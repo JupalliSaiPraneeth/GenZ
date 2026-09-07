@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSurveyStore } from '../stores/surveyStore';
-import confetti from 'canvas-confetti';
 import {
   Sparkles,
   ArrowRight,
@@ -47,6 +46,9 @@ export default function Survey() {
     lastSyncedAt,
   } = useSurveyStore();
 
+  // Smooth Card Moving Animation State
+  const [cardAnimClass, setCardAnimClass] = useState('translate-x-0 opacity-100 scale-100');
+
   const handleLogoutSession = () => {
     if (logoutParticipant) logoutParticipant();
     else if (resetSession) resetSession();
@@ -56,7 +58,7 @@ export default function Survey() {
   };
 
   const hasSavedState = Boolean(participantName || Object.keys(answersById).length > 0);
-  
+
   // Onboarding Step State (0 = Welcome Screen, 1 = 4-Chapter Roadmap, 2 = Privacy Guarantee, 2.5 = Name Entry, 3 = Active 207-Q Survey)
   const [onboardingStep, setOnboardingStep] = useState(hasSavedState ? 3 : 0);
 
@@ -104,6 +106,23 @@ export default function Survey() {
     }
   };
 
+  // Smooth Card Moving Transition Handler
+  const handleNextQuestionWithAnim = () => {
+    // 1. Card exit animation: slide left, rotate -2deg, fade out (200ms)
+    setCardAnimClass('-translate-x-12 opacity-0 -rotate-2 scale-95 transition-all duration-200 ease-in');
+
+    setTimeout(() => {
+      // 2. Reset position to right (offscreen) and call store nextQuestion action
+      setCardAnimClass('translate-x-12 opacity-0 scale-95 duration-0');
+      nextQuestion();
+
+      // 3. Smooth spring slide-in to center
+      setTimeout(() => {
+        setCardAnimClass('translate-x-0 opacity-100 scale-100 transition-all duration-300 ease-out');
+      }, 50);
+    }, 200);
+  };
+
   // Auto-switch to active survey experience if session state is restored asynchronously
   useEffect(() => {
     if (hasSavedState && onboardingStep < 3) {
@@ -120,17 +139,6 @@ export default function Survey() {
       setEmailInput(participantEmail);
     }
   }, [participantName, participantEmail]);
-
-  // Milestone Celebration Trigger
-  useEffect(() => {
-    if (progressPercentage === 25 || progressPercentage === 50 || progressPercentage === 75 || progressPercentage === 100) {
-      confetti({
-        particleCount: 60,
-        spread: 70,
-        origin: { y: 0.75 },
-      });
-    }
-  }, [progressPercentage]);
 
   // Auto-scroll smooth to top whenever question or step changes
   useEffect(() => {
@@ -152,7 +160,6 @@ export default function Survey() {
   };
 
   const handleFinishSurvey = () => {
-    confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
     navigate('/survey-complete');
   };
 
@@ -544,7 +551,7 @@ export default function Survey() {
     return (
       <div className="min-h-screen flex items-center justify-center pt-[150px] sm:pt-[160px] pb-12 px-4 bg-[#FAF7F0]">
         <div className="max-w-xl w-full bg-white rounded-3xl p-8 sm:p-10 border border-[#109A9B]/20 shadow-2xl relative overflow-hidden">
-          
+
           <form onSubmit={handleSaveNameAndStart} className="space-y-5">
             <div className="text-center">
               <div className="w-14 h-14 rounded-2xl bg-[#109A9B]/15 text-[#109A9B] flex items-center justify-center mx-auto mb-3 border border-[#109A9B]/30">
@@ -631,10 +638,9 @@ export default function Survey() {
     <div className="relative min-h-screen overflow-x-hidden bg-[#FAF7F0] flex flex-col justify-between pt-[100px] sm:pt-[135px] md:pt-[155px] pb-12">
 
       {/* ==================================================== */}
-      {/* OVERALL PAGE BACKGROUND — MASTER PROMPT DECORATIONS */}
+      {/* OVERALL PAGE BACKGROUND — ORIGINAL TEAL ATMOSPHERIC GRADIENT */}
       {/* ==================================================== */}
 
-      {/* UPPER ATMOSPHERIC TEAL SECTION WITH GRADIENT TRANSITIONS */}
       <div className="absolute top-0 left-0 right-0 h-[520px] bg-gradient-to-b from-[#109A9B] via-[#0D8788] to-[#075D63] z-0 overflow-hidden">
         {/* Radial Glow Lighting */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.18),transparent_65%)]" />
@@ -647,59 +653,29 @@ export default function Survey() {
       {/* 2. TOP RIGHT DEEP TEAL ORGANIC WAVE SECTION */}
       <div className="absolute top-0 right-0 w-[550px] h-[400px] bg-gradient-to-bl from-[#063E46]/50 via-[#075D63]/30 to-transparent rounded-bl-[260px] blur-xl pointer-events-none z-0" />
 
-      {/* 3. CENTER DIAGONAL ORGANIC SVG WAVE BOUNDARY (Separating upper teal from lower pale cream) */}
+      {/* 3. CENTER DIAGONAL ORGANIC SVG WAVE BOUNDARY */}
       <div className="absolute top-[440px] left-0 right-0 z-0 pointer-events-none">
         <svg className="w-full h-36 text-[#FAF7F0] fill-current preserve-3d" viewBox="0 0 1440 180" preserveAspectRatio="none">
           <path d="M0,64L120,74.7C240,85,480,107,720,101.3C960,96,1200,64,1320,48L1440,32L1440,180L1320,180C1200,180,960,180,720,180C480,180,240,180,120,180L0,180Z" />
         </svg>
       </div>
 
-      {/* 4. BOTTOM LEFT OVERSIZED ORGANIC CIRCULAR TEAL SHAPE (Behind Student Portrait) */}
+      {/* 4. BOTTOM LEFT ORGANIC SHAPE */}
       <div className="absolute bottom-0 -left-20 w-[520px] h-[520px] rounded-full bg-[#109A9B]/15 blur-3xl pointer-events-none z-0" />
       <div className="absolute top-[280px] left-8 w-[360px] h-[360px] rounded-full bg-[#FFF8E8]/60 blur-2xl pointer-events-none z-0" />
 
-      {/* 5. BOTTOM RIGHT LARGE TEAL ORGANIC BLOB & CREAM WAVE */}
+      {/* 5. BOTTOM RIGHT ORGANIC BLOB */}
       <div className="absolute -bottom-20 -right-20 w-[480px] h-[480px] bg-gradient-to-tl from-[#109A9B]/25 via-[#075D63]/15 to-transparent rounded-full blur-3xl pointer-events-none z-0" />
       <div className="absolute bottom-12 right-0 w-[380px] h-[260px] bg-[#FDE7B5]/40 rounded-tl-[180px] blur-2xl pointer-events-none z-0" />
-
-      {/* 6. SUBTLE DECORATIVE ABSTRACT ELEMENTS (Dotted grids, stars & sparkles) */}
-      {/* Top Left 4x4 Dotted Matrix Grid */}
-      <svg className="absolute top-20 left-8 w-24 h-24 text-white/30 z-10 hidden lg:block pointer-events-none" viewBox="0 0 100 100" fill="currentColor">
-        <circle cx="20" cy="20" r="3" /><circle cx="50" cy="20" r="3" /><circle cx="80" cy="20" r="3" />
-        <circle cx="20" cy="50" r="3" /><circle cx="50" cy="50" r="3" /><circle cx="80" cy="50" r="3" />
-        <circle cx="20" cy="80" r="3" /><circle cx="50" cy="80" r="3" /><circle cx="80" cy="80" r="3" />
-      </svg>
-
-      {/* Top Right 4x4 Dotted Matrix Grid */}
-      <svg className="absolute top-24 right-10 w-24 h-24 text-white/30 z-10 hidden xl:block pointer-events-none" viewBox="0 0 100 100" fill="currentColor">
-        <circle cx="20" cy="20" r="3" /><circle cx="50" cy="20" r="3" /><circle cx="80" cy="20" r="3" />
-        <circle cx="20" cy="50" r="3" /><circle cx="50" cy="50" r="3" /><circle cx="80" cy="50" r="3" />
-        <circle cx="20" cy="80" r="3" /><circle cx="50" cy="80" r="3" /><circle cx="80" cy="80" r="3" />
-      </svg>
-
-      {/* Bottom Right Dotted Grid */}
-      <svg className="absolute bottom-24 right-12 w-20 h-20 text-[#063E46]/20 z-10 hidden xl:block pointer-events-none" viewBox="0 0 100 100" fill="currentColor">
-        <circle cx="20" cy="20" r="2.5" /><circle cx="50" cy="20" r="2.5" /><circle cx="80" cy="20" r="2.5" />
-        <circle cx="20" cy="50" r="2.5" /><circle cx="50" cy="50" r="2.5" /><circle cx="80" cy="50" r="2.5" />
-        <circle cx="20" cy="80" r="2.5" /><circle cx="50" cy="80" r="2.5" /><circle cx="80" cy="80" r="2.5" />
-      </svg>
 
       {/* MAIN CONTAINER */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">
 
-
-
-        {/* ==================================================== */}
-        {/* 3-COLUMN MAIN CONTENT GRID (LEFT / CENTER / RIGHT) */}
-        {/* ==================================================== */}
+        {/* 3-COLUMN MAIN CONTENT GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pt-2">
 
-          {/* ==================================================== */}
-          {/* LEFT SIDE VISUAL AREA (Doodle + Student + Quote Card) */}
-          {/* ==================================================== */}
+          {/* LEFT SIDE VISUAL AREA */}
           <div className="hidden lg:flex lg:col-span-4 flex-col items-center relative pr-4 lg:pr-8">
-
-            {/* Handwritten Doodle: "Small Answers Big Changes" */}
             <div className="absolute -top-14 -left-2 z-20 pointer-events-none">
               <div className="font-handwritten text-2xl sm:text-3xl font-extrabold text-[#063E46] rotate-[-8deg] leading-tight drop-shadow-xs">
                 Small <br /> Answers <br /> Big Changes
@@ -711,7 +687,6 @@ export default function Survey() {
               </div>
             </div>
 
-            {/* Gen-Z Student Portrait Cutout */}
             <div className="relative z-10 pt-1">
               <img
                 src="/GenZ-removebg-preview.png"
@@ -721,21 +696,17 @@ export default function Survey() {
               />
             </div>
 
-            {/* Floating Quote Card at Bottom Left */}
             <div className="mt-4 bg-[#EAF6F6]/95 backdrop-blur-xs border border-[#109A9B]/30 rounded-2xl p-4 shadow-md max-w-[250px] text-left relative z-20 transform rotate-[-2deg]">
               <span className="text-3xl leading-none text-[#109A9B] font-serif font-bold block mb-1">“</span>
               <p className="text-xs font-semibold text-[#063E46] leading-snug">
                 Your perspective today builds a brighter tomorrow.
               </p>
             </div>
-
           </div>
 
-          {/* ==================================================== */}
-          {/* CENTER COLUMN: MAIN SURVEY QUESTIONNAIRE CARD */}
-          {/* ==================================================== */}
+          {/* CENTER COLUMN: MAIN SURVEY QUESTIONNAIRE CARD WITH CARD ANIMATION */}
           <div className="col-span-1 lg:col-span-7 max-w-[580px] w-full mx-auto">
-            <div className="bg-[#FFF8E8] rounded-[28px] p-6 sm:p-7 border border-white/70 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] relative z-20 transition-all min-h-[520px] flex flex-col justify-between">
+            <div className={`bg-[#FFF8E8] rounded-[28px] p-6 sm:p-7 border border-white/70 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] relative z-20 transition-all duration-300 min-h-[520px] flex flex-col justify-between ${cardAnimClass}`}>
 
               <div>
                 {/* Header Topic Badge, Participant & Response Counts */}
@@ -775,11 +746,10 @@ export default function Survey() {
                       type="button"
                       onClick={jumpToNextSkippedQuestion}
                       disabled={skippedCount === 0}
-                      className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full border text-xs font-sora font-extrabold shadow-2xs transition-all ${
-                        skippedCount > 0
+                      className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full border text-xs font-sora font-extrabold shadow-2xs transition-all ${skippedCount > 0
                           ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 cursor-pointer hover:scale-105 active:scale-95'
                           : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
-                      }`}
+                        }`}
                       title={skippedCount > 0 ? "Click to jump to your next skipped question!" : "No skipped questions"}
                     >
                       <SkipForward className={`w-3.5 h-3.5 ${skippedCount > 0 ? 'text-amber-600' : 'text-slate-400'}`} />
@@ -812,9 +782,9 @@ export default function Survey() {
                       <button
                         key={idx}
                         onClick={() => handleOptionSelect(opt.value)}
-                        className={`w-full text-left py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl border-2 transition-all duration-200 flex items-center justify-between group cursor-pointer ${isSelected
-                            ? 'border-[#075D63] bg-[#EAF6F6] shadow-2xs font-bold'
-                            : 'border-slate-200 hover:border-[#109A9B]/60 bg-white hover:bg-[#EAF6F6]/40 font-medium'
+                        className={`w-full text-left py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl border-2 transition-all duration-200 flex items-center justify-between group cursor-pointer active:scale-[0.99] ${isSelected
+                          ? 'border-[#075D63] bg-[#EAF6F6] shadow-2xs font-bold'
+                          : 'border-slate-200 hover:border-[#109A9B]/60 bg-white hover:bg-[#EAF6F6]/40 font-medium'
                           }`}
                       >
                         <span className={`text-sm sm:text-base ${isSelected ? 'text-[#075D63] font-extrabold' : 'text-[#10242C]'}`}>
@@ -831,12 +801,12 @@ export default function Survey() {
                 </div>
               </div>
 
-              {/* Bottom Actions Container (Properly Enclosed inside Card Grid) */}
+              {/* Bottom Actions Container */}
               <div className="w-full flex items-center justify-between gap-2.5 pt-4 border-t border-slate-200/80 mt-2 font-inter">
                 <button
                   onClick={prevQuestion}
                   disabled={currentQuestionIndex === 0}
-                  className="bg-white border border-[#063E46]/40 text-[#063E46] hover:bg-[#FFF8E8] font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all disabled:opacity-30 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  className="bg-white border border-[#063E46]/40 text-[#063E46] hover:bg-[#FFF8E8] font-bold text-xs sm:text-sm px-5 py-3 rounded-xl transition-all disabled:opacity-30 flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Previous</span>
@@ -844,8 +814,8 @@ export default function Survey() {
 
                 {currentQuestionIndex < questions.length - 1 ? (
                   <button
-                    onClick={nextQuestion}
-                    className="flex-1 bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-sora font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all group cursor-pointer"
+                    onClick={handleNextQuestionWithAnim}
+                    className="flex-1 bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-sora font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2 transition-all group cursor-pointer"
                   >
                     <span>Next Question</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -853,7 +823,7 @@ export default function Survey() {
                 ) : (
                   <button
                     onClick={handleFinishSurvey}
-                    className="flex-1 bg-[#109A9B] hover:bg-[#075D63] text-white font-sora font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                    className="flex-1 bg-[#109A9B] hover:bg-[#075D63] text-white font-sora font-bold text-xs sm:text-sm py-3.5 px-5 rounded-xl shadow-xl active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <span>Complete Survey 🏆</span>
                   </button>
