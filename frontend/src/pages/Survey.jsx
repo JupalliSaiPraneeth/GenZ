@@ -159,177 +159,124 @@ export default function Survey() {
   // ONBOARDING STEP 0: MASTER PROMPT WELCOME EXPERIENCE
   if (onboardingStep === 0) {
     return (
-      <div className="relative min-h-screen overflow-x-hidden bg-[#FAF7F0] flex flex-col justify-between pt-[165px] sm:pt-[175px]">
+      <div className="relative min-h-screen overflow-x-hidden bg-[#FAF7F0] flex flex-col justify-between pt-[100px] sm:pt-[140px] md:pt-[165px]">
 
         {/* TOP TEAL / BOTTOM BEIGE ARTISTIC SPLIT BACKGROUND WITH ORGANIC SVG DIVIDER */}
-        <div className="absolute top-0 left-0 right-0 h-[530px] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-[480px] sm:h-[530px] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden">
           {/* Radial Glow Lighting */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
         </div>
 
         {/* Organic Curved SVG Boundary Divider */}
-        <div className="absolute top-[475px] left-0 right-0 z-0 pointer-events-none">
-          <svg className="w-full h-24 sm:h-32 text-[#FAF7F0] fill-current preserve-3d" viewBox="0 0 1440 120" preserveAspectRatio="none">
+        <div className="absolute top-[430px] sm:top-[475px] left-0 right-0 z-0 pointer-events-none">
+          <svg className="w-full h-20 sm:h-32 text-[#FAF7F0] fill-current preserve-3d" viewBox="0 0 1440 120" preserveAspectRatio="none">
             <path d="M0,32L80,42.7C160,53,320,75,480,80C640,85,800,75,960,58.7C1120,43,1280,21,1360,10.7L1440,0L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z" />
           </svg>
         </div>
 
         {/* ORGANIC BACKGROUND SHAPES */}
-        {/* Bottom Left Organic Teal Shape */}
         <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-[#109A9B]/20 blur-3xl pointer-events-none z-0" />
-        {/* Bottom Right Organic Teal Blob */}
         <div className="absolute -bottom-16 -right-16 w-80 h-80 rounded-full bg-[#075D63]/15 blur-3xl pointer-events-none z-0" />
-        {/* Beige Area Soft Cream Glow */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[55%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.65),transparent_55%)] pointer-events-none z-0" />
 
-        {/* DECORATIVE BACKGROUND ELEMENTS & HANDWRITTEN DOODLES */}
-        {/* Top Left Doodle: "Your Voice Matters" */}
+        {/* DECORATIVE BACKGROUND ELEMENTS */}
         <div className="absolute top-40 left-6 sm:left-14 text-white/90 z-10 pointer-events-none hidden sm:block">
           <div className="font-handwritten text-2xl font-extrabold rotate-[-8deg] leading-tight text-[#FFF8E8]">
             Your <br /> Voice <br /> Matters
           </div>
-          <svg className="w-12 h-6 text-[#FDE7B5] ml-2 mt-1" viewBox="0 0 50 20" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M 5 10 Q 25 18 45 8" />
-          </svg>
         </div>
 
-        {/* Top Right Doodle: "Ideas Today Better Tomorrow" */}
         <div className="absolute top-40 right-6 sm:right-14 text-white/90 z-10 pointer-events-none hidden sm:block text-right">
           <div className="font-handwritten text-2xl font-extrabold rotate-[8deg] leading-tight text-[#FFF8E8]">
             Ideas Today <br /> Better Tomorrow
           </div>
-          <svg className="w-14 h-6 text-[#FDE7B5] ml-auto mt-1" viewBox="0 0 50 20" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M 5 12 Q 25 5 45 15" />
-          </svg>
-        </div>
-
-        {/* Left & Right Refined Dot Grids */}
-        <svg className="absolute top-48 left-8 w-12 h-12 text-white/20 z-10 hidden lg:block pointer-events-none" viewBox="0 0 100 100" fill="currentColor">
-          <circle cx="20" cy="20" r="2.2" /><circle cx="50" cy="20" r="2.2" /><circle cx="80" cy="20" r="2.2" />
-          <circle cx="20" cy="50" r="2.2" /><circle cx="50" cy="50" r="2.2" /><circle cx="80" cy="50" r="2.2" />
-          <circle cx="20" cy="80" r="2.2" /><circle cx="50" cy="80" r="2.2" /><circle cx="80" cy="80" r="2.2" />
-        </svg>
-        <svg className="absolute top-48 right-8 w-12 h-12 text-white/20 z-10 hidden lg:block pointer-events-none" viewBox="0 0 100 100" fill="currentColor">
-          <circle cx="20" cy="20" r="2.2" /><circle cx="50" cy="20" r="2.2" /><circle cx="80" cy="20" r="2.2" />
-          <circle cx="20" cy="50" r="2.2" /><circle cx="50" cy="50" r="2.2" /><circle cx="80" cy="50" r="2.2" />
-          <circle cx="20" cy="80" r="2.2" /><circle cx="50" cy="80" r="2.2" /><circle cx="80" cy="80" r="2.2" />
-        </svg>
-
-        {/* Middle Left Minimal Curved Doodle Line */}
-        <div className="absolute top-1/2 left-8 text-[#109A9B]/40 pointer-events-none hidden lg:block z-10">
-          <svg className="w-16 h-16" viewBox="0 0 60 60" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M 10 10 Q 30 50 50 20" strokeDasharray="4 4" />
-          </svg>
-        </div>
-
-        {/* Bottom Right Doodle: "One Voice can Spark Change" */}
-        <div className="absolute bottom-20 right-8 sm:right-16 text-[#063E46] z-10 pointer-events-none hidden md:block text-right">
-          <div className="font-handwritten text-2xl font-extrabold rotate-[-5deg]">
-            One <br /> Voice can <br /> Spark Change
-          </div>
-          <svg className="w-10 h-8 text-[#063E46] ml-auto mt-1" viewBox="0 0 30 30" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M 5 25 Q 15 5 25 5" />
-            <path d="M 18 5 L 25 5 L 25 12" />
-          </svg>
         </div>
 
         {/* MAIN CONTAINER CONTENT */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 pb-16 w-full flex-1 flex flex-col justify-between">
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-10 pb-12 sm:pb-16 w-full flex-1 flex flex-col justify-between">
 
           <div>
-            {/* CENTRAL WELCOME CARD (COMPACT & PERFECTLY PROPORTIONED) */}
-            <div className="max-w-[580px] mx-auto bg-[#FFFDF9] rounded-[28px] p-6 sm:p-8 md:p-9 border border-white/80 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] text-center relative z-20 transform hover:-translate-y-0.5 transition-all duration-300">
+            {/* CENTRAL WELCOME CARD */}
+            <div className="max-w-[580px] mx-auto bg-[#FFFDF9] rounded-[24px] sm:rounded-[28px] p-5 sm:p-8 md:p-9 border border-white/80 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] text-center relative z-20 transition-all duration-300">
 
               {/* Header Sparkles Icon Box */}
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#075D63] to-[#109A9B] text-[#FFF8E8] flex items-center justify-center mx-auto mb-4 shadow-md shadow-teal-900/15 animate-bounce-gentle">
-                <Sparkles className="w-7 h-7 fill-[#FFF8E8]" />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#075D63] to-[#109A9B] text-[#FFF8E8] flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-md shadow-teal-900/15">
+                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 fill-[#FFF8E8]" />
               </div>
 
               {/* Main Heading */}
-              <h1 className="font-heading font-extrabold text-3xl sm:text-[44px] leading-tight text-[#10242C] mb-3 tracking-tight">
+              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl md:text-[44px] leading-tight text-[#10242C] mb-2 sm:mb-3 tracking-tight">
                 Hey, <span className="bg-gradient-to-r from-[#109A9B] to-[#075D63] bg-clip-text text-transparent">Gen Z 👋</span>
               </h1>
 
               {/* Description */}
-              <p className="text-[#53656A] text-sm sm:text-base leading-relaxed max-w-[480px] mx-auto mb-6 font-medium">
+              <p className="text-[#53656A] text-xs sm:text-base leading-relaxed max-w-[480px] mx-auto mb-5 sm:mb-6 font-medium">
                 Welcome to India's premier youth perspective research study. We have organized the <strong className="text-[#063E46] font-bold">207 questions</strong> into <strong className="text-[#063E46] font-bold">4 simple chapters</strong> so your journey feels fast, smooth, and engaging.
               </p>
 
               {/* Primary CTA Button */}
               <button
                 onClick={() => setOnboardingStep(1)}
-                className="w-full h-[54px] bg-[#063E46] hover:bg-gradient-to-r hover:from-[#075D63] hover:to-[#109A9B] text-[#FFF8E8] font-heading font-bold text-base rounded-2xl shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 transform hover:-translate-y-[2px] active:translate-y-0 group cursor-pointer"
+                className="w-full h-[48px] sm:h-[54px] bg-[#063E46] hover:bg-gradient-to-r hover:from-[#075D63] hover:to-[#109A9B] text-[#FFF8E8] font-heading font-bold text-sm sm:text-base rounded-2xl shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 transform hover:-translate-y-[2px] active:translate-y-0 group cursor-pointer"
               >
                 <span>Let's Get Started</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-200" />
               </button>
 
               {/* Security Guarantee Message */}
-              <div className="flex items-center justify-center gap-1.5 mt-3.5 text-xs font-semibold text-[#063E46]">
+              <div className="flex items-center justify-center gap-1.5 mt-3 sm:mt-3.5 text-[11px] sm:text-xs font-semibold text-[#063E46]">
                 <Lock className="w-3.5 h-3.5 text-[#109A9B]" />
                 <span>Your responses are 100% anonymous and secure</span>
               </div>
 
             </div>
 
-            {/* SURVEY INFORMATION ROW (PERFECTLY BALANCED SPACING) */}
-            <div className="mt-9 sm:mt-10 max-w-5xl mx-auto bg-[#FFFDF9]/95 backdrop-blur-md rounded-[22px] p-4 sm:p-5 border border-[#109A9B]/20 shadow-md">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 divide-y sm:divide-y-0 md:divide-x divide-[#063E46]/15">
+            {/* SURVEY INFORMATION ROW */}
+            <div className="mt-6 sm:mt-10 max-w-5xl mx-auto bg-[#FFFDF9]/95 backdrop-blur-md rounded-[22px] p-3 sm:p-5 border border-[#109A9B]/20 shadow-md">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 divide-y-0 sm:divide-y-0 md:divide-x divide-[#063E46]/15">
 
-                <div className="flex items-center gap-3.5 p-1.5 justify-center sm:justify-start md:justify-center">
-                  <div className="w-[52px] h-[52px] rounded-2xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-6 h-6 text-[#109A9B]" />
+                <div className="flex items-center gap-2.5 sm:gap-3.5 p-1 justify-start sm:justify-center">
+                  <div className="w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] rounded-2xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-[#109A9B]" />
                   </div>
                   <div>
-                    <span className="block font-heading font-extrabold text-[#10242C] text-base leading-snug">15–20 Mins</span>
-                    <span className="text-xs text-[#53656A] font-medium">Quick & engaging</span>
+                    <span className="block font-heading font-extrabold text-[#10242C] text-xs sm:text-base leading-snug">15–20 Mins</span>
+                    <span className="text-[10px] sm:text-xs text-[#53656A] font-medium">Quick & engaging</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3.5 p-1.5 pt-3 sm:pt-1.5 justify-center sm:justify-start md:justify-center">
-                  <div className="w-[52px] h-[52px] rounded-2xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-6 h-6 text-[#109A9B]" />
+                <div className="flex items-center gap-2.5 sm:gap-3.5 p-1 justify-start sm:justify-center">
+                  <div className="w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] rounded-2xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-[#109A9B]" />
                   </div>
                   <div>
-                    <span className="block font-heading font-extrabold text-[#10242C] text-base leading-snug">207 Questions</span>
-                    <span className="text-xs text-[#53656A] font-medium">Across 4 chapters</span>
+                    <span className="block font-heading font-extrabold text-[#10242C] text-xs sm:text-base leading-snug">207 Questions</span>
+                    <span className="text-[10px] sm:text-xs text-[#53656A] font-medium">Across 4 chapters</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3.5 p-1.5 pt-3 sm:pt-1.5 justify-center sm:justify-start md:justify-center">
-                  <div className="w-[52px] h-[52px] rounded-2xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
-                    <ShieldCheck className="w-6 h-6 text-[#109A9B]" />
+                <div className="flex items-center gap-2.5 sm:gap-3.5 p-1 justify-start sm:justify-center">
+                  <div className="w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] rounded-2xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#109A9B]" />
                   </div>
                   <div>
-                    <span className="block font-heading font-extrabold text-[#10242C] text-base leading-snug">Your Privacy</span>
-                    <span className="text-xs text-[#53656A] font-medium">Completely anonymous</span>
+                    <span className="block font-heading font-extrabold text-[#10242C] text-xs sm:text-base leading-snug">Your Privacy</span>
+                    <span className="text-[10px] sm:text-xs text-[#53656A] font-medium">100% Anonymous</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3.5 p-1.5 pt-3 sm:pt-1.5 justify-center sm:justify-start md:justify-center">
-                  <div className="w-[52px] h-[52px] rounded-2xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
-                    <Gift className="w-6 h-6 text-[#109A9B]" />
+                <div className="flex items-center gap-2.5 sm:gap-3.5 p-1 justify-start sm:justify-center">
+                  <div className="w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] rounded-2xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
+                    <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-[#109A9B]" />
                   </div>
                   <div>
-                    <span className="block font-heading font-extrabold text-[#10242C] text-base leading-snug">Rewards</span>
-                    <span className="text-xs text-[#53656A] font-medium">Certificate & Lucky Draw</span>
+                    <span className="block font-heading font-extrabold text-[#10242C] text-xs sm:text-base leading-snug">Rewards</span>
+                    <span className="text-[10px] sm:text-xs text-[#53656A] font-medium">Certificate & Draw</span>
                   </div>
                 </div>
 
               </div>
             </div>
-          </div>
-
-          <div>
-            {/* MOTIVATIONAL DIVIDER */}
-            <div className="mt-10 flex items-center justify-center gap-4 max-w-xl mx-auto">
-              <div className="flex-1 h-[1px] bg-[#063E46]/15" />
-              <span className="text-[11px] font-mono font-extrabold tracking-[4px] text-[#063E46]/70 uppercase">
-                REAL OPINIONS • BRIGHTER TOMORROW
-              </span>
-              <div className="flex-1 h-[1px] bg-[#063E46]/15" />
-            </div>
-
           </div>
 
         </div>
@@ -341,7 +288,7 @@ export default function Survey() {
   // ONBOARDING STEP 1: ATTRACTIVE, PROFESSIONAL EDITORIAL 4-SECTION ROADMAP
   if (onboardingStep === 1) {
     return (
-      <div className="relative min-h-screen overflow-x-hidden bg-[#FAF7F0] flex flex-col justify-between pt-[105px] sm:pt-[120px] pb-6">
+      <div className="relative min-h-screen overflow-x-hidden bg-[#FAF7F0] flex flex-col justify-between pt-[95px] sm:pt-[120px] pb-6">
 
         {/* ELEGANT ATMOSPHERIC DEEP TEAL HEADER */}
         <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-[#093238] via-[#0E5158] to-[#109A9B] z-0 overflow-hidden">
@@ -355,26 +302,22 @@ export default function Survey() {
           </svg>
         </div>
 
-        {/* SOFT BACKGROUND GLOW BLOBS */}
-        <div className="absolute top-10 right-10 w-80 h-80 bg-[#109A9B]/20 rounded-full blur-3xl pointer-events-none z-0" />
-        <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none z-0" />
-
         {/* MAIN COMPOSITION CONTAINER */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-between">
 
           {/* CENTERED ROADMAP CARD CONTAINER */}
           <div className="flex justify-center items-center pt-2">
 
-            {/* CENTRAL ROADMAP CARD (HIGH-END ATTRACTIVE FONT & PERFECT PROPORTIONS) */}
+            {/* CENTRAL ROADMAP CARD */}
             <div className="max-w-[580px] w-full mx-auto font-jakarta">
-              <div className="bg-[#FFFDF9] rounded-[28px] p-5 sm:p-7 border border-white/80 shadow-[0px_20px_50px_rgba(6,62,70,0.12)] relative z-20">
+              <div className="bg-[#FFFDF9] rounded-[24px] sm:rounded-[28px] p-4 sm:p-7 border border-white/80 shadow-[0px_20px_50px_rgba(6,62,70,0.12)] relative z-20">
 
                 {/* Header Label & Title */}
-                <div className="text-center sm:text-left mb-4">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#109A9B]/10 border border-[#109A9B]/20 text-[#075D63] font-inter font-bold text-[11px] uppercase tracking-wider mb-1.5">
+                <div className="text-center sm:text-left mb-3 sm:mb-4">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-[#109A9B]/10 border border-[#109A9B]/20 text-[#075D63] font-inter font-bold text-[10px] sm:text-[11px] uppercase tracking-wider mb-1">
                     ✨ 4 Chapter Journey
                   </span>
-                  <h2 className="font-sora font-extrabold text-2xl sm:text-[32px] text-[#10242C] leading-tight tracking-tight">
+                  <h2 className="font-sora font-extrabold text-xl sm:text-[32px] text-[#10242C] leading-tight tracking-tight">
                     Your 4-Section <span className="text-[#109A9B]">Roadmap</span>
                   </h2>
                   <p className="text-[#53656A] font-inter text-xs sm:text-[13px] leading-relaxed mt-1 font-normal">
@@ -383,138 +326,138 @@ export default function Survey() {
                 </div>
 
                 {/* INTEGRATED KEY STATS BAR */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-4 py-2 px-3 rounded-xl bg-[#EAF6F6]/80 border border-[#109A9B]/20 font-inter">
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#075D63] p-0.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 mb-3 sm:mb-4 py-1.5 px-2.5 rounded-xl bg-[#EAF6F6]/80 border border-[#109A9B]/20 font-inter">
+                  <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#075D63] p-0.5">
                     <BarChart2 className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
                     <span>207 Questions</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#075D63] p-0.5">
+                  <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#075D63] p-0.5">
                     <Clock className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
                     <span>15–20 Mins</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#075D63] p-0.5">
+                  <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#075D63] p-0.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
                     <span>100% Anonymous</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-semibold text-[#075D63] p-0.5">
+                  <div className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#075D63] p-0.5">
                     <Gift className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
                     <span>Rewards</span>
                   </div>
                 </div>
 
                 {/* 4 STACKED INTERACTIVE SECTION CARDS */}
-                <div className="space-y-2.5 mb-5 font-inter">
+                <div className="space-y-2 sm:space-y-2.5 mb-4 sm:mb-5 font-inter">
 
                   {/* SECTION 01 */}
                   <div
                     onClick={() => setOnboardingStep(2)}
-                    className="p-3 sm:p-3.5 rounded-[16px] bg-[#F4FAF8] hover:bg-white border border-[#109A9B]/20 hover:border-[#109A9B] transition-all duration-200 shadow-2xs hover:shadow-md flex items-center justify-between group cursor-pointer"
+                    className="p-2.5 sm:p-3.5 rounded-[16px] bg-[#F4FAF8] hover:bg-white border border-[#109A9B]/20 hover:border-[#109A9B] transition-all duration-200 shadow-2xs flex items-center justify-between group cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#109A9B] to-[#075D63] text-white font-sora font-extrabold text-sm sm:text-base flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#109A9B] to-[#075D63] text-white font-sora font-extrabold text-xs sm:text-base flex items-center justify-center flex-shrink-0 shadow-sm">
                         01
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-sora font-extrabold text-[#10242C] text-xs sm:text-[13px] tracking-wide uppercase">
+                        <h4 className="font-sora font-extrabold text-[#10242C] text-[11px] sm:text-[13px] tracking-wide uppercase truncate">
                           KNOW YOUR EVERYDAY YOU
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-[#53656A] font-inter font-medium mt-0.5">
+                        <p className="text-[10px] sm:text-xs text-[#53656A] font-inter font-medium truncate">
                           Education • Health • Lifestyle
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-2.5">
-                      <span className="text-[11px] sm:text-xs font-inter font-semibold text-[#075D63] bg-white px-2.5 py-0.5 rounded-full border border-[#109A9B]/20 shadow-2xs">Q1 – Q35</span>
-                      <ChevronRight className="w-4 h-4 text-[#10242C] group-hover:translate-x-1 transition-transform" />
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-1.5">
+                      <span className="text-[10px] sm:text-xs font-inter font-semibold text-[#075D63] bg-white px-2 py-0.5 rounded-full border border-[#109A9B]/20">Q1–35</span>
+                      <ChevronRight className="w-4 h-4 text-[#10242C]" />
                     </div>
                   </div>
 
                   {/* SECTION 02 */}
                   <div
                     onClick={() => setOnboardingStep(2)}
-                    className="p-3 sm:p-3.5 rounded-[16px] bg-[#FFF8F0] hover:bg-white border border-amber-200/80 hover:border-amber-400 transition-all duration-200 shadow-2xs hover:shadow-md flex items-center justify-between group cursor-pointer"
+                    className="p-2.5 sm:p-3.5 rounded-[16px] bg-[#FFF8F0] hover:bg-white border border-amber-200/80 hover:border-amber-400 transition-all duration-200 shadow-2xs flex items-center justify-between group cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white font-sora font-extrabold text-sm sm:text-base flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white font-sora font-extrabold text-xs sm:text-base flex items-center justify-center flex-shrink-0 shadow-sm">
                         02
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-sora font-extrabold text-[#10242C] text-xs sm:text-[13px] tracking-wide uppercase">
+                        <h4 className="font-sora font-extrabold text-[#10242C] text-[11px] sm:text-[13px] tracking-wide uppercase truncate">
                           YOUR WORLD & CONNECTIONS
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-[#53656A] font-inter font-medium mt-0.5">
-                          Entertainment • Reading • Relationships • Career
+                        <p className="text-[10px] sm:text-xs text-[#53656A] font-inter font-medium truncate">
+                          Entertainment • Career
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-2.5">
-                      <span className="text-[11px] sm:text-xs font-inter font-semibold text-amber-900 bg-white px-2.5 py-0.5 rounded-full border border-amber-200 shadow-2xs">Q36 – Q90</span>
-                      <ChevronRight className="w-4 h-4 text-[#10242C] group-hover:translate-x-1 transition-transform" />
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-1.5">
+                      <span className="text-[10px] sm:text-xs font-inter font-semibold text-amber-900 bg-white px-2 py-0.5 rounded-full border border-amber-200">Q36–90</span>
+                      <ChevronRight className="w-4 h-4 text-[#10242C]" />
                     </div>
                   </div>
 
                   {/* SECTION 03 */}
                   <div
                     onClick={() => setOnboardingStep(2)}
-                    className="p-3 sm:p-3.5 rounded-[16px] bg-[#F6F4FA] hover:bg-white border border-purple-200/80 hover:border-purple-400 transition-all duration-200 shadow-2xs hover:shadow-md flex items-center justify-between group cursor-pointer"
+                    className="p-2.5 sm:p-3.5 rounded-[16px] bg-[#F6F4FA] hover:bg-white border border-purple-200/80 hover:border-purple-400 transition-all duration-200 shadow-2xs flex items-center justify-between group cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 text-white font-sora font-extrabold text-sm sm:text-base flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 text-white font-sora font-extrabold text-xs sm:text-base flex items-center justify-center flex-shrink-0 shadow-sm">
                         03
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-sora font-extrabold text-[#10242C] text-xs sm:text-[13px] tracking-wide uppercase">
+                        <h4 className="font-sora font-extrabold text-[#10242C] text-[11px] sm:text-[13px] tracking-wide uppercase truncate">
                           BUILD YOUR FUTURE
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-[#53656A] font-inter font-medium mt-0.5">
-                          Finance • Skills • Technology • Mobility
+                        <p className="text-[10px] sm:text-xs text-[#53656A] font-inter font-medium truncate">
+                          Finance • Skills • AI
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-2.5">
-                      <span className="text-[11px] sm:text-xs font-inter font-semibold text-purple-900 bg-white px-2.5 py-0.5 rounded-full border border-purple-200 shadow-2xs">Q91 – Q130</span>
-                      <ChevronRight className="w-4 h-4 text-[#10242C] group-hover:translate-x-1 transition-transform" />
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-1.5">
+                      <span className="text-[10px] sm:text-xs font-inter font-semibold text-purple-900 bg-white px-2 py-0.5 rounded-full border border-purple-200">Q91–130</span>
+                      <ChevronRight className="w-4 h-4 text-[#10242C]" />
                     </div>
                   </div>
 
                   {/* SECTION 04 */}
                   <div
                     onClick={() => setOnboardingStep(2)}
-                    className="p-3 sm:p-3.5 rounded-[16px] bg-[#FAF4F5] hover:bg-white border border-rose-200/80 hover:border-rose-400 transition-all duration-200 shadow-2xs hover:shadow-md flex items-center justify-between group cursor-pointer"
+                    className="p-2.5 sm:p-3.5 rounded-[16px] bg-[#FAF4F5] hover:bg-white border border-rose-200/80 hover:border-rose-400 transition-all duration-200 shadow-2xs flex items-center justify-between group cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 text-white font-sora font-extrabold text-sm sm:text-base flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 text-white font-sora font-extrabold text-xs sm:text-base flex items-center justify-center flex-shrink-0 shadow-sm">
                         04
                       </div>
                       <div className="min-w-0">
-                        <h4 className="font-sora font-extrabold text-[#10242C] text-xs sm:text-[13px] tracking-wide uppercase">
+                        <h4 className="font-sora font-extrabold text-[#10242C] text-[11px] sm:text-[13px] tracking-wide uppercase truncate">
                           YOUR VOICE, YOUR FUTURE
                         </h4>
-                        <p className="text-[11px] sm:text-xs text-[#53656A] font-inter font-medium mt-0.5">
-                          Society • Values • Aspirations • Impact
+                        <p className="text-[10px] sm:text-xs text-[#53656A] font-inter font-medium truncate">
+                          Society • Aspirations
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-2.5">
-                      <span className="text-[11px] sm:text-xs font-inter font-semibold text-rose-900 bg-white px-2.5 py-0.5 rounded-full border border-rose-200 shadow-2xs">Q131 – Q207</span>
-                      <ChevronRight className="w-4 h-4 text-[#10242C] group-hover:translate-x-1 transition-transform" />
+                    <div className="flex items-center gap-1.5 flex-shrink-0 ml-1.5">
+                      <span className="text-[10px] sm:text-xs font-inter font-semibold text-rose-900 bg-white px-2 py-0.5 rounded-full border border-rose-200">Q131–207</span>
+                      <ChevronRight className="w-4 h-4 text-[#10242C]" />
                     </div>
                   </div>
 
                 </div>
 
                 {/* BOTTOM ACTION BUTTONS */}
-                <div className="flex flex-col sm:flex-row gap-2.5 font-inter">
+                <div className="flex flex-col sm:flex-row gap-2 font-inter">
                   <button
                     onClick={() => setOnboardingStep(0)}
-                    className="w-full sm:w-[120px] h-[46px] bg-white border border-[#063E46]/30 hover:bg-[#F4FAF8] text-[#063E46] font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-2xs"
+                    className="w-full sm:w-[110px] h-[44px] bg-white border border-[#063E46]/30 hover:bg-[#F4FAF8] text-[#063E46] font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Back</span>
                   </button>
                   <button
                     onClick={() => setOnboardingStep(2)}
-                    className="flex-1 h-[46px] bg-gradient-to-r from-[#063E46] to-[#109A9B] hover:from-[#075D63] hover:to-[#0D8788] text-[#FFF8E8] font-sora font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-teal-950/20 hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group cursor-pointer"
+                    className="flex-1 h-[44px] bg-gradient-to-r from-[#063E46] to-[#109A9B] hover:from-[#075D63] hover:to-[#0D8788] text-[#FFF8E8] font-sora font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 group cursor-pointer"
                   >
                     <span>Next: Privacy Protection</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -522,8 +465,8 @@ export default function Survey() {
                 </div>
 
                 {/* SECURITY GUARANTEE */}
-                <div className="flex items-center justify-center gap-1.5 mt-3 text-xs font-medium text-[#063E46] font-inter">
-                  <ShieldCheck className="w-4 h-4 text-[#109A9B]" />
+                <div className="flex items-center justify-center gap-1.5 mt-2.5 text-[11px] font-medium text-[#063E46] font-inter">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#109A9B]" />
                   <span>Your progress is saved automatically</span>
                 </div>
 
@@ -541,9 +484,9 @@ export default function Survey() {
   // ONBOARDING STEP 2: PRIVACY GUARANTEE
   if (onboardingStep === 2) {
     return (
-      <div className="min-h-screen flex items-center justify-center pt-[150px] sm:pt-[160px] pb-12 px-4 bg-[#FAF7F0]">
-        <div className="max-w-xl w-full bg-white rounded-3xl p-8 sm:p-10 border border-[#109A9B]/20 shadow-2xl relative overflow-hidden">
-          <div className="space-y-6">
+      <div className="min-h-screen flex items-center justify-center pt-[105px] sm:pt-[150px] pb-12 px-3 sm:px-4 bg-[#FAF7F0]">
+        <div className="max-w-xl w-full bg-white rounded-3xl p-6 sm:p-10 border border-[#109A9B]/20 shadow-2xl relative overflow-hidden">
+          <div className="space-y-5 sm:space-y-6">
             <div className="text-center">
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto mb-2 border border-emerald-200">
                 <Shield className="w-6 h-6" />
@@ -685,7 +628,7 @@ export default function Survey() {
 
   // ACTIVE 207-QUESTION SURVEY EXPERIENCE (Step 3: Master Prompt Implementation)
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#FAF7F0] flex flex-col justify-between pt-[145px] sm:pt-[155px] pb-12">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#FAF7F0] flex flex-col justify-between pt-[100px] sm:pt-[135px] md:pt-[155px] pb-12">
 
       {/* ==================================================== */}
       {/* OVERALL PAGE BACKGROUND — MASTER PROMPT DECORATIONS */}

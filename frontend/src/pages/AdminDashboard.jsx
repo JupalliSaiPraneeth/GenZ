@@ -10,18 +10,18 @@ import {
 
 export default function AdminDashboard() {
   return (
-    <div className="py-8 px-4 max-w-7xl mx-auto space-y-8 bg-[#FFF8E8]">
+    <div className="pt-[105px] sm:pt-[130px] md:pt-[160px] pb-16 px-3 sm:px-6 max-w-7xl mx-auto space-y-6 sm:space-y-8 bg-[#FFF8E8] min-h-screen">
 
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#109A9B]/15 pb-6">
         <div>
           {/* COMBO 04 Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#063E46] text-white font-mono text-xs font-bold shadow-md">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-[#063E46] text-white font-mono text-[11px] sm:text-xs font-bold shadow-md">
             <span className="text-[#FDE7B5]">COMBO 04</span>
             <span className="text-white/40">•</span>
             <span className="text-[#109A9B]">Hex → #109A9B & #FDE7B5</span>
           </div>
-          <h1 className="font-heading font-extrabold text-3xl text-[#10242C] mt-2">
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#10242C] mt-2">
             Research Intelligence Dashboard
           </h1>
         </div>

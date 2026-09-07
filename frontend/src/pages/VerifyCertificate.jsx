@@ -35,22 +35,22 @@ export default function VerifyCertificate() {
   }, [initialCode]);
 
   return (
-    <div className="min-h-screen pt-[115px] pb-16 px-4 max-w-2xl mx-auto bg-[#FAF7F0]">
+    <div className="min-h-screen pt-[105px] sm:pt-[130px] md:pt-[160px] pb-16 px-3 sm:px-4 max-w-2xl mx-auto bg-[#FAF7F0]">
 
-      <div className="text-center mb-10">
-        <div className="w-14 h-14 rounded-2xl bg-[#EAF6F6] text-[#075D63] flex items-center justify-center mx-auto mb-4 border border-[#109A9B]/20">
-          <ShieldCheck className="w-8 h-8" />
+      <div className="text-center mb-8 sm:mb-10">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#EAF6F6] text-[#075D63] flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-[#109A9B]/20">
+          <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8" />
         </div>
-        <h1 className="font-heading font-extrabold text-3xl text-[#10242C] mb-2">
+        <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#10242C] mb-2">
           Verify Certificate
         </h1>
-        <p className="text-[#53656A] text-sm font-medium">
+        <p className="text-[#53656A] text-xs sm:text-sm font-medium">
           Enter a Gen Z Voices certificate verification code to validate authenticity.
         </p>
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleVerify} className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-sm mb-8 flex gap-3">
+      <form onSubmit={handleVerify} className="bg-white p-4 sm:p-6 rounded-3xl border border-[#109A9B]/20 shadow-sm mb-6 sm:mb-8 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="w-5 h-5 text-[#53656A] absolute left-4 top-1/2 -translate-y-1/2" />
           <input
@@ -58,10 +58,10 @@ export default function VerifyCertificate() {
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="e.g. GZ2026-482910"
-            className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-[#075D63] font-mono text-sm font-bold text-[#10242C]"
+            className="w-full pl-12 pr-4 py-3 sm:py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-[#075D63] font-mono text-sm font-bold text-[#10242C]"
           />
         </div>
-        <button type="submit" className="bg-[#075D63] hover:bg-[#063E46] text-[#FFF8E8] font-bold py-3.5 px-7 rounded-2xl text-sm transition-all shadow-md">
+        <button type="submit" className="bg-[#075D63] hover:bg-[#063E46] text-[#FFF8E8] font-bold py-3 sm:py-3.5 px-7 rounded-2xl text-sm transition-all shadow-md w-full sm:w-auto">
           Verify
         </button>
       </form>

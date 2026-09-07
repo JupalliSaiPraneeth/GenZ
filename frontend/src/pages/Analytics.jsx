@@ -181,53 +181,53 @@ export default function Analytics() {
   }, [dbResponses]);
 
   return (
-    <div className="pt-[175px] sm:pt-[190px] pb-24 px-4 sm:px-6 max-w-7xl mx-auto space-y-10 bg-[#FAF7F0] min-h-screen w-full overflow-y-auto">
+    <div className="pt-[105px] sm:pt-[130px] md:pt-[160px] pb-16 sm:pb-24 px-3 sm:px-6 max-w-7xl mx-auto space-y-6 sm:space-y-10 bg-[#FAF7F0] min-h-screen w-full overflow-y-auto">
 
       {/* Page Header */}
-      <div className="text-center max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[#109A9B]/40 text-[#075D63] font-bold text-xs uppercase tracking-wider mb-4 shadow-xs">
-          <Database className="w-4 h-4 text-[#109A9B]" />
+      <div className="text-center max-w-3xl mx-auto px-2">
+        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white border border-[#109A9B]/40 text-[#075D63] font-bold text-[11px] sm:text-xs uppercase tracking-wider mb-3 sm:mb-4 shadow-xs">
+          <Database className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#109A9B]" />
           <span>Real Database Response Engine</span>
         </div>
-        <h1 className="font-heading font-extrabold text-3xl sm:text-5xl text-[#10242C] tracking-tight mb-4">
+        <h1 className="font-heading font-extrabold text-2xl sm:text-4xl lg:text-5xl text-[#10242C] tracking-tight mb-3">
           Gen Z Research Intelligence
         </h1>
-        <p className="text-[#53656A] text-base font-medium">
+        <p className="text-[#53656A] text-sm sm:text-base font-medium leading-relaxed">
           Analytics calculated strictly from response records stored in the database (IndexedDB local database & Supabase).
         </p>
 
         {/* Database Live Counter Status */}
-        <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#EAF6F6] border border-[#109A9B]/30 text-[#075D63] text-xs font-bold shadow-2xs">
+        <div className="mt-4 inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-2xl bg-[#EAF6F6] border border-[#109A9B]/30 text-[#075D63] text-[11px] sm:text-xs font-bold shadow-2xs max-w-full text-left sm:text-center">
           {loadingDb ? (
-            <RefreshCw className="w-4 h-4 animate-spin text-[#109A9B]" />
+            <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#109A9B] shrink-0" />
           ) : (
-            <CheckCircle2 className="w-4 h-4 text-[#109A9B]" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#109A9B] shrink-0" />
           )}
           <span>
-            Database Records: {uniqueParticipantsCount} Participant Session(s) • {totalResponseEntriesCount} Total Answers Saved
+            Database Records: {uniqueParticipantsCount} Session(s) • {totalResponseEntriesCount} Answers Saved
           </span>
         </div>
       </div>
 
       {/* AI RESEARCH INSIGHT CARD */}
-      <div className="bg-[#075D63] text-white p-8 rounded-3xl border border-[#063E46] shadow-2xl relative overflow-hidden">
+      <div className="bg-[#075D63] text-white p-5 sm:p-8 rounded-3xl border border-[#063E46] shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#109A9B]/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-2 text-[#FDE7B5] font-bold text-xs uppercase tracking-widest">
+        <div className="relative z-10 space-y-3 sm:space-y-4">
+          <div className="flex items-center gap-2 text-[#FDE7B5] font-bold text-[11px] sm:text-xs uppercase tracking-widest">
             <Cpu className="w-4 h-4" />
             <span>Database Intelligence Generator</span>
           </div>
 
-          <h3 className="font-heading font-extrabold text-2xl text-[#FFF8E8]">
+          <h3 className="font-heading font-extrabold text-xl sm:text-2xl text-[#FFF8E8]">
             Key Trend: Real Database Analysis
           </h3>
 
-          <p className="text-[#FFF8E8]/90 text-sm sm:text-base leading-relaxed max-w-4xl font-medium">
+          <p className="text-[#FFF8E8]/90 text-xs sm:text-base leading-relaxed max-w-4xl font-medium">
             "{aiInsightText}"
           </p>
 
-          <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#FDE7B5] font-semibold">
+          <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#FDE7B5] font-semibold">
             <span>Data Source: Database (IndexedDB & Supabase)</span>
             <span>Sample Size: {uniqueParticipantsCount} Unique Session(s)</span>
           </div>
@@ -236,15 +236,15 @@ export default function Analytics() {
 
       {/* Empty Database State Notice if 0 responses */}
       {!hasRealData && !loadingDb && (
-        <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 text-center max-w-2xl mx-auto shadow-xs">
-          <Database className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+        <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 sm:p-6 text-center max-w-2xl mx-auto shadow-xs">
+          <Database className="w-7 h-7 text-amber-600 mx-auto mb-2" />
           <h4 className="font-bold text-[#10242C] text-base mb-1">No Database Responses Found Yet</h4>
           <p className="text-xs text-[#53656A] font-medium leading-relaxed mb-4">
-            The database currently has 0 participant submissions recorded. All demo sample responses have been removed. Complete the 207-question survey to store your answers into the database and generate live real-time analytics!
+            The database currently has 0 participant submissions recorded. Take the 207-question survey to store your answers into the database and generate live real-time analytics!
           </p>
           <a
             href="/survey"
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs rounded-xl shadow-md transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs rounded-xl shadow-md transition-all"
           >
             Take Survey Now
           </a>
@@ -252,23 +252,23 @@ export default function Analytics() {
       )}
 
       {/* VISUAL CHARTS GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
 
         {/* Chart 1: Employer Selection Priority */}
-        <div className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-sm">
-          <h3 className="font-heading font-bold text-lg text-[#10242C] mb-2 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-[#075D63]" />
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-[#109A9B]/20 shadow-sm">
+          <h3 className="font-heading font-bold text-base sm:text-lg text-[#10242C] mb-1 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#075D63]" />
             Top Factors in Employer Selection (%)
           </h3>
-          <p className="text-xs text-[#53656A] mb-6 font-medium">
+          <p className="text-xs text-[#53656A] mb-4 sm:mb-6 font-medium">
             Calculated from database records for Q77, Q78, Q80, Q125.
           </p>
 
-          <div className="h-72 w-full">
+          <div className="h-64 sm:h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={workPreferenceData} layout="vertical" margin={{ left: 20, right: 20 }}>
+              <BarChart data={workPreferenceData} layout="vertical" margin={{ left: 0, right: 15 }}>
                 <XAxis type="number" domain={[0, 100]} />
-                <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 12 }} />
+                <YAxis dataKey="name" type="category" width={95} tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(value) => [`${value}%`, 'Database Preference']} />
                 <Bar dataKey="value" fill="#075D63" radius={[0, 8, 8, 0]} />
               </BarChart>
@@ -277,24 +277,24 @@ export default function Analytics() {
         </div>
 
         {/* Chart 2: AI Tool Daily Adoption */}
-        <div className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-sm">
-          <h3 className="font-heading font-bold text-lg text-[#10242C] mb-2 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#109A9B]" />
+        <div className="bg-white p-4 sm:p-6 rounded-3xl border border-[#109A9B]/20 shadow-sm">
+          <h3 className="font-heading font-bold text-base sm:text-lg text-[#10242C] mb-1 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#109A9B]" />
             Generative AI Usage Distribution
           </h3>
-          <p className="text-xs text-[#53656A] mb-6 font-medium">
+          <p className="text-xs text-[#53656A] mb-4 sm:mb-6 font-medium">
             Calculated from database records for Q121 (Daily/Weekly/Occasionally/Never).
           </p>
 
-          <div className="h-72 w-full flex items-center justify-center">
+          <div className="h-64 sm:h-72 w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={aiAdoptionData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
+                  innerRadius={50}
+                  outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
                 >
@@ -307,10 +307,10 @@ export default function Analytics() {
             </ResponsiveContainer>
           </div>
 
-          <div className="flex justify-center gap-4 text-xs font-semibold text-[#53656A] mt-4">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 text-xs font-semibold text-[#53656A] mt-2 sm:mt-4">
             {aiAdoptionData.map((item, idx) => (
               <div key={idx} className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full" style={{ backgroundColor: item.color }} />
                 <span>{item.name} ({item.value}%)</span>
               </div>
             ))}
