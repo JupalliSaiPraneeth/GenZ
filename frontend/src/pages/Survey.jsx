@@ -447,20 +447,20 @@ export default function Survey() {
                 </div>
 
                 {/* BOTTOM ACTION BUTTONS */}
-                <div className="flex flex-col sm:flex-row gap-2 font-inter">
+                <div className="flex flex-row items-center gap-2 sm:gap-3 font-inter">
                   <button
                     onClick={() => setOnboardingStep(0)}
-                    className="w-full sm:w-[110px] h-[44px] bg-white border border-[#063E46]/30 hover:bg-[#F4FAF8] text-[#063E46] font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                    className="px-3.5 sm:px-5 min-h-[44px] sm:min-h-[46px] bg-white border border-[#063E46]/30 hover:bg-[#F4FAF8] text-[#063E46] font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs shrink-0"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Back</span>
                   </button>
                   <button
                     onClick={() => setOnboardingStep(2)}
-                    className="flex-1 h-[44px] bg-gradient-to-r from-[#063E46] to-[#109A9B] hover:from-[#075D63] hover:to-[#0D8788] text-[#FFF8E8] font-sora font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                    className="flex-1 min-h-[44px] sm:min-h-[46px] px-3 sm:px-5 bg-gradient-to-r from-[#063E46] to-[#109A9B] hover:from-[#075D63] hover:to-[#0D8788] text-[#FFF8E8] font-sora font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 sm:gap-2 group cursor-pointer"
                   >
-                    <span>Next: Privacy Protection</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <span className="truncate">Next: Privacy Protection</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform shrink-0" />
                   </button>
                 </div>
 
@@ -518,19 +518,19 @@ export default function Survey() {
               </div>
             </div>
 
-            <div className="pt-4 flex gap-3">
+            <div className="pt-4 flex gap-2.5 sm:gap-3">
               <button
                 onClick={() => setOnboardingStep(1)}
-                className="w-1/3 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-[#10242C] font-bold text-sm rounded-2xl transition-colors cursor-pointer"
+                className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-[#10242C] font-bold text-xs sm:text-sm rounded-2xl transition-colors cursor-pointer shrink-0"
               >
                 Back
               </button>
               <button
                 onClick={() => setOnboardingStep(2.5)}
-                className="flex-1 py-3 px-4 bg-[#109A9B] hover:bg-[#0E8586] text-white font-bold text-sm rounded-2xl shadow-lg shadow-teal-900/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-3 sm:px-4 bg-[#109A9B] hover:bg-[#0E8586] text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-teal-900/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2"
               >
-                <span>I Understand, Next: Enter Name</span>
-                <ArrowRight className="w-4 h-4" />
+                <span className="truncate">I Understand, Next: Enter Details</span>
+                <ArrowRight className="w-4 h-4 shrink-0" />
               </button>
             </div>
           </div>
