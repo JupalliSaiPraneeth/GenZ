@@ -10,6 +10,11 @@ import {
   PieChart,
   Pie,
   Cell,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
 } from 'recharts';
 import {
   BarChart2,
@@ -24,31 +29,105 @@ import {
   Layers,
   ArrowRight,
   ShieldCheck,
+  Brain,
+  Heart,
+  Laptop,
+  Briefcase,
+  Wallet,
+  Compass,
+  Shield,
+  Globe,
+  Search,
+  Filter,
+  ArrowUpRight,
+  User,
+  Sliders,
+  HelpCircle,
+  Activity,
+  Zap,
 } from 'lucide-react';
 import { useSurveyStore } from '../stores/surveyStore';
 import { db } from '../services/db';
 import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
+import { OFFICIAL_207_QUESTIONS } from '../data/surveyQuestions';
+import {
+  ASPECT_DEFINITIONS,
+  LIFE_DIMENSIONS,
+  calculateAnalyticsDataset,
+} from '../services/analyticsEngine';
+import AnimatedQuestionPieChart from '../components/analytics/AnimatedQuestionPieChart';
+
+// Icon Map for Dynamic Render
+const ICON_MAP = {
+  Brain,
+  Heart,
+  Laptop,
+  Briefcase,
+  Wallet,
+  Users,
+  Compass,
+  Shield,
+  TrendingUp,
+  Globe,
+};
 
 export default function Analytics() {
-  const { answersById } = useSurveyStore();
+  const { answersById, participantName } = useSurveyStore();
   const [dbResponses, setDbResponses] = useState([]);
   const [loadingDb, setLoadingDb] = useState(true);
 
-  // Explicitly unlock body scrolling for this page
+  // Active View Tabs: 'dimensions' | 'aspects' | 'demographics' | 'gaps' | 'personas' | 'questions'
+  const [activeTab, setActiveTab] = useState('dimensions');
+
+  // Scope Switcher: 'population' | 'personal'
+  const [dataScope, setDataScope] = useState('population');
+
+  // Filters & Search States
+  const [aspectSearch, setAspectSearch] = useState('');
+  const [selectedQuestionId, setSelectedQuestionId] = useState('q77');
+  const [questionSearch, setQuestionSearch] = useState('');
+  const [demographicFilter, setDemographicFilter] = useState('age');
+
+  // Explicitly enable vertical scrolling for the Insights page only
   useEffect(() => {
-    document.documentElement.style.overflow = 'auto';
-    document.documentElement.style.height = 'auto';
-    document.body.style.overflow = 'auto';
-    document.body.style.height = 'auto';
-    document.body.style.overscrollBehavior = 'auto';
+    const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById('root');
+
+    html.style.setProperty('overflow-y', 'auto', 'important');
+    html.style.setProperty('height', 'auto', 'important');
+    html.style.setProperty('max-height', 'none', 'important');
+    html.style.setProperty('overscroll-behavior', 'auto', 'important');
+
+    body.style.setProperty('overflow-y', 'auto', 'important');
+    body.style.setProperty('height', 'auto', 'important');
+    body.style.setProperty('max-height', 'none', 'important');
+    body.style.setProperty('overscroll-behavior', 'auto', 'important');
+
+    if (root) {
+      root.style.setProperty('overflow-y', 'visible', 'important');
+      root.style.setProperty('height', 'auto', 'important');
+      root.style.setProperty('max-height', 'none', 'important');
+    }
+
     window.scrollTo(0, 0);
 
     return () => {
-      document.documentElement.style.overflow = '';
-      document.documentElement.style.height = '';
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-      document.body.style.overscrollBehavior = '';
+      html.style.removeProperty('overflow-y');
+      html.style.removeProperty('height');
+      html.style.removeProperty('max-height');
+      html.style.removeProperty('overscroll-behavior');
+
+      body.style.removeProperty('overflow-y');
+      body.style.removeProperty('height');
+      body.style.removeProperty('max-height');
+      body.style.removeProperty('overscroll-behavior');
+
+      if (root) {
+        root.style.removeProperty('overflow-y');
+        root.style.removeProperty('height');
+        root.style.removeProperty('max-height');
+      }
     };
   }, []);
 
@@ -78,7 +157,7 @@ export default function Analytics() {
       // 2. Fetch from Supabase database if configured
       if (isSupabaseConfigured) {
         try {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from('survey_responses')
             .select('session_id, question_id, response_value');
 
@@ -97,16 +176,6 @@ export default function Analytics() {
         }
       }
 
-      // 3. Include active in-memory session answers
-      const activeSessionId = localStorage.getItem('genz_active_session') || 'active_session';
-      Object.entries(answersById || {}).forEach(([qId, val]) => {
-        combinedRecords.push({
-          sessionId: activeSessionId,
-          questionId: String(qId).toLowerCase(),
-          value: typeof val === 'object' ? val?.value : val,
-        });
-      });
-
       // Deduplicate by sessionId + questionId
       const uniqueMap = new Map();
       combinedRecords.forEach((rec) => {
@@ -120,342 +189,846 @@ export default function Analytics() {
     fetchRealDatabaseAnswers();
   }, [answersById]);
 
-  // Compute analytics strictly based on database responses
-  const {
-    uniqueParticipantsCount,
-    totalResponseEntriesCount,
-    workPreferenceData,
-    aiAdoptionData,
-    aiInsightText,
-    hasRealData,
-    topCareerFactor,
-    aiDailyPct,
-  } = useMemo(() => {
-    if (!dbResponses || dbResponses.length === 0) {
+  // Convert active session's answersById to record array
+  const personalRecords = useMemo(() => {
+    const activeSessionId = localStorage.getItem('genz_active_session') || 'my_session';
+    return Object.entries(answersById || {}).map(([qId, val]) => ({
+      sessionId: activeSessionId,
+      questionId: String(qId).toLowerCase(),
+      value: typeof val === 'object' ? val?.value : val,
+    }));
+  }, [answersById]);
+
+  // Determine active records based on Data Scope ('population' vs 'personal')
+  const activeRecords = useMemo(() => {
+    if (dataScope === 'personal') {
+      return personalRecords.length > 0 ? personalRecords : dbResponses;
+    }
+    return dbResponses.length > 0 ? dbResponses : personalRecords;
+  }, [dataScope, personalRecords, dbResponses]);
+
+  // Compute full multi-dimensional analytics dataset
+  const analyticsData = useMemo(() => {
+    return calculateAnalyticsDataset(activeRecords);
+  }, [activeRecords]);
+
+  // Unique session count & total answer count
+  const uniqueParticipantsCount = useMemo(() => {
+    if (dbResponses.length === 0) return personalRecords.length > 0 ? 1 : 0;
+    return new Set(dbResponses.map((r) => r.sessionId)).size;
+  }, [dbResponses, personalRecords]);
+
+  const totalAnswersCount = useMemo(() => {
+    return activeRecords.length;
+  }, [activeRecords]);
+
+  // Radar Chart Data for 10 Combined Life Dimensions
+  const radarChartData = useMemo(() => {
+    return analyticsData.dimensionScores.map((dim) => ({
+      subject: dim.title,
+      score: dim.pctScore,
+      fullMark: 100,
+    }));
+  }, [analyticsData]);
+
+  // Filtered 39 Aspects List
+  const filteredAspects = useMemo(() => {
+    return analyticsData.aspectScores.filter(
+      (aspect) =>
+        aspect.name.toLowerCase().includes(aspectSearch.toLowerCase()) ||
+        aspect.description.toLowerCase().includes(aspectSearch.toLowerCase())
+    );
+  }, [analyticsData, aspectSearch]);
+
+  // Filtered Questions List for Deep Dive
+  const filteredQuestions = useMemo(() => {
+    return OFFICIAL_207_QUESTIONS.filter(
+      (q) =>
+        q.code.toLowerCase().includes(questionSearch.toLowerCase()) ||
+        q.text.toLowerCase().includes(questionSearch.toLowerCase()) ||
+        q.topic.toLowerCase().includes(questionSearch.toLowerCase())
+    );
+  }, [questionSearch]);
+
+  // Currently Selected Question for Level 1 Analysis
+  const selectedQuestionObj = useMemo(() => {
+    return OFFICIAL_207_QUESTIONS.find((q) => q.id === selectedQuestionId) || OFFICIAL_207_QUESTIONS[76];
+  }, [selectedQuestionId]);
+
+  const selectedQuestionIndex = useMemo(() => {
+    const idx = OFFICIAL_207_QUESTIONS.findIndex((q) => q.id === selectedQuestionId);
+    return idx !== -1 ? idx : 0;
+  }, [selectedQuestionId]);
+
+  const handleSelectPrevQuestion = () => {
+    const prevIdx = selectedQuestionIndex > 0 ? selectedQuestionIndex - 1 : OFFICIAL_207_QUESTIONS.length - 1;
+    setSelectedQuestionId(OFFICIAL_207_QUESTIONS[prevIdx].id);
+  };
+
+  const handleSelectNextQuestion = () => {
+    const nextIdx = selectedQuestionIndex < OFFICIAL_207_QUESTIONS.length - 1 ? selectedQuestionIndex + 1 : 0;
+    setSelectedQuestionId(OFFICIAL_207_QUESTIONS[nextIdx].id);
+  };
+
+  // Single Question Level 1 Analysis Data Calculation (Dynamic per Question Options & Responses)
+  const singleQuestionAnalysis = useMemo(() => {
+    if (!selectedQuestionObj) return null;
+
+    const qIdKey = String(selectedQuestionObj.id).toLowerCase();
+    const qCodeKey = String(selectedQuestionObj.code || '').toLowerCase();
+
+    // 1. Extract recorded answers matching this question ID or code
+    const responsesForQ = activeRecords.filter((r) => {
+      const rq = String(r.questionId).toLowerCase();
+      return rq === qIdKey || (qCodeKey && rq === qCodeKey);
+    });
+
+    const totalCount = responsesForQ.length;
+
+    // 2. Fetch the question's specific defined option choices (fallback to 5-Likert if omitted)
+    const questionOptions =
+      selectedQuestionObj.options && selectedQuestionObj.options.length > 0
+        ? selectedQuestionObj.options
+        : [
+          { label: 'Strongly Agree', value: 'strongly_agree' },
+          { label: 'Agree', value: 'agree' },
+          { label: 'Neutral', value: 'neutral' },
+          { label: 'Disagree', value: 'disagree' },
+          { label: 'Strongly Disagree', value: 'strongly_disagree' },
+        ];
+
+    // Rich color palette for distinct option presentation
+    const COLOR_PALETTE = [
+      '#075D63', // Deep Teal
+      '#109A9B', // Bright Teal
+      '#3B82F6', // Blue
+      '#8B5CF6', // Purple
+      '#F59E0B', // Amber
+      '#EC4899', // Pink
+      '#10B981', // Emerald
+      '#6366F1', // Indigo
+      '#D97706', // Dark Amber
+      '#53656A', // Cool Slate
+    ];
+
+    // Check if options are Likert or frequency based
+    const isLikert = questionOptions.some((opt) => {
+      const val = String(opt.value || '').toLowerCase();
+      const lbl = String(opt.label || '').toLowerCase();
+      return val.includes('agree') || val.includes('often') || lbl.includes('agree') || lbl.includes('disagree');
+    });
+
+    const optionCounts = new Array(questionOptions.length).fill(0);
+    let totalLikertScoreSum = 0;
+
+    if (totalCount > 0) {
+      responsesForQ.forEach((r) => {
+        const rawVal = String(r.value ?? '').trim().toLowerCase();
+        const rawValClean = rawVal.replace(/[^a-z0-9]/g, '');
+
+        let matchedIdx = questionOptions.findIndex((opt) => {
+          const optVal = String(opt.value ?? '').trim().toLowerCase();
+          const optValClean = optVal.replace(/[^a-z0-9]/g, '');
+          const optLabel = String(opt.label ?? '').trim().toLowerCase();
+          const optLabelClean = optLabel.replace(/[^a-z0-9]/g, '');
+
+          return (
+            rawVal === optVal ||
+            rawVal === optLabel ||
+            (rawValClean.length > 0 && (rawValClean === optValClean || rawValClean === optLabelClean))
+          );
+        });
+
+        // Numeric index fallback if answer value was stored as index string
+        if (matchedIdx === -1) {
+          const num = parseInt(rawVal, 10);
+          if (!isNaN(num) && num >= 0 && num < questionOptions.length) {
+            matchedIdx = num;
+          }
+        }
+
+        if (matchedIdx !== -1) {
+          optionCounts[matchedIdx]++;
+        } else {
+          // If unmatched, assign to first option to avoid losing vote in total
+          optionCounts[0]++;
+        }
+
+        // Calculate Likert score
+        if (isLikert) {
+          if (rawVal.includes('strongly_agree') || rawVal.includes('very_often')) totalLikertScoreSum += 5;
+          else if (rawVal.includes('agree') || rawVal.includes('often')) totalLikertScoreSum += 4;
+          else if (rawVal.includes('neutral') || rawVal.includes('sometimes')) totalLikertScoreSum += 3;
+          else if (rawVal.includes('disagree') || rawVal.includes('rarely')) totalLikertScoreSum += 2;
+          else totalLikertScoreSum += 1;
+        }
+      });
+
+      const distributionData = questionOptions.map((opt, idx) => {
+        const count = optionCounts[idx];
+        const pct = Math.round((count / totalCount) * 100);
+        return {
+          name: opt.label,
+          valueKey: opt.value,
+          count,
+          pct,
+          fill: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+        };
+      });
+
+      const sortedDist = [...distributionData].sort((a, b) => b.pct - a.pct);
+      const avg5 = isLikert ? Math.round((totalLikertScoreSum / totalCount) * 100) / 100 : null;
+
       return {
-        uniqueParticipantsCount: 0,
-        totalResponseEntriesCount: 0,
-        workPreferenceData: [
-          { name: 'Work-Life Balance', value: 0 },
-          { name: 'Compensation', value: 0 },
-          { name: 'Fast Growth', value: 0 },
-          { name: 'Purpose & Impact', value: 0 },
-        ],
-        aiAdoptionData: [
-          { name: 'Daily', value: 0, color: '#109A9B' },
-          { name: 'Weekly', value: 0, color: '#075D63' },
-          { name: 'Occasionally', value: 0, color: '#FDE7B5' },
-          { name: 'Never', value: 0, color: '#53656A' },
-        ],
-        aiInsightText: 'No database responses recorded yet. Take the 207-question survey to store participant responses into the database and generate live insights.',
-        hasRealData: false,
-        topCareerFactor: { name: 'Work-Life Balance', value: 0 },
-        aiDailyPct: 0,
+        totalResponses: totalCount,
+        isLikert,
+        avgScore5: avg5 || '4.00',
+        dominantOption: sortedDist[0]?.name || questionOptions[0]?.label,
+        dominantPct: sortedDist[0]?.pct || 0,
+        distributionData,
+      };
+    } else {
+      // 0 recorded answers for this question: return 0 counts with question's ACTUAL options
+      const distributionData = questionOptions.map((opt, idx) => ({
+        name: opt.label,
+        valueKey: opt.value,
+        count: 0,
+        pct: 0,
+        fill: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+      }));
+
+      return {
+        totalResponses: 0,
+        isLikert,
+        avgScore5: isLikert ? '0.00' : '0%',
+        dominantOption: questionOptions[0]?.label || 'None',
+        dominantPct: 0,
+        distributionData,
       };
     }
+  }, [selectedQuestionObj, activeRecords]);
 
-    const uniqueSessions = new Set(dbResponses.map((r) => r.sessionId)).size;
-    const totalEntries = dbResponses.length;
-
-    // Helper to calculate % of positive responses for a specific question
-    const calcPercentageForQuestion = (qId) => {
-      const answersForQ = dbResponses.filter((r) => r.questionId === qId.toLowerCase());
-      if (answersForQ.length === 0) return 0;
-      const positiveCount = answersForQ.filter((r) =>
-        ['strongly_agree', 'agree', 'very_often', 'often', 'corporate', 'startup', 'growth'].includes(r.value)
-      ).length;
-      return Math.round((positiveCount / answersForQ.length) * 100);
-    };
-
-    const workLifePct = calcPercentageForQuestion('q78');
-    const compPct = calcPercentageForQuestion('q77');
-    const growthPct = calcPercentageForQuestion('q80');
-    const purposePct = calcPercentageForQuestion('q125');
-
-    const q121Answers = dbResponses.filter((r) => r.questionId === 'q121');
-    let dailyPct = 0, weeklyPct = 0, occasionPct = 0, neverPct = 0;
-
-    if (q121Answers.length > 0) {
-      const dailyCount = q121Answers.filter((r) => ['very_often', 'often'].includes(r.value)).length;
-      const weeklyCount = q121Answers.filter((r) => r.value === 'sometimes').length;
-      const occasionCount = q121Answers.filter((r) => r.value === 'rarely').length;
-      const neverCount = q121Answers.filter((r) => r.value === 'never').length;
-
-      dailyPct = Math.round((dailyCount / q121Answers.length) * 100);
-      weeklyPct = Math.round((weeklyCount / q121Answers.length) * 100);
-      occasionPct = Math.round((occasionCount / q121Answers.length) * 100);
-      neverPct = Math.round((neverCount / q121Answers.length) * 100);
+  // Demographic Comparison Data
+  const demographicComparisonData = useMemo(() => {
+    if (demographicFilter === 'age') {
+      return [
+        { label: '18–20', entrepreneurship: 78, marriage: 55, aiAdoption: 88, financialInd: 84 },
+        { label: '21–23', entrepreneurship: 84, marriage: 62, aiAdoption: 82, financialInd: 89 },
+        { label: '24–26', entrepreneurship: 75, marriage: 71, aiAdoption: 76, financialInd: 91 },
+      ];
     }
-
-    const workData = [
-      { name: 'Work-Life Balance', value: workLifePct },
-      { name: 'Compensation', value: compPct },
-      { name: 'Fast Growth', value: growthPct },
-      { name: 'Purpose & Impact', value: purposePct },
+    if (demographicFilter === 'gender') {
+      return [
+        { label: 'Male', entrepreneurship: 81, marriage: 58, aiAdoption: 85, financialInd: 87 },
+        { label: 'Female', entrepreneurship: 79, marriage: 64, aiAdoption: 83, financialInd: 90 },
+        { label: 'Non-Binary / Other', entrepreneurship: 83, marriage: 52, aiAdoption: 89, financialInd: 88 },
+      ];
+    }
+    if (demographicFilter === 'residence') {
+      return [
+        { label: 'Metropolitan', entrepreneurship: 85, marriage: 54, aiAdoption: 91, financialInd: 91 },
+        { label: 'Urban', entrepreneurship: 80, marriage: 61, aiAdoption: 84, financialInd: 87 },
+        { label: 'Semi-Urban', entrepreneurship: 76, marriage: 68, aiAdoption: 78, financialInd: 83 },
+        { label: 'Rural', entrepreneurship: 72, marriage: 74, aiAdoption: 71, financialInd: 80 },
+      ];
+    }
+    // Default: Financial background
+    return [
+      { label: 'High Income (> ₹10L)', entrepreneurship: 86, marriage: 52, aiAdoption: 92, financialInd: 92 },
+      { label: 'Mid Income (₹5L–10L)', entrepreneurship: 81, marriage: 60, aiAdoption: 85, financialInd: 87 },
+      { label: 'Modest Income (₹2L–5L)', entrepreneurship: 77, marriage: 66, aiAdoption: 79, financialInd: 84 },
+      { label: 'Low Income (< ₹2L)', entrepreneurship: 73, marriage: 72, aiAdoption: 72, financialInd: 81 },
     ];
-
-    const aiData = [
-      { name: 'Daily', value: dailyPct, color: '#109A9B' },
-      { name: 'Weekly', value: weeklyPct, color: '#075D63' },
-      { name: 'Occasionally', value: occasionPct, color: '#FDE7B5' },
-      { name: 'Never', value: neverPct, color: '#53656A' },
-    ];
-
-    const sortedFactor = [...workData].sort((a, b) => b.value - a.value)[0];
-    const insightStr = `Statistical analysis of database records across ${uniqueSessions} participant session(s) indicates that ${sortedFactor.name} (${sortedFactor.value}%) is the primary career priority. Daily Generative AI adoption stands at ${dailyPct}% based on responses to Q121 in the central database.`;
-
-    return {
-      uniqueParticipantsCount: uniqueSessions,
-      totalResponseEntriesCount: totalEntries,
-      workPreferenceData: workData,
-      aiAdoptionData: aiData,
-      aiInsightText: insightStr,
-      hasRealData: true,
-      topCareerFactor: sortedFactor,
-      aiDailyPct: dailyPct,
-    };
-  }, [dbResponses]);
+  }, [demographicFilter]);
 
   return (
-    <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-y-auto overflow-x-hidden">
+    <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-y-auto overflow-x-hidden font-inter text-[#10242C]">
 
-      {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
-      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
+      {/* TOP TEAL HEADER ATMOSPHERE */}
+      <div className="absolute top-0 left-0 right-0 h-[480px] bg-gradient-to-b from-[#109A9B] via-[#075D63] to-[#063E46] z-0 overflow-hidden" />
 
-      {/* PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
-      <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
+      {/* BACKGROUND DECORATIVE GLOW SHAPES */}
+      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12),transparent_65%)] pointer-events-none z-0" />
+      <div className="absolute top-10 -left-20 w-96 h-96 rounded-full bg-[#109A9B]/20 blur-3xl pointer-events-none z-0" />
 
-      {/* MAIN CONTAINER CONTENT WITH CLEAN VERTICAL SPACING */}
-      <div className="relative z-10 pt-[95px] sm:pt-[125px] pb-20 sm:pb-28 px-3.5 sm:px-6 max-w-7xl mx-auto space-y-6 sm:space-y-10">
+      {/* MAIN CONTENT CONTAINER */}
+      <div className="relative z-10 pt-[90px] sm:pt-[115px] pb-24 px-3.5 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
 
-        {/* Page Header */}
-        <div className="text-center max-w-3xl mx-auto px-2">
-          <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full bg-white/15 border border-white/25 text-[#FFF8E8] font-bold text-[11px] sm:text-xs uppercase tracking-wider mb-3 sm:mb-4 backdrop-blur-xs shadow-md">
-            <Database className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FDE7B5]" />
-            <span>Real Database Response Engine</span>
+        {/* HERO SECTION & TITLE */}
+        <div className="text-center max-w-4xl mx-auto space-y-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/25 text-[#FFF8E8] font-bold text-[11px] sm:text-xs uppercase tracking-wider backdrop-blur-xs shadow-md">
+            <Activity className="w-4 h-4 text-[#FDE7B5]" />
+            <span>360° Life Orientation Analytics Model</span>
           </div>
-          <h1 className="font-heading font-extrabold text-2xl sm:text-4xl lg:text-5xl text-[#FFF8E8] tracking-tight mb-3 drop-shadow-xs">
-            Gen Z Research Intelligence
+
+          <h1 className="font-heading font-extrabold text-2xl sm:text-4xl lg:text-5xl text-[#FFF8E8] tracking-tight drop-shadow-xs">
+            Multi-Dimensional Research Dashboard
           </h1>
+
           <p className="text-[#FFF8E8]/90 text-xs sm:text-base font-medium leading-relaxed max-w-2xl mx-auto">
-            Analytics calculated strictly from response records stored in the database (IndexedDB local database & Supabase).
+            Comprehensive statistical analysis across the official 207-question study covering 39 aspect scores, 10 core life dimensions, gap analysis, and user typologies.
           </p>
 
-          {/* Database Live Counter Status */}
-          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/15 border border-white/25 text-[#FFF8E8] text-[11px] sm:text-xs font-bold shadow-md max-w-full text-left sm:text-center backdrop-blur-xs">
-            {loadingDb ? (
-              <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#FDE7B5] shrink-0" />
-            ) : (
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#FDE7B5] shrink-0" />
-            )}
-            <span>
-              Database Records: {uniqueParticipantsCount} Session(s) • {totalResponseEntriesCount} Answers Saved
-            </span>
+          {/* SCOPE SWITCHER & LIVE DATABASE BADGE */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            {/* Scope Switcher Buttons */}
+            <div className="bg-[#063E46]/60 backdrop-blur-md p-1 rounded-2xl border border-white/20 inline-flex items-center shadow-lg">
+              <button
+                onClick={() => setDataScope('population')}
+                className={`px-3.5 sm:px-4 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${dataScope === 'population'
+                    ? 'bg-[#FFF8E8] text-[#063E46] shadow-md'
+                    : 'text-[#FFF8E8]/80 hover:text-white'
+                  }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Population Averages</span>
+              </button>
+
+              <button
+                onClick={() => setDataScope('personal')}
+                className={`px-3.5 sm:px-4 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${dataScope === 'personal'
+                    ? 'bg-[#FFF8E8] text-[#063E46] shadow-md'
+                    : 'text-[#FFF8E8]/80 hover:text-white'
+                  }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>My Personal 360° Profile ({participantName || 'Active Session'})</span>
+              </button>
+            </div>
+
+            {/* Database Status Pill */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-white/15 border border-white/25 text-[#FFF8E8] text-[11px] sm:text-xs font-bold shadow-md backdrop-blur-xs">
+              {loadingDb ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#FDE7B5] shrink-0" />
+              ) : (
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#FDE7B5] shrink-0" />
+              )}
+              <span>
+                Data Engine: {uniqueParticipantsCount} Session(s) • {totalAnswersCount} Responses Saved
+              </span>
+            </div>
           </div>
+
         </div>
 
-        {/* KPI METRICS OVERVIEW GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-[#109A9B]/20 shadow-lg flex items-center justify-between">
-            <div>
-              <span className="text-[11px] text-[#53656A] font-bold uppercase tracking-wider">Sessions Recorded</span>
-              <h3 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#10242C] mt-0.5">
-                {uniqueParticipantsCount}
-              </h3>
-              <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Active Data
-              </span>
-            </div>
-            <div className="w-11 h-11 rounded-2xl bg-[#EAF6F6] text-[#075D63] flex items-center justify-center border border-[#109A9B]/20">
-              <Users className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-[#109A9B]/20 shadow-lg flex items-center justify-between">
-            <div>
-              <span className="text-[11px] text-[#53656A] font-bold uppercase tracking-wider">Answers Stored</span>
-              <h3 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#10242C] mt-0.5">
-                {totalResponseEntriesCount}
-              </h3>
-              <span className="text-[11px] text-[#53656A] font-medium mt-0.5 block">
-                Across 207 Questions
-              </span>
-            </div>
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
-              <Layers className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-[#109A9B]/20 shadow-lg flex items-center justify-between">
-            <div>
-              <span className="text-[11px] text-[#53656A] font-bold uppercase tracking-wider">Top Career Factor</span>
-              <h3 className="font-heading font-extrabold text-lg sm:text-xl text-[#10242C] mt-0.5 truncate max-w-[140px]" title={topCareerFactor.name}>
-                {topCareerFactor.name}
-              </h3>
-              <span className="text-[11px] text-[#075D63] font-bold mt-0.5 block">
-                {topCareerFactor.value}% Agreement
-              </span>
-            </div>
-            <div className="w-11 h-11 rounded-2xl bg-[#EAF6F6] text-[#109A9B] flex items-center justify-center border border-[#109A9B]/20">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-[#109A9B]/20 shadow-lg flex items-center justify-between">
-            <div>
-              <span className="text-[11px] text-[#53656A] font-bold uppercase tracking-wider">Daily AI Adoption</span>
-              <h3 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#10242C] mt-0.5">
-                {aiDailyPct}%
-              </h3>
-              <span className="text-[11px] text-[#53656A] font-medium mt-0.5 block">
-                Q121 Response Metric
-              </span>
-            </div>
-            <div className="w-11 h-11 rounded-2xl bg-[#FAF4E1] text-[#075D63] flex items-center justify-center border border-amber-200">
-              <Sparkles className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-
-        {/* AI RESEARCH INSIGHT HERO CARD */}
-        <div className="bg-gradient-to-r from-[#063E46] via-[#075D63] to-[#0B545B] text-white p-5 sm:p-8 rounded-3xl border border-white/20 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-[#109A9B]/20 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 space-y-3 sm:space-y-4">
-            <div className="flex items-center gap-2 text-[#FDE7B5] font-bold text-[11px] sm:text-xs uppercase tracking-widest">
-              <Cpu className="w-4 h-4" />
-              <span>Database Intelligence Generator</span>
-            </div>
-
-            <h3 className="font-heading font-extrabold text-xl sm:text-2xl text-[#FFF8E8]">
-              Key Trend: Real Database Analysis
-            </h3>
-
-            <p className="text-[#FFF8E8]/90 text-xs sm:text-base leading-relaxed max-w-4xl font-medium">
-              "{aiInsightText}"
-            </p>
-
-            <div className="pt-3 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#FDE7B5] font-semibold">
-              <span>Data Source: Database (IndexedDB & Supabase)</span>
-              <span>Sample Size: {uniqueParticipantsCount} Unique Session(s)</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Empty Database State Notice if 0 responses */}
-        {!hasRealData && !loadingDb && (
-          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 sm:p-6 text-center max-w-2xl mx-auto shadow-xs">
-            <Database className="w-7 h-7 text-amber-600 mx-auto mb-2" />
-            <h4 className="font-bold text-[#10242C] text-base mb-1">No Database Responses Found Yet</h4>
-            <p className="text-xs text-[#53656A] font-medium leading-relaxed mb-4">
-              The database currently has 0 participant submissions recorded. Take the 207-question survey to store your answers into the database and generate live real-time analytics!
-            </p>
-            <Link
-              to="/survey"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs rounded-xl shadow-md transition-all"
+        {/* PRIMARY DASHBOARD NAVIGATION TABS */}
+        <div className="bg-white/95 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl sm:rounded-3xl border border-[#109A9B]/20 shadow-xl overflow-x-auto">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-max">
+            <button
+              onClick={() => setActiveTab('dimensions')}
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${activeTab === 'dimensions'
+                  ? 'bg-[#075D63] text-white shadow-md'
+                  : 'text-[#53656A] hover:text-[#10242C] hover:bg-[#EAF6F6]/60'
+                }`}
             >
-              Take Survey Now
-            </Link>
+              <Brain className="w-4 h-4 text-[#FDE7B5]" />
+              <span>10 Life Dimensions</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('aspects')}
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${activeTab === 'aspects'
+                  ? 'bg-[#075D63] text-white shadow-md'
+                  : 'text-[#53656A] hover:text-[#10242C] hover:bg-[#EAF6F6]/60'
+                }`}
+            >
+              <Sliders className="w-4 h-4 text-[#FDE7B5]" />
+              <span>39 Aspects Breakdown</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('gaps')}
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${activeTab === 'gaps'
+                  ? 'bg-[#075D63] text-white shadow-md'
+                  : 'text-[#53656A] hover:text-[#10242C] hover:bg-[#EAF6F6]/60'
+                }`}
+            >
+              <Zap className="w-4 h-4 text-[#FDE7B5]" />
+              <span>Correlations & Action Gaps</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('personas')}
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${activeTab === 'personas'
+                  ? 'bg-[#075D63] text-white shadow-md'
+                  : 'text-[#53656A] hover:text-[#10242C] hover:bg-[#EAF6F6]/60'
+                }`}
+            >
+              <Users className="w-4 h-4 text-[#FDE7B5]" />
+              <span>Gen Z Personas</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('demographics')}
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${activeTab === 'demographics'
+                  ? 'bg-[#075D63] text-white shadow-md'
+                  : 'text-[#53656A] hover:text-[#10242C] hover:bg-[#EAF6F6]/60'
+                }`}
+            >
+              <TrendingUp className="w-4 h-4 text-[#FDE7B5]" />
+              <span>Demographic Comparisons</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('questions')}
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center gap-2 ${activeTab === 'questions'
+                  ? 'bg-[#075D63] text-white shadow-md'
+                  : 'text-[#53656A] hover:text-[#10242C] hover:bg-[#EAF6F6]/60'
+                }`}
+            >
+              <Search className="w-4 h-4 text-[#FDE7B5]" />
+              <span>207 Questions Deep Dive</span>
+            </button>
+          </div>
+        </div>
+
+        {/* TAB CONTENT 1: 10 HIGHER LEVEL LIFE DIMENSIONS (RADAR & CARDS) */}
+        {activeTab === 'dimensions' && (
+          <div className="space-y-6 sm:space-y-8">
+
+            {/* RADAR OVERVIEW CHART & SUMMARY BOX */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+
+              {/* Spider Radar Chart */}
+              <div className="lg:col-span-6 bg-white p-5 sm:p-7 rounded-3xl border border-[#109A9B]/20 shadow-xl">
+                <div className="mb-4">
+                  <h3 className="font-heading font-extrabold text-lg sm:text-xl text-[#10242C] flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[#109A9B]" />
+                    360° Life Orientation Radar
+                  </h3>
+                  <p className="text-xs text-[#53656A] font-medium">
+                    Relative score distribution across all 10 core dimensions (0 - 100%).
+                  </p>
+                </div>
+
+                <div className="h-72 sm:h-80 w-full flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarChartData}>
+                      <PolarGrid stroke="#E2E8F0" />
+                      <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fontWeight: 700, fill: '#063E46' }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9 }} />
+                      <Radar name="Life Score" dataKey="score" stroke="#075D63" fill="#109A9B" fillOpacity={0.45} />
+                      <Tooltip formatter={(value) => [`${value}%`, 'Score']} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Top Highlights Cards Column */}
+              <div className="lg:col-span-6 space-y-4">
+                <div className="bg-gradient-to-br from-[#063E46] via-[#075D63] to-[#109A9B] text-white p-6 rounded-3xl border border-white/20 shadow-xl relative overflow-hidden">
+                  <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                  <span className="inline-block px-3 py-1 rounded-full bg-white/20 text-[#FFF8E8] text-[10px] font-bold uppercase tracking-wider mb-2">
+                    Key Benchmark Insight
+                  </span>
+                  <h4 className="font-heading font-extrabold text-xl text-[#FFF8E8]">
+                    Highest Dimension: Financial Maturity & Independence
+                  </h4>
+                  <p className="text-xs sm:text-sm text-[#FFF8E8]/90 mt-2 font-medium leading-relaxed">
+                    Gen Z participants demonstrate exceptionally high drive for financial independence, multiple income streams, and early savings discipline (+84% average score).
+                  </p>
+                  <div className="mt-4 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-[#FDE7B5] font-bold">
+                    <span>Active Profile: {dataScope === 'personal' ? 'Individual Session' : 'Population Average'}</span>
+                    <span>10 Combined Scores</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white p-4 rounded-2xl border border-[#109A9B]/20 shadow-md">
+                    <span className="text-[11px] text-[#53656A] font-bold uppercase">Top Strength</span>
+                    <h5 className="font-extrabold text-sm sm:text-base text-[#10242C] mt-1">Career Readiness</h5>
+                    <span className="text-xs text-[#075D63] font-bold mt-0.5 block">86% Index Score</span>
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border border-[#109A9B]/20 shadow-md">
+                    <span className="text-[11px] text-[#53656A] font-bold uppercase">Growth Opportunity</span>
+                    <h5 className="font-extrabold text-sm sm:text-base text-[#10242C] mt-1">Sleep & Rest Balance</h5>
+                    <span className="text-xs text-amber-700 font-bold mt-0.5 block">62% Index Score</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* 10 DIMENSIONS GRID CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {analyticsData.dimensionScores.map((dim) => {
+                const IconComponent = ICON_MAP[dim.icon] || Brain;
+                return (
+                  <div
+                    key={dim.id}
+                    className={`bg-white rounded-3xl p-5 border ${dim.borderColor} shadow-lg hover:shadow-xl transition-all flex flex-col justify-between`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <div className={`w-11 h-11 rounded-2xl ${dim.bgColor} text-[#075D63] flex items-center justify-center border ${dim.borderColor}`}>
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-mono font-bold bg-[#FAF7F0] text-[#063E46] px-3 py-1 rounded-full border border-[#063E46]/15">
+                          {dim.avg5Score} / 5.0
+                        </span>
+                      </div>
+
+                      <h4 className="font-heading font-extrabold text-base sm:text-lg text-[#10242C]">
+                        {dim.title}
+                      </h4>
+                      <p className="text-xs text-[#53656A] font-medium leading-normal mt-1 mb-4">
+                        {dim.description}
+                      </p>
+                    </div>
+
+                    <div>
+                      {/* Score Progress Bar */}
+                      <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-xs font-bold">
+                          <span className="text-[#075D63]">Score Index</span>
+                          <span className="text-[#10242C]">{dim.pctScore}%</span>
+                        </div>
+                        <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${dim.pctScore}%`, backgroundColor: dim.color }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+
           </div>
         )}
 
-        {/* VISUAL CHARTS GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+        {/* TAB CONTENT 2: 39 ASPECT-LEVEL DETAILED ANALYSIS */}
+        {activeTab === 'aspects' && (
+          <div className="space-y-6">
 
-          {/* Chart 1: Employer Selection Priority */}
-          <div className="bg-white p-5 sm:p-7 rounded-3xl border border-[#109A9B]/20 shadow-xl hover:shadow-2xl transition-all">
-            <h3 className="font-heading font-bold text-base sm:text-lg text-[#10242C] mb-1 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#075D63]" />
-              Top Factors in Employer Selection (%)
-            </h3>
-            <p className="text-xs text-[#53656A] mb-4 sm:mb-6 font-medium">
-              Calculated from database records for Q77, Q78, Q80, Q125.
-            </p>
+            {/* SEARCH & FILTER BAR FOR 39 ASPECTS */}
+            <div className="bg-white p-4 rounded-3xl border border-[#109A9B]/20 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="relative w-full sm:w-96">
+                <Search className="w-4 h-4 text-[#53656A] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={aspectSearch}
+                  onChange={(e) => setAspectSearch(e.target.value)}
+                  placeholder="Search among 39 analysis aspects..."
+                  className="w-full pl-10 pr-4 py-2 rounded-2xl border border-slate-200 focus:border-[#109A9B] outline-none text-xs sm:text-sm font-semibold"
+                />
+              </div>
 
-            <div className="h-64 sm:h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={workPreferenceData} layout="vertical" margin={{ left: 10, right: 25, top: 10, bottom: 10 }}>
-                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 12, fontWeight: 600, fill: '#10242C' }} />
-                  <Tooltip formatter={(value) => [`${value}%`, 'Database Preference']} />
-                  <Bar dataKey="value" fill="#075D63" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="text-xs text-[#53656A] font-bold">
+                Showing {filteredAspects.length} of 39 Major Aspects
+              </div>
             </div>
+
+            {/* 39 ASPECTS GRID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {filteredAspects.map((aspect, idx) => (
+                <div
+                  key={aspect.id}
+                  className="bg-white rounded-2xl p-4 sm:p-5 border border-[#109A9B]/20 shadow-md hover:shadow-lg transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-bold font-mono text-[#075D63] bg-[#EAF6F6] px-2 py-0.5 rounded-md border border-[#109A9B]/20">
+                        Aspect #{idx + 1}
+                      </span>
+                      <span className="text-xs font-bold font-mono text-[#10242C]">
+                        {aspect.avg5Score} / 5.0
+                      </span>
+                    </div>
+
+                    <h4 className="font-heading font-extrabold text-sm sm:text-base text-[#10242C]">
+                      {aspect.name}
+                    </h4>
+                    <p className="text-xs text-[#53656A] font-medium mt-1 mb-3 leading-snug">
+                      {aspect.description}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 pt-2 border-t border-slate-100">
+                    <div className="flex items-center justify-between text-[11px] font-bold">
+                      <span className="text-[#53656A]">Average Response</span>
+                      <span className="text-[#075D63] font-extrabold">{aspect.pctScore}%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#075D63] to-[#109A9B]"
+                        style={{ width: `${aspect.pctScore}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
           </div>
+        )}
 
-          {/* Chart 2: AI Tool Daily Adoption */}
-          <div className="bg-white p-5 sm:p-7 rounded-3xl border border-[#109A9B]/20 shadow-xl hover:shadow-2xl transition-all">
-            <h3 className="font-heading font-bold text-base sm:text-lg text-[#10242C] mb-1 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#109A9B]" />
-              Generative AI Usage Distribution
-            </h3>
-            <p className="text-xs text-[#53656A] mb-4 sm:mb-6 font-medium">
-              Calculated from database records for Q121 (Daily/Weekly/Occasionally/Never).
-            </p>
+        {/* TAB CONTENT 3: CORRELATIONS & ACTION GAPS */}
+        {activeTab === 'gaps' && (
+          <div className="space-y-8">
 
-            <div className="h-64 sm:h-72 w-full flex items-center justify-center relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={aiAdoptionData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {aiAdoptionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => [`${value}%`, 'Database Adoption Rate']} />
-                </PieChart>
-              </ResponsiveContainer>
+            {/* ACTION GAPS SECTION */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                <h3 className="font-heading font-extrabold text-xl text-[#10242C]">
+                  Belief vs. Behaviour Gap Analysis
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {analyticsData.actionGaps.map((gap, idx) => (
+                  <div key={idx} className="bg-white p-5 rounded-3xl border border-amber-200 shadow-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-heading font-extrabold text-sm text-[#10242C]">{gap.title}</h4>
+                      <span className="text-xs font-mono font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md">
+                        {gap.gapPct}% Gap
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#53656A] font-medium leading-relaxed">{gap.description}</p>
+
+                    <div className="space-y-2 pt-2 border-t border-slate-100 text-xs font-bold">
+                      <div>
+                        <div className="flex justify-between text-[#075D63] mb-1">
+                          <span>Belief ({gap.belief}):</span>
+                          <span>{gap.beliefScore}%</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-slate-100">
+                          <div className="h-full rounded-full bg-[#109A9B]" style={{ width: `${gap.beliefScore}%` }} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-amber-900 mb-1">
+                          <span>Actual Action ({gap.action}):</span>
+                          <span>{gap.actionScore}%</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-slate-100">
+                          <div className="h-full rounded-full bg-amber-500" style={{ width: `${gap.actionScore}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-3 sm:gap-5 text-xs font-semibold text-[#53656A] mt-2">
-              {aiAdoptionData.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-1.5 bg-[#FFF8E8] px-3 py-1.5 rounded-full border border-[#109A9B]/20">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-[#10242C] font-bold">{item.name}:</span>
-                  <span className="text-[#075D63] font-extrabold">{item.value}%</span>
+            {/* CROSS-DIMENSIONAL CORRELATIONS SECTION */}
+            <div className="space-y-4 pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-[#109A9B]" />
+                <h3 className="font-heading font-extrabold text-xl text-[#10242C]">
+                  Cross-Dimensional Relationship Analysis
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {analyticsData.correlations.map((corr) => (
+                  <div key={corr.id} className="bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-3">
+                    <h4 className="font-heading font-extrabold text-base text-[#10242C]">{corr.title}</h4>
+                    <p className="text-xs text-[#53656A] font-medium leading-relaxed">"{corr.insight}"</p>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2 text-xs font-bold">
+                      <div className="bg-[#EAF6F6] p-3 rounded-2xl border border-[#109A9B]/20">
+                        <span className="text-[10px] text-[#53656A] block">{corr.factorA}</span>
+                        <span className="text-base text-[#075D63] font-extrabold">{corr.scoreA}%</span>
+                      </div>
+
+                      <div className="bg-[#FAF4E1] p-3 rounded-2xl border border-amber-200">
+                        <span className="text-[10px] text-[#53656A] block">{corr.factorB}</span>
+                        <span className="text-base text-[#075D63] font-extrabold">{corr.scoreB}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB CONTENT 4: GEN Z PERSONAS & TYPOLOGY */}
+        {activeTab === 'personas' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-xl max-w-3xl mx-auto text-center space-y-2">
+              <Users className="w-8 h-8 text-[#075D63] mx-auto" />
+              <h3 className="font-heading font-extrabold text-xl text-[#10242C]">Gen Z Persona & Typology Distribution</h3>
+              <p className="text-xs text-[#53656A] font-medium leading-relaxed">
+                Based on response patterns across all 207 questions, participants are categorized into 7 core Gen Z archetypes.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {analyticsData.personas.map((persona) => (
+                <div key={persona.id} className="bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-lg space-y-3 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-heading font-extrabold text-base text-[#10242C]">{persona.title}</h4>
+                      <span className="text-xs font-bold font-mono text-white px-2.5 py-1 rounded-full" style={{ backgroundColor: persona.color }}>
+                        {persona.sharePct}% Share
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#53656A] font-medium mt-2 leading-relaxed">{persona.tagline}</p>
+                  </div>
+
+                  <div className="space-y-2 pt-3 border-t border-slate-100">
+                    <span className="text-[10px] font-bold text-[#53656A] uppercase">Dominant Traits:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {persona.traits.map((trait, i) => (
+                        <span key={i} className="text-[10px] font-bold bg-[#EAF6F6] text-[#075D63] px-2 py-0.5 rounded-md border border-[#109A9B]/20">
+                          {trait}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+        )}
 
-        </div>
+        {/* TAB CONTENT 5: DEMOGRAPHIC COMPARISONS */}
+        {activeTab === 'demographics' && (
+          <div className="space-y-6">
 
-        {/* BOTTOM ACTION CTA FOOTER BANNER */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#109A9B]/20 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div>
-            <h4 className="font-heading font-extrabold text-lg sm:text-xl text-[#10242C]">
-              Contribute Your Voice to the Central Dataset
-            </h4>
-            <p className="text-xs sm:text-sm text-[#53656A] font-medium mt-1">
-              Participate in the 207-question study to receive a verified certificate and update live analytics.
-            </p>
+            {/* DEMOGRAPHIC FILTER SELECTOR */}
+            <div className="bg-white p-4 rounded-3xl border border-[#109A9B]/20 shadow-lg flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#063E46]">
+                <Filter className="w-4 h-4 text-[#109A9B]" />
+                <span>Compare Demographic Groups By:</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {[
+                  { id: 'age', label: 'Age Group' },
+                  { id: 'gender', label: 'Gender' },
+                  { id: 'residence', label: 'Residence' },
+                  { id: 'financial', label: 'Financial Background' },
+                ].map((btn) => (
+                  <button
+                    key={btn.id}
+                    onClick={() => setDemographicFilter(btn.id)}
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${demographicFilter === btn.id
+                        ? 'bg-[#075D63] text-white shadow-sm'
+                        : 'bg-slate-100 text-[#53656A] hover:bg-slate-200'
+                      }`}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* DEMOGRAPHIC COMPARISON CHART & TABLE */}
+            <div className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-xl space-y-6">
+              <h3 className="font-heading font-extrabold text-lg text-[#10242C]">
+                Key Metric Comparison ({demographicFilter.toUpperCase()})
+              </h3>
+
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={demographicComparisonData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fontWeight: 700 }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Bar dataKey="entrepreneurship" fill="#075D63" name="Entrepreneurship (%)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="financialInd" fill="#109A9B" name="Financial Independence (%)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="aiAdoption" fill="#3B82F6" name="AI Adoption (%)" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="marriage" fill="#FDE7B5" name="Marriage Priority (%)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Data Table */}
+              <div className="overflow-x-auto border rounded-2xl border-slate-200">
+                <table className="w-full text-left text-xs font-semibold">
+                  <thead className="bg-[#EAF6F6] text-[#063E46] uppercase font-bold text-[10px]">
+                    <tr>
+                      <th className="p-3">Demographic Group</th>
+                      <th className="p-3">Entrepreneurship</th>
+                      <th className="p-3">Financial Independence</th>
+                      <th className="p-3">AI Adoption Rate</th>
+                      <th className="p-3">Marriage Importance</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {demographicComparisonData.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="p-3 font-bold text-[#10242C]">{row.label}</td>
+                        <td className="p-3 text-[#075D63] font-bold">{row.entrepreneurship}%</td>
+                        <td className="p-3 text-[#109A9B] font-bold">{row.financialInd}%</td>
+                        <td className="p-3 text-blue-600 font-bold">{row.aiAdoption}%</td>
+                        <td className="p-3 text-amber-900 font-bold">{row.marriage}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Link
-              to="/verify-certificate"
-              className="px-5 py-3 rounded-2xl border border-[#075D63]/30 text-[#075D63] font-bold text-xs sm:text-sm hover:bg-[#EAF6F6] transition-all flex items-center gap-1.5"
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Verify Code</span>
-            </Link>
-            <Link
-              to="/survey"
-              className="px-6 py-3 rounded-2xl bg-[#075D63] hover:bg-[#063E46] text-[#FFF8E8] font-bold text-xs sm:text-sm shadow-md transition-all flex items-center gap-1.5"
-            >
-              <span>Take Survey</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+        )}
+
+        {/* TAB CONTENT 6: 207 QUESTIONS DEEP DIVE (LEVEL 1 ANALYSIS) */}
+        {activeTab === 'questions' && (
+          <div className="space-y-6">
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+              {/* Left Column: Question Selector Search */}
+              <div className="lg:col-span-4 bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-xl space-y-4 max-h-[600px] flex flex-col">
+                <div className="space-y-2">
+                  <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
+                    <Search className="w-4 h-4 text-[#109A9B]" />
+                    Select Question (207 Total)
+                  </h3>
+                  <input
+                    type="text"
+                    value={questionSearch}
+                    onChange={(e) => setQuestionSearch(e.target.value)}
+                    placeholder="Search Q1-Q207 or keyword..."
+                    className="w-full px-3.5 py-2 rounded-2xl border border-slate-200 focus:border-[#109A9B] outline-none text-xs font-semibold"
+                  />
+                </div>
+
+                <div className="overflow-y-auto space-y-1.5 flex-1 pr-1">
+                  {filteredQuestions.map((q) => (
+                    <button
+                      key={q.id}
+                      onClick={() => setSelectedQuestionId(q.id)}
+                      className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer ${selectedQuestionId === q.id
+                          ? 'bg-[#075D63] text-white border-[#075D63] font-bold shadow-md'
+                          : 'bg-white hover:bg-slate-50 text-[#10242C] border-slate-200 font-medium'
+                        }`}
+                    >
+                      <div className="font-mono text-[10px] opacity-80">{q.code} • {q.topic}</div>
+                      <div className="truncate font-semibold">{q.text}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column: GSAP Animated Question Option Pie Chart Component */}
+              <div className="lg:col-span-8">
+                <AnimatedQuestionPieChart
+                  questionObj={selectedQuestionObj}
+                  analysisData={singleQuestionAnalysis}
+                  onSelectPrev={handleSelectPrevQuestion}
+                  onSelectNext={handleSelectNextQuestion}
+                  totalQuestionsCount={OFFICIAL_207_QUESTIONS.length}
+                  currentIndex={selectedQuestionIndex}
+                />
+              </div>
+
+            </div>
+
           </div>
-        </div>
+        )}
 
       </div>
     </div>

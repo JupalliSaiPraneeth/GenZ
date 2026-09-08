@@ -68,12 +68,22 @@ export default function Navbar() {
           })}
         </nav>
 
-        {/* Right Action Controls: Logout (if logged in) & Mobile Menu */}
+        {/* Right Action Controls: Admin Login, Logout (if logged in) & Mobile Menu */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 font-inter">
+          {/* Admin Login Button */}
+          <Link
+            to="/admin/login"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 h-[34px] sm:h-[44px] rounded-full bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold text-xs sm:text-sm border border-[#063E46] shadow-sm transition-all cursor-pointer whitespace-nowrap"
+            title="Admin Portal Login"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FDE7B5] shrink-0" />
+            <span>Admin Login</span>
+          </Link>
+
           {participantName && (
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3.5 sm:px-4 h-[34px] sm:h-[44px] rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs sm:text-sm border border-rose-200 transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3 sm:px-4 h-[34px] sm:h-[44px] rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs sm:text-sm border border-rose-200 transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
               title="Logout session"
             >
               <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 shrink-0" />
@@ -123,6 +133,15 @@ export default function Navbar() {
                 </Link>
               );
             })}
+
+            <Link
+              to="/admin/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-4 py-3 rounded-2xl font-bold text-base bg-[#063E46] text-[#FFF8E8] flex items-center gap-3 transition-colors shadow-sm"
+            >
+              <ShieldCheck className="w-5 h-5 text-[#FDE7B5] shrink-0" />
+              <span>Admin Portal Login</span>
+            </Link>
 
             {participantName && (
               <button

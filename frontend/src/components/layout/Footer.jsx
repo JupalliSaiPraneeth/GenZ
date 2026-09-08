@@ -58,7 +58,7 @@ export default function Footer() {
             <ul className="space-y-2 text-xs sm:text-sm text-[#FFF8E8]/90 font-medium">
               <li><Link to="/privacy" className="hover:text-[#FDE7B5] transition-colors flex items-center gap-1.5"><Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FDE7B5]" /> Privacy Architecture</Link></li>
               <li><Link to="/verify-certificate" className="hover:text-[#FDE7B5] transition-colors flex items-center gap-1.5"><Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FDE7B5]" /> Verify Certificate</Link></li>
-              <li><Link to="/admin" className="hover:text-[#FDE7B5] transition-colors flex items-center gap-1.5"><ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FFF8E8]/60" /> Researcher Portal</Link></li>
+              <li><Link to="/admin/login" className="hover:text-[#FDE7B5] transition-colors flex items-center gap-1.5"><ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FDE7B5]" /> Admin Portal Login</Link></li>
               <li><Link to="/analytics" className="hover:text-[#FDE7B5] transition-colors">Live Research Dashboard</Link></li>
             </ul>
           </div>
