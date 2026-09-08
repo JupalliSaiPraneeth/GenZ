@@ -5,8 +5,8 @@ import { Sparkles, Shield, Heart, Award, ArrowUpRight } from 'lucide-react';
 export default function Footer() {
   const location = useLocation();
 
-  // Hide footer on homepage as requested
-  if (['/', '/about', '/categories'].includes(location.pathname)) {
+  // Hide footer on homepage and survey pages as requested
+  if (['/', '/about', '/categories', '/survey'].includes(location.pathname)) {
     return null;
   }
 

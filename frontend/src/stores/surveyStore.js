@@ -261,11 +261,33 @@ export const useSurveyStore = create((set, get) => ({
     });
   },
 
+  getAnsweredCount: () => {
+    const { questions, answersById } = get();
+    if (!questions || questions.length === 0 || !answersById) return 0;
+    
+    const uniqueAnsweredQIds = new Set();
+    questions.forEach(q => {
+      const uuidKey = toUuidQuestionId(q.id);
+      const val = answersById[q.id] ?? (q.code ? answersById[q.code] : undefined) ?? answersById[uuidKey];
+      if (val !== undefined && val !== null && val !== '' && val !== 'skipped') {
+        uniqueAnsweredQIds.add(q.id);
+      }
+    });
+    return uniqueAnsweredQIds.size;
+  },
+
   getProgressPercentage: () => {
-    const { answersById, questions } = get();
-    const answeredCount = Object.keys(answersById).length;
-    if (questions.length === 0) return 0;
-    return Math.round((answeredCount / questions.length) * 100);
+    const { questions } = get();
+    if (!questions || questions.length === 0) return 0;
+    const answeredCount = get().getAnsweredCount();
+    return Math.min(100, Math.round((answeredCount / questions.length) * 100));
+  },
+
+  isSurveyCompleted: () => {
+    const { questions } = get();
+    if (!questions || questions.length === 0) return false;
+    const answeredCount = get().getAnsweredCount();
+    return answeredCount >= questions.length;
   },
 }));
 

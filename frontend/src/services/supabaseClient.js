@@ -116,15 +116,12 @@ export async function fetchResponsesForSession(sessionId) {
 
     if (error || !responses) return {};
 
-    const answersById = {};
     responses.forEach(r => {
       const rawId = r.response_value?.question_raw_id;
       const convertedKey = fromUuidQuestionId(r.question_id);
       const val = r.response_value?.value ?? r.response_value;
-
-      if (rawId) answersById[rawId] = val;
-      if (convertedKey) answersById[convertedKey] = val;
-      answersById[r.question_id] = val;
+      const rawKey = rawId || convertedKey || r.question_id;
+      if (rawKey) answersById[rawKey] = val;
     });
 
     return answersById;
@@ -198,10 +195,8 @@ export async function findOrCreateParticipantByEmail(participantName = '', email
             const rawId = r.response_value?.question_raw_id;
             const convertedKey = fromUuidQuestionId(r.question_id);
             const val = r.response_value?.value ?? r.response_value;
-
-            if (rawId) answersById[rawId] = val;
-            if (convertedKey) answersById[convertedKey] = val;
-            answersById[r.question_id] = val;
+            const rawKey = rawId || convertedKey || r.question_id;
+            if (rawKey) answersById[rawKey] = val;
           });
         }
 

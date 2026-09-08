@@ -9,7 +9,10 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: hidden;
+    height: 100%;
+    max-height: 100dvh;
+    overscroll-behavior: none;
     background-color: #FAF7F0;
   }
 

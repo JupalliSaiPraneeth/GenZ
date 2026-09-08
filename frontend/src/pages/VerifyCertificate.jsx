@@ -35,75 +35,84 @@ export default function VerifyCertificate() {
   }, [initialCode]);
 
   return (
-    <div className="min-h-screen pt-[105px] sm:pt-[130px] md:pt-[160px] pb-16 px-3 sm:px-4 max-w-2xl mx-auto bg-[#FAF7F0]">
+    <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-x-hidden">
 
-      <div className="text-center mb-8 sm:mb-10">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#EAF6F6] text-[#075D63] flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-[#109A9B]/20">
-          <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8" />
+      {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
+      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
+
+      {/* PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
+      <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
+
+      <div className="relative z-10 pt-[95px] sm:pt-[125px] pb-16 px-3 sm:px-4 max-w-2xl mx-auto">
+
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/15 text-[#FFF8E8] flex items-center justify-center mx-auto mb-3 sm:mb-4 border border-white/25 shadow-md backdrop-blur-xs">
+            <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8 text-[#FFF8E8]" />
+          </div>
+          <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#FFF8E8] mb-2 drop-shadow-xs">
+            Verify Certificate
+          </h1>
+          <p className="text-[#FFF8E8]/90 text-xs sm:text-sm font-medium max-w-md mx-auto">
+            Enter a Gen Z Voices certificate verification code to validate authenticity.
+          </p>
         </div>
-        <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-[#10242C] mb-2">
-          Verify Certificate
-        </h1>
-        <p className="text-[#53656A] text-xs sm:text-sm font-medium">
-          Enter a Gen Z Voices certificate verification code to validate authenticity.
-        </p>
+
+        {/* Input Form */}
+        <form onSubmit={handleVerify} className="bg-white p-4 sm:p-6 rounded-3xl border border-[#109A9B]/20 shadow-xl mb-6 sm:mb-8 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="w-5 h-5 text-[#53656A] absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="e.g. GZ2026-482910"
+              className="w-full pl-12 pr-4 py-3 sm:py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-[#075D63] font-mono text-sm font-bold text-[#10242C]"
+            />
+          </div>
+          <button type="submit" className="bg-[#075D63] hover:bg-[#063E46] text-[#FFF8E8] font-bold py-3 sm:py-3.5 px-7 rounded-2xl text-sm transition-all shadow-md w-full sm:w-auto">
+            Verify
+          </button>
+        </form>
+
+        {/* Verification Output */}
+        {result && (
+          <div className="bg-white rounded-3xl p-8 border border-[#109A9B]/20 shadow-xl">
+            {result.valid ? (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 text-emerald-700 font-bold border-b border-slate-200 pb-4">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                  <span className="text-lg">Authentic Certificate Verified</span>
+                </div>
+
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-[#53656A] font-medium">Verification Code</span>
+                    <span className="font-mono font-bold text-[#10242C]">{result.code}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-[#53656A] font-medium">Issuer</span>
+                    <span className="font-bold text-[#10242C]">Gen Z Voices Research Platform</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b border-slate-100">
+                    <span className="text-[#53656A] font-medium">Issued Date</span>
+                    <span className="font-medium text-[#10242C]">{result.issuedAt}</span>
+                  </div>
+                  <div className="flex justify-between py-2">
+                    <span className="text-[#53656A] font-medium">Certificate Type</span>
+                    <span className="font-bold text-[#075D63]">{result.type}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 text-red-600 font-bold">
+                <AlertCircle className="w-6 h-6" />
+                <span>{result.message}</span>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
-
-      {/* Input Form */}
-      <form onSubmit={handleVerify} className="bg-white p-4 sm:p-6 rounded-3xl border border-[#109A9B]/20 shadow-sm mb-6 sm:mb-8 flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-5 h-5 text-[#53656A] absolute left-4 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="e.g. GZ2026-482910"
-            className="w-full pl-12 pr-4 py-3 sm:py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-[#075D63] font-mono text-sm font-bold text-[#10242C]"
-          />
-        </div>
-        <button type="submit" className="bg-[#075D63] hover:bg-[#063E46] text-[#FFF8E8] font-bold py-3 sm:py-3.5 px-7 rounded-2xl text-sm transition-all shadow-md w-full sm:w-auto">
-          Verify
-        </button>
-      </form>
-
-      {/* Verification Output */}
-      {result && (
-        <div className="bg-white rounded-3xl p-8 border border-[#109A9B]/20 shadow-xl">
-          {result.valid ? (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 text-emerald-700 font-bold border-b border-slate-200 pb-4">
-                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                <span className="text-lg">Authentic Certificate Verified</span>
-              </div>
-
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-[#53656A] font-medium">Verification Code</span>
-                  <span className="font-mono font-bold text-[#10242C]">{result.code}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-[#53656A] font-medium">Issuer</span>
-                  <span className="font-bold text-[#10242C]">Gen Z Voices Research Platform</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-100">
-                  <span className="text-[#53656A] font-medium">Issued Date</span>
-                  <span className="font-medium text-[#10242C]">{result.issuedAt}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-[#53656A] font-medium">Certificate Type</span>
-                  <span className="font-bold text-[#075D63]">{result.type}</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 text-red-600 font-bold">
-              <AlertCircle className="w-6 h-6" />
-              <span>{result.message}</span>
-            </div>
-          )}
-        </div>
-      )}
-
     </div>
   );
 }
