@@ -173,8 +173,11 @@ export default function Survey() {
     }
   }, [participantName, participantEmail]);
 
-  // Lock html and body scrolling completely while on survey page
+  // Lock html and body scrolling completely on desktop screens
   useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) return;
+
     document.documentElement.style.overflow = 'hidden';
     document.documentElement.style.height = '100%';
     document.body.style.overflow = 'hidden';
@@ -269,10 +272,10 @@ export default function Survey() {
   // ONBOARDING STEP 0: MASTER PROMPT WELCOME EXPERIENCE
   if (onboardingStep === 0) {
     return (
-      <div className="fixed inset-0 h-screen h-[100dvh] w-screen overflow-hidden bg-[#FAF7F0] flex flex-col justify-end pt-[80px] sm:pt-[96px] pb-4 sm:pb-6 touch-none overscroll-none select-none">
+      <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto sm:overflow-hidden bg-[#FAF7F0] flex flex-col justify-center sm:justify-end pt-[72px] sm:pt-[96px] pb-4 sm:pb-6 touch-auto sm:touch-none overscroll-none select-none">
 
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
-        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
+        <div className="absolute top-0 left-0 right-0 h-[50vh] min-h-[300px] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
 
         {/* PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
         <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
@@ -296,38 +299,38 @@ export default function Survey() {
         </div>
 
         {/* MAIN CONTAINER CONTENT */}
-        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-10 pb-4 sm:pb-6 w-full flex-1 flex flex-col justify-end">
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-10 pb-4 sm:pb-6 w-full flex-1 flex flex-col justify-center sm:justify-end">
 
-          <div className="mt-auto flex flex-col items-center">
+          <div className="my-auto sm:mt-auto flex flex-col items-center">
             {/* CENTRAL WELCOME CARD */}
-            <div className="max-w-[580px] lg:max-w-[620px] w-full mx-auto bg-[#FFFDF9] rounded-[24px] sm:rounded-[28px] p-5 sm:p-8 md:p-9 border border-white/80 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] text-center relative z-20 transition-all duration-300">
+            <div className="max-w-[580px] lg:max-w-[620px] w-full mx-auto bg-[#FFFDF9] rounded-[20px] sm:rounded-[28px] p-4 sm:p-8 md:p-9 border border-white/80 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] text-center relative z-20 transition-all duration-300">
 
               {/* Header Sparkles Icon Box */}
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#075D63] to-[#109A9B] text-[#FFF8E8] flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-md shadow-teal-900/15">
-                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 fill-[#FFF8E8]" />
+              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#075D63] to-[#109A9B] text-[#FFF8E8] flex items-center justify-center mx-auto mb-2.5 sm:mb-4 shadow-md shadow-teal-900/15">
+                <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 fill-[#FFF8E8]" />
               </div>
 
               {/* Main Heading */}
-              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl md:text-[44px] leading-tight text-[#10242C] mb-2 sm:mb-3 tracking-tight">
+              <h1 className="font-heading font-extrabold text-xl sm:text-3xl md:text-[44px] leading-tight text-[#10242C] mb-1.5 sm:mb-3 tracking-tight">
                 Hey, <span className="bg-gradient-to-r from-[#109A9B] to-[#075D63] bg-clip-text text-transparent">Gen Z 👋</span>
               </h1>
 
               {/* Description */}
-              <p className="text-[#53656A] text-xs sm:text-base leading-relaxed max-w-[480px] mx-auto mb-5 sm:mb-6 font-medium">
+              <p className="text-[#53656A] text-xs sm:text-base leading-relaxed max-w-[480px] mx-auto mb-4 sm:mb-6 font-medium">
                 Welcome to India's premier youth perspective research study. We have organized the <strong className="text-[#063E46] font-bold">207 questions</strong> into <strong className="text-[#063E46] font-bold">4 simple chapters</strong> so your journey feels fast, smooth, and engaging.
               </p>
 
               {/* Primary CTA Button */}
               <button
                 onClick={() => setOnboardingStep(1)}
-                className="w-full h-[48px] sm:h-[54px] bg-[#063E46] hover:bg-gradient-to-r hover:from-[#075D63] hover:to-[#109A9B] text-[#FFF8E8] font-heading font-bold text-sm sm:text-base rounded-2xl shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 transform hover:-translate-y-[2px] active:translate-y-0 group cursor-pointer"
+                className="w-full h-[44px] sm:h-[54px] bg-[#063E46] hover:bg-gradient-to-r hover:from-[#075D63] hover:to-[#109A9B] text-[#FFF8E8] font-heading font-bold text-xs sm:text-base rounded-xl sm:rounded-2xl shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 sm:gap-2.5 transform hover:-translate-y-[2px] active:translate-y-0 group cursor-pointer"
               >
                 <span>Let's Get Started</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-200" />
               </button>
 
               {/* Security Guarantee Message */}
-              <div className="flex items-center justify-center gap-1.5 mt-3 sm:mt-3.5 text-[11px] sm:text-xs font-semibold text-[#063E46]">
+              <div className="flex items-center justify-center gap-1.5 mt-2.5 sm:mt-3.5 text-[10px] sm:text-xs font-semibold text-[#063E46]">
                 <Lock className="w-3.5 h-3.5 text-[#109A9B]" />
                 <span>Your responses are 100% anonymous and secure</span>
               </div>
@@ -335,46 +338,46 @@ export default function Survey() {
             </div>
 
             {/* SURVEY INFORMATION ROW - Symmetrical Width Alignment with Central Card */}
-            <div className="mt-3.5 sm:mt-5 max-w-[580px] lg:max-w-[620px] w-full mx-auto bg-[#FFFDF9]/95 backdrop-blur-md rounded-[22px] p-3 sm:p-4 border border-[#109A9B]/20 shadow-md">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 divide-y-0 sm:divide-y-0 md:divide-x divide-[#063E46]/15">
+            <div className="mt-2.5 sm:mt-5 max-w-[580px] lg:max-w-[620px] w-full mx-auto bg-[#FFFDF9]/95 backdrop-blur-md rounded-[18px] sm:rounded-[22px] p-2.5 sm:p-4 border border-[#109A9B]/20 shadow-md">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 sm:gap-3 divide-y-0 sm:divide-y-0 md:divide-x divide-[#063E46]/15">
 
-                <div className="flex items-center gap-2 sm:gap-2.5 p-1 justify-start sm:justify-center">
-                  <div className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-[#109A9B]" />
+                <div className="flex items-center gap-1.5 sm:gap-2.5 p-1 justify-start sm:justify-center">
+                  <div className="w-[32px] h-[32px] sm:w-[44px] sm:h-[44px] rounded-lg sm:rounded-xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#109A9B]" />
                   </div>
-                  <div>
-                    <span className="block font-heading font-extrabold text-[#10242C] text-xs sm:text-sm leading-snug">15–20 Mins</span>
-                    <span className="text-[10px] sm:text-[11px] text-[#53656A] font-medium">Quick & engaging</span>
+                  <div className="min-w-0">
+                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">15–20 Mins</span>
+                    <span className="block text-[9px] sm:text-[11px] text-[#53656A] font-medium leading-tight truncate">Quick & engaging</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-2.5 p-1 justify-start sm:justify-center">
-                  <div className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-[#109A9B]" />
+                <div className="flex items-center gap-1.5 sm:gap-2.5 p-1 justify-start sm:justify-center">
+                  <div className="w-[32px] h-[32px] sm:w-[44px] sm:h-[44px] rounded-lg sm:rounded-xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#109A9B]" />
                   </div>
-                  <div>
-                    <span className="block font-heading font-extrabold text-[#10242C] text-xs sm:text-sm leading-snug">207 Questions</span>
-                    <span className="text-[10px] sm:text-[11px] text-[#53656A] font-medium">Across 4 chapters</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 sm:gap-2.5 p-1 justify-start sm:justify-center">
-                  <div className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
-                    <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#109A9B]" />
-                  </div>
-                  <div>
-                    <span className="block font-heading font-extrabold text-[#10242C] text-xs sm:text-sm leading-snug">Your Privacy</span>
-                    <span className="text-[10px] sm:text-[11px] text-[#53656A] font-medium">100% Anonymous</span>
+                  <div className="min-w-0">
+                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">207 Questions</span>
+                    <span className="block text-[9px] sm:text-[11px] text-[#53656A] font-medium leading-tight truncate">Across 4 chapters</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-2.5 p-1 justify-start sm:justify-center">
-                  <div className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
-                    <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-[#109A9B]" />
+                <div className="flex items-center gap-1.5 sm:gap-2.5 p-1 justify-start sm:justify-center">
+                  <div className="w-[32px] h-[32px] sm:w-[44px] sm:h-[44px] rounded-lg sm:rounded-xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#109A9B]" />
                   </div>
-                  <div>
-                    <span className="block font-heading font-extrabold text-[#10242C] text-xs sm:text-sm leading-snug">Rewards</span>
-                    <span className="text-[10px] sm:text-[11px] text-[#53656A] font-medium">Certificate & Draw</span>
+                  <div className="min-w-0">
+                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">Your Privacy</span>
+                    <span className="block text-[9px] sm:text-[11px] text-[#53656A] font-medium leading-tight truncate">100% Anonymous</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 sm:gap-2.5 p-1 justify-start sm:justify-center">
+                  <div className="w-[32px] h-[32px] sm:w-[44px] sm:h-[44px] rounded-lg sm:rounded-xl bg-[#109A9B]/12 text-[#063E46] flex items-center justify-center flex-shrink-0">
+                    <Gift className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#109A9B]" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">Rewards</span>
+                    <span className="block text-[9px] sm:text-[11px] text-[#53656A] font-medium leading-tight truncate">Certificate & Draw</span>
                   </div>
                 </div>
 
@@ -391,7 +394,7 @@ export default function Survey() {
   // ONBOARDING STEP 1: ATTRACTIVE, PROFESSIONAL EDITORIAL 4-SECTION ROADMAP
   if (onboardingStep === 1) {
     return (
-      <div className="fixed inset-0 h-screen h-[100dvh] w-screen overflow-hidden bg-[#FAF7F0] flex flex-col justify-center items-center pt-[76px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 touch-none overscroll-none select-none">
+      <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto sm:overflow-hidden bg-[#FAF7F0] flex flex-col justify-center items-center pt-[72px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 touch-auto sm:touch-none overscroll-none select-none">
 
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
         <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
@@ -581,7 +584,7 @@ export default function Survey() {
   // ONBOARDING STEP 2: PRIVACY GUARANTEE
   if (onboardingStep === 2) {
     return (
-      <div className="fixed inset-0 h-screen h-[100dvh] w-screen overflow-y-auto flex items-center justify-center pt-[76px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] touch-none overscroll-none select-none">
+      <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto flex items-center justify-center pt-[72px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] touch-auto sm:touch-none overscroll-none select-none">
         
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
         <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
@@ -646,7 +649,7 @@ export default function Survey() {
   // ONBOARDING STEP 2.5: PARTICIPANT NAME & EMAIL ENTRY (Persists immediately to Supabase DB)
   if (onboardingStep === 2.5 || (onboardingStep === 3 && !participantName)) {
     return (
-      <div className="fixed inset-0 h-screen h-[100dvh] w-screen overflow-y-auto flex items-center justify-center pt-[76px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] touch-none overscroll-none select-none">
+      <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto flex items-center justify-center pt-[72px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] touch-auto sm:touch-none overscroll-none select-none">
 
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
         <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
@@ -739,7 +742,7 @@ export default function Survey() {
 
   // ACTIVE 207-QUESTION SURVEY EXPERIENCE (Step 3: Master Prompt Implementation)
   return (
-    <div className="fixed inset-0 h-screen h-[100dvh] w-screen overflow-hidden bg-[#FAF7F0] flex flex-col justify-center items-center pt-[95px] sm:pt-[110px] md:pt-[120px] pb-6 sm:pb-8 touch-none overscroll-none select-none">
+    <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto sm:overflow-hidden bg-[#FAF7F0] flex flex-col justify-center items-center pt-[76px] sm:pt-[110px] md:pt-[120px] pb-6 sm:pb-8 touch-auto sm:touch-none overscroll-none select-none">
 
       {/* ==================================================== */}
       {/* OVERALL PAGE BACKGROUND — ORIGINAL TEAL ATMOSPHERIC GRADIENT */}
