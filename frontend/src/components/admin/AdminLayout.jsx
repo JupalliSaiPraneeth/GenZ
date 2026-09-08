@@ -49,7 +49,7 @@ export default function AdminLayout({ children, title = 'Admin Portal' }) {
 
   const handleLogout = () => {
     adminAuthService.logout();
-    navigate('/admin/login');
+    navigate('/');
   };
 
   const activeNavItem = NAV_ITEMS.find((item) => location.pathname.startsWith(item.path)) || NAV_ITEMS[0];
