@@ -28,7 +28,7 @@ app.add_middleware(
 class QualityAnalysisRequest(BaseModel):
     session_id: str
     completion_seconds: int
-    total_questions: int = 207
+    total_questions: int = 75
     responses: List[Dict[str, Any]]
     attention_check_passed: bool = True
 

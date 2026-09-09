@@ -1,13 +1,11 @@
 import { create } from 'zustand';
 import { saveAnswerLocally, markAnswerSynced } from '../services/db';
-import { SURVEY_SECTIONS, OFFICIAL_207_QUESTIONS } from '../data/surveyQuestions';
+import { SURVEY_SECTIONS, OFFICIAL_75_QUESTIONS } from '../data/surveyQuestions';
 import { 
-  getOrCreateAnonymousParticipant, 
-  createNewParticipant,
-  findOrCreateParticipantByEmail,
-  fetchResponsesForSession,
-  ensureSurveySessionInSupabase, 
+  registerParticipant,
+  fetchResponsesForParticipant,
   syncResponseToSupabase,
+  completeParticipantSurvey,
   toUuidQuestionId,
   generateValidUUID
 } from '../services/supabaseClient';
@@ -19,7 +17,7 @@ export const useSurveyStore = create((set, get) => ({
   participantId: localStorage.getItem('genz_participant_id') || null,
   isResumedSession: false,
   sections: SURVEY_SECTIONS,
-  questions: OFFICIAL_207_QUESTIONS,
+  questions: OFFICIAL_75_QUESTIONS,
   
   currentSectionIndex: 0,
   currentQuestionIndex: 0,
@@ -31,7 +29,6 @@ export const useSurveyStore = create((set, get) => ({
   initSession: async () => {
     let existingSession = localStorage.getItem('genz_active_session');
     
-    // Check if existingSession is a valid UUID, otherwise regenerate
     if (!existingSession || !existingSession.includes('-') || existingSession.length !== 36) {
       existingSession = generateValidUUID();
       localStorage.setItem('genz_active_session', existingSession);
@@ -46,20 +43,8 @@ export const useSurveyStore = create((set, get) => ({
     try {
       let fetchedAnswers = {};
 
-      if (savedEmail) {
-        const res = await findOrCreateParticipantByEmail(savedName, savedEmail);
-        if (res && res.participant?.id) {
-          localStorage.setItem('genz_participant_id', res.participant.id);
-        }
-        if (res && res.isExisting && res.answersById) {
-          fetchedAnswers = res.answersById;
-          existingSession = res.sessionId;
-        }
-      }
-
-      // Also try direct fetch by sessionId if answers are not loaded yet
-      if (Object.keys(fetchedAnswers).length === 0 && existingSession) {
-        fetchedAnswers = await fetchResponsesForSession(existingSession);
+      if (savedParticipantId) {
+        fetchedAnswers = await fetchResponsesForParticipant(savedParticipantId);
       }
 
       const { questions, sections } = get();
@@ -67,10 +52,7 @@ export const useSurveyStore = create((set, get) => ({
 
       if (fetchedAnswers && Object.keys(fetchedAnswers).length > 0) {
         const idx = questions.findIndex(q => {
-          const uuidKey = toUuidQuestionId(q.id);
-          const hasAns = fetchedAnswers[q.id] !== undefined || 
-                         (q.code && fetchedAnswers[q.code] !== undefined) || 
-                         fetchedAnswers[uuidKey] !== undefined;
+          const hasAns = fetchedAnswers[q.id] !== undefined || (q.code && fetchedAnswers[q.code] !== undefined);
           return !hasAns;
         });
 
@@ -126,55 +108,68 @@ export const useSurveyStore = create((set, get) => ({
   setParticipantDetails: async (name, email) => {
     const trimmedName = name.trim();
     const trimmedEmail = email ? email.trim().toLowerCase() : '';
+    const deviceTimestamp = new Date().toISOString();
 
-    localStorage.setItem('genz_participant_name', trimmedName);
-    localStorage.setItem('genz_participant_email', trimmedEmail);
+    const res = await registerParticipant(trimmedName, trimmedEmail, deviceTimestamp);
 
-    const res = await findOrCreateParticipantByEmail(trimmedName, trimmedEmail);
+    if (res?.error) {
+      return res;
+    }
 
     const pId = res.participant?.id || null;
     if (pId) {
       localStorage.setItem('genz_participant_id', pId);
     }
-    localStorage.setItem('genz_active_session', res.sessionId);
+    localStorage.setItem('genz_participant_name', trimmedName);
+    localStorage.setItem('genz_participant_email', trimmedEmail);
 
-    // Link session to participant explicitly in Supabase
-    await ensureSurveySessionInSupabase(res.sessionId, pId);
+    // Fetch existing responses for this participant from Supabase DB
+    let fetchedAnswers = {};
+    if (pId) {
+      fetchedAnswers = await fetchResponsesForParticipant(pId);
+    }
 
-    const { questions, sections } = get();
-    let firstUnansweredIdx = 0;
+    const { questions, sections, answersById, sessionId } = get();
 
-    if (res.isExisting && res.answersById && Object.keys(res.answersById).length > 0) {
-      const idx = questions.findIndex(q => {
-        const uuidKey = toUuidQuestionId(q.id);
-        const hasAns = res.answersById[q.id] !== undefined || 
-                       (q.code && res.answersById[q.code] !== undefined) || 
-                       res.answersById[uuidKey] !== undefined;
-        return !hasAns;
+    // Merge DB answers with current local answersById
+    const mergedAnswers = { ...(fetchedAnswers || {}), ...(answersById || {}) };
+
+    // Sync any unpersisted local answers to Supabase under the participant ID
+    if (pId && answersById && Object.keys(answersById).length > 0) {
+      Object.entries(answersById).forEach(([qId, val]) => {
+        syncResponseToSupabase(pId, sessionId, qId, val, deviceTimestamp);
       });
+    }
 
-      if (idx !== -1) {
-        firstUnansweredIdx = idx;
-      } else {
-        firstUnansweredIdx = Math.min(Object.keys(res.answersById).length, questions.length - 1);
-      }
+    // Determine first unanswered question index (where user left off)
+    let firstUnansweredIdx = 0;
+    const unansweredIdx = questions.findIndex(q => {
+      const hasAns = mergedAnswers[q.id] !== undefined || (q.code && mergedAnswers[q.code] !== undefined);
+      return !hasAns;
+    });
+
+    if (unansweredIdx !== -1) {
+      firstUnansweredIdx = unansweredIdx;
+    } else if (Object.keys(mergedAnswers).length > 0) {
+      firstUnansweredIdx = Math.min(Object.keys(mergedAnswers).length, questions.length - 1);
     }
 
     const targetQuestion = questions[firstUnansweredIdx] || questions[0];
     const sectionIdx = targetQuestion ? sections.findIndex(s => s.id === targetQuestion.sectionId) : 0;
 
+    const isResumed = Boolean(res?.isResumed || Object.keys(fetchedAnswers).length > 0);
+
     set({
       participantName: trimmedName,
       participantEmail: trimmedEmail,
       participantId: pId,
-      sessionId: res.sessionId,
-      answersById: res.answersById || {},
+      answersById: mergedAnswers,
       currentQuestionIndex: Math.max(0, firstUnansweredIdx),
       currentSectionIndex: Math.max(0, sectionIdx),
-      isResumedSession: res.isExisting
+      isResumedSession: isResumed
     });
 
-    return res;
+    return { success: true, participant: res.participant, isResumed };
   },
 
   setParticipantName: async (name) => {
@@ -184,6 +179,7 @@ export const useSurveyStore = create((set, get) => ({
   setAnswer: async (questionId, value) => {
     const { sessionId, participantId, answersById } = get();
     const updatedAnswers = { ...answersById, [questionId]: value };
+    const deviceTimestamp = new Date().toISOString();
     
     set({
       answersById: updatedAnswers,
@@ -191,12 +187,13 @@ export const useSurveyStore = create((set, get) => ({
     });
 
     try {
-      // 1. Immediate local backup save
+      // 1. Local Dexie save
       await saveAnswerLocally(sessionId, questionId, value);
 
-      // 2. IMMEDIATE Supabase Database direct sync with participantId linked
-      const success = await syncResponseToSupabase(sessionId, questionId, value, participantId);
-      
+      // 2. Direct Supabase Database sync with device_timestamp & participant_id
+      const effectiveParticipantId = participantId || sessionId;
+      const qCode = get().questions.find(q => q.id === questionId)?.code || questionId;
+      const success = await syncResponseToSupabase(effectiveParticipantId, sessionId, questionId, value, deviceTimestamp);
       if (success) {
         await markAnswerSynced(`${sessionId}_${questionId}`);
       }
@@ -252,42 +249,20 @@ export const useSurveyStore = create((set, get) => ({
 
   jumpToQuestion: (questionIndex) => {
     const { questions, sections } = get();
-    const targetQ = questions[questionIndex];
-    if (!targetQ) return;
-    const secIdx = sections.findIndex(s => s.id === targetQ.sectionId);
-    set({
-      currentQuestionIndex: Math.max(0, Math.min(questionIndex, questions.length - 1)),
-      currentSectionIndex: secIdx !== -1 ? secIdx : get().currentSectionIndex,
-    });
-  },
+    const targetQuestion = questions[questionIndex];
+    if (!targetQuestion) return;
 
-  getAnsweredCount: () => {
-    const { questions, answersById } = get();
-    if (!questions || questions.length === 0 || !answersById) return 0;
-    
-    const uniqueAnsweredQIds = new Set();
-    questions.forEach(q => {
-      const uuidKey = toUuidQuestionId(q.id);
-      const val = answersById[q.id] ?? (q.code ? answersById[q.code] : undefined) ?? answersById[uuidKey];
-      if (val !== undefined && val !== null && val !== '' && val !== 'skipped') {
-        uniqueAnsweredQIds.add(q.id);
-      }
+    const sectionIdx = sections.findIndex(s => s.id === targetQuestion.sectionId);
+
+    set({
+      currentQuestionIndex: questionIndex,
+      currentSectionIndex: sectionIdx !== -1 ? sectionIdx : get().currentSectionIndex,
     });
-    return uniqueAnsweredQIds.size;
   },
 
   getProgressPercentage: () => {
-    const { questions } = get();
-    if (!questions || questions.length === 0) return 0;
-    const answeredCount = get().getAnsweredCount();
-    return Math.min(100, Math.round((answeredCount / questions.length) * 100));
-  },
-
-  isSurveyCompleted: () => {
-    const { questions } = get();
-    if (!questions || questions.length === 0) return false;
-    const answeredCount = get().getAnsweredCount();
-    return answeredCount >= questions.length;
+    const { answersById, questions } = get();
+    const answeredCount = questions.filter(q => Boolean(answersById[q.id] && answersById[q.id] !== 'skipped')).length;
+    return Math.round((answeredCount / questions.length) * 100);
   },
 }));
-

@@ -1,191 +1,209 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Award, CheckCircle2, ShieldCheck, Download } from 'lucide-react';
+import { Award, CheckCircle2, ShieldCheck, Download, Clock, Sparkles, RefreshCw, Gift, AlertCircle } from 'lucide-react';
+import { useSurveyStore } from '../stores/surveyStore';
+import { fetchParticipantStatus } from '../services/supabaseClient';
 
 export default function SurveyComplete() {
-  const [participateChoice, setParticipateChoice] = useState('yes'); // 'yes' | 'no'
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [certCode, setCertCode] = useState('');
+  const { participantName, participantEmail, participantId } = useSurveyStore();
+  const [participant, setParticipant] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (participateChoice === 'yes') {
-      const code = `GZ2026-${Math.floor(100000 + Math.random() * 900000)}`;
-      setCertCode(code);
+  const loadStatus = async () => {
+    setIsRefreshing(true);
+    const savedId = participantId || localStorage.getItem('genz_participant_id');
+    const savedEmail = participantEmail || localStorage.getItem('genz_participant_email');
+    const target = savedId || savedEmail;
+
+    if (target) {
+      const data = await fetchParticipantStatus(target);
+      if (data) {
+        setParticipant(data);
+      }
     }
-    setIsSubmitted(true);
+    setLoading(false);
+    setIsRefreshing(false);
   };
+
+  useEffect(() => {
+    loadStatus();
+  }, [participantId, participantEmail]);
+
+  const pName = participant?.name || participantName || localStorage.getItem('genz_participant_name') || 'Gen Z Participant';
+  const pEmail = participant?.email || participantEmail || localStorage.getItem('genz_participant_email') || '';
+  const certCode = participant?.certificate_id || `CERT-GZ2026-${Math.floor(10000 + Math.random() * 90000)}`;
+  const evalStatus = participant?.evaluation_status || 'pending_evaluation';
+  const certStatus = participant?.certificate_status || (evalStatus === 'approved' ? 'issued' : 'pending');
+  const luckyStatus = participant?.lucky_draw_status || 'pending';
+  const luckyPrize = participant?.lucky_draw_prize;
+
+  const isApproved = evalStatus === 'approved' || certStatus === 'issued';
+  const isRejected = evalStatus === 'rejected';
+  const isPending = !isApproved && !isRejected;
 
   return (
     <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-x-hidden">
-
       {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
       <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
-
-      {/* PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
       <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
 
       <div className="relative z-10 pt-[95px] sm:pt-[125px] pb-16 px-4 max-w-3xl mx-auto text-center space-y-6 sm:space-y-8">
-
+        
         {/* Header Trophy Badge */}
         <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-3xl bg-white/15 text-[#FDE7B5] flex items-center justify-center mx-auto shadow-lg border border-white/25 backdrop-blur-xs font-bold text-3xl">
           🏆
         </div>
 
         <h1 className="font-heading font-extrabold text-3xl sm:text-5xl text-[#FFF8E8] tracking-tight drop-shadow-xs">
-          Thank You for Completing the Survey!
+          Responses Submitted Successfully!
         </h1>
         <p className="text-[#FFF8E8]/90 text-base sm:text-lg max-w-xl mx-auto font-medium leading-relaxed">
-          Your answers have been securely recorded. Your perspective contributes directly to national research intelligence for Generation Z in India.
+          Thank you <strong className="text-white">{pName}</strong>! Your 75 responses have been securely logged in our research database.
         </p>
 
-        {/* OPTIONAL CERTIFICATE & LUCKY DRAW SECTION */}
-        {!isSubmitted ? (
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#109A9B]/20 shadow-2xl text-left max-w-xl mx-auto space-y-6">
+        {/* DYNAMIC EVALUATION & CERTIFICATE CARD */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#109A9B]/20 shadow-2xl text-left max-w-xl mx-auto space-y-6">
 
-            <div className="border-b border-slate-200 pb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#109A9B] font-mono">OPTIONAL STEP</span>
-              <h3 className="font-heading font-bold text-xl text-[#10242C] mt-1 flex items-center gap-2">
-                <Award className="w-5 h-5 text-[#075D63]" />
-                Certificate of Appreciation & Lucky Draw
+          {/* STATUS HEADER BADGE */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#53656A]">
+                SUBMISSION STATUS
+              </span>
+              <h3 className="font-heading font-extrabold text-lg sm:text-xl text-[#10242C] mt-0.5">
+                {isApproved && '✅ Verified & Certificate Unlocked'}
+                {isPending && '⏳ Pending Admin Evaluation'}
+                {isRejected && '⚠️ Submission Under Review'}
               </h3>
-              <p className="text-xs text-[#53656A] mt-1 font-medium">
-                Would you like to receive an official Certificate of Appreciation and participate in the monthly Lucky Draw?
-              </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-
-              {/* Yes / No Choice */}
-              <div className="space-y-3">
-                <label
-                  onClick={() => setParticipateChoice('yes')}
-                  className={`p-4 rounded-2xl border-2 flex items-start gap-3 cursor-pointer transition-all ${participateChoice === 'yes' ? 'border-[#075D63] bg-[#EAF6F6]' : 'border-slate-200 bg-white'
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="participate"
-                    checked={participateChoice === 'yes'}
-                    onChange={() => setParticipateChoice('yes')}
-                    className="mt-1 text-[#075D63] focus:ring-[#075D63]"
-                  />
-                  <div>
-                    <span className="font-bold text-sm text-[#10242C] block">
-                      Yes — I would like to receive the certificate and enter the Lucky Draw.
-                    </span>
-                    <span className="text-xs text-[#53656A] font-medium">Issued instantly upon providing your details below.</span>
-                  </div>
-                </label>
-
-                <label
-                  onClick={() => setParticipateChoice('no')}
-                  className={`p-4 rounded-2xl border-2 flex items-start gap-3 cursor-pointer transition-all ${participateChoice === 'no' ? 'border-[#075D63] bg-[#EAF6F6]' : 'border-slate-200 bg-white'
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="participate"
-                    checked={participateChoice === 'no'}
-                    onChange={() => setParticipateChoice('no')}
-                    className="mt-1 text-[#075D63] focus:ring-[#075D63]"
-                  />
-                  <div>
-                    <span className="font-bold text-sm text-[#10242C] block">
-                      No — I do not wish to participate.
-                    </span>
-                    <span className="text-xs text-[#53656A] font-medium">Submit survey responses completely anonymously without certificate.</span>
-                  </div>
-                </label>
-              </div>
-
-              {/* Email & Name input if Yes */}
-              {participateChoice === 'yes' && (
-                <div className="space-y-4 pt-2 border-t border-slate-200">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-[#10242C] mb-1">Full Name (For Certificate)</label>
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Ananya Sharma"
-                      className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-[#075D63] text-sm font-semibold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-[#10242C] mb-1">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. ananya@example.com"
-                      className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 focus:outline-none focus:border-[#075D63] text-sm font-semibold"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <button type="submit" className="bg-[#075D63] hover:bg-[#063E46] text-[#FFF8E8] font-bold w-full py-4 rounded-2xl shadow-md transition-all">
-                <span>{participateChoice === 'yes' ? 'Issue Certificate & Finish →' : 'Complete Anonymous Submission →'}</span>
-              </button>
-            </form>
-
+            <button
+              onClick={loadStatus}
+              disabled={isRefreshing}
+              className="p-2.5 rounded-2xl bg-slate-100 hover:bg-[#EAF6F6] text-[#075D63] transition-all flex items-center gap-1 text-xs font-bold cursor-pointer"
+              title="Refresh status from database"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
           </div>
-        ) : (
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#109A9B]/20 shadow-2xl text-left max-w-xl mx-auto space-y-6">
-            {participateChoice === 'yes' ? (
-              <>
-                <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-                  <div>
-                    <span className="text-xs text-[#53656A] font-mono">VERIFICATION CODE</span>
-                    <h3 className="font-mono font-bold text-lg text-[#075D63]">{certCode}</h3>
-                  </div>
-                  <span className="px-3.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-                    Verified
-                  </span>
-                </div>
 
-                <div className="p-6 bg-[#FFF8E8] rounded-2xl border border-[#109A9B]/20 text-center space-y-2">
-                  <Award className="w-12 h-12 text-[#075D63] mx-auto" />
-                  <h4 className="font-heading font-bold text-lg text-[#10242C]">Certificate of Appreciation</h4>
-                  <p className="text-xs text-[#53656A]">Issued to <strong className="text-[#10242C]">{name}</strong> ({email}) for contribution to Gen Z Research 2026.</p>
+          {/* CASE 1: PENDING EVALUATION STATE */}
+          {isPending && (
+            <div className="space-y-4">
+              <div className="p-5 bg-amber-50 rounded-2xl border border-amber-200/80 text-amber-900 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-sm text-amber-950">
+                  <Clock className="w-4 h-4 text-amber-600 animate-pulse" />
+                  <span>Admin Evaluation in Progress</span>
                 </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link
-                    to={`/verify-certificate?code=${certCode}`}
-                    className="bg-white border border-[#075D63]/40 text-[#10242C] font-bold text-sm flex-1 py-3.5 rounded-full flex items-center justify-center gap-2 hover:bg-[#FFF8E8]"
-                  >
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Verify Certificate</span>
-                  </Link>
-                  <button
-                    onClick={() => alert(`Certificate ${certCode} downloaded for ${name}!`)}
-                    className="bg-[#075D63] hover:bg-[#063E46] text-[#FFF8E8] font-bold text-sm flex-1 py-3.5 rounded-full flex items-center justify-center gap-2 shadow-md"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Download PDF</span>
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-6 space-y-4">
-                <CheckCircle2 className="w-16 h-16 text-emerald-600 mx-auto" />
-                <h3 className="font-heading font-bold text-2xl text-[#10242C]">Anonymous Submission Confirmed</h3>
-                <p className="text-xs text-[#53656A] max-w-md mx-auto font-medium">
-                  Your responses have been recorded without personal identifying information. Thank you for your contribution to Gen Z research.
+                <p className="text-xs leading-relaxed text-amber-900/90 font-medium">
+                  Our research evaluation team is reviewing your 75 survey responses. Once evaluated and verified by the admin, your official <strong>Certificate of Participation</strong> will be generated here, and your <strong>Lucky Draw Entry</strong> will be announced!
                 </p>
-                <Link to="/" className="bg-[#075D63] hover:bg-[#063E46] text-[#FFF8E8] font-bold text-sm px-6 py-3 rounded-full inline-flex">
-                  <span>Return to Home</span>
-                </Link>
               </div>
-            )}
+
+              <div className="p-4 bg-[#EAF6F6] rounded-2xl border border-[#109A9B]/20 text-xs text-[#075D63] font-medium flex items-center gap-3">
+                <ShieldCheck className="w-5 h-5 text-[#109A9B] shrink-0" />
+                <span>Your registered email <strong>{pEmail || 'associated with your account'}</strong> will be notified once evaluated.</span>
+              </div>
+            </div>
+          )}
+
+          {/* CASE 2: APPROVED & ISSUED CERTIFICATE STATE */}
+          {isApproved && (
+            <div className="space-y-6">
+              {/* CERTIFICATE DISPLAY BOX */}
+              <div className="p-6 bg-[#FFF8E8] rounded-2xl border-2 border-[#109A9B]/30 text-center space-y-3 relative overflow-hidden shadow-inner">
+                <div className="w-14 h-14 bg-gradient-to-br from-[#063E46] to-[#109A9B] rounded-2xl text-[#FDE7B5] flex items-center justify-center mx-auto shadow-md">
+                  <Award className="w-8 h-8" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-bold tracking-widest text-[#075D63] uppercase bg-white/80 px-3 py-1 rounded-full border border-[#109A9B]/20">
+                    VERIFIED CODE: {certCode}
+                  </span>
+                  <h4 className="font-heading font-extrabold text-xl text-[#10242C] mt-2">
+                    Certificate of Research Participation
+                  </h4>
+                  <p className="text-xs text-[#53656A] mt-1 font-medium">
+                    Proudly awarded to <strong className="text-[#10242C] font-bold text-sm">{pName}</strong> ({pEmail}) for contribution to national Gen Z Research 2026.
+                  </p>
+                </div>
+              </div>
+
+              {/* LUCKY DRAW ANNOUNCEMENT BANNER */}
+              <div className="p-5 rounded-2xl border text-left space-y-2 bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 font-mono flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    LUCKY DRAW ANNOUNCEMENT
+                  </span>
+                  {luckyStatus === 'winner' && (
+                    <span className="px-2.5 py-0.5 bg-amber-400 text-amber-950 text-[10px] font-extrabold rounded-full animate-bounce">
+                      🏆 WINNER
+                    </span>
+                  )}
+                </div>
+
+                {luckyStatus === 'winner' ? (
+                  <div className="space-y-1 pt-1">
+                    <h5 className="font-heading font-extrabold text-base text-emerald-950 flex items-center gap-1.5">
+                      <Gift className="w-5 h-5 text-amber-600" />
+                      Congratulations! You Won the Lucky Draw!
+                    </h5>
+                    <p className="text-xs text-emerald-900 font-bold">
+                      Prize Awarded: <span className="underline text-amber-700">{luckyPrize || 'Special Gen Z Swag & Voucher Kit'}</span>
+                    </p>
+                    <p className="text-[11px] text-emerald-800 font-medium">
+                      Our coordinator will reach out to <strong>{pEmail}</strong> regarding prize dispatch.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-emerald-900 font-semibold pt-1">
+                    🎯 Your entry has been recorded in the active Lucky Draw pool. Prize announcements are updated here periodically.
+                  </p>
+                )}
+              </div>
+
+              {/* ACTION BUTTONS */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Link
+                  to={`/verify-certificate?code=${certCode}`}
+                  className="bg-white border-2 border-[#075D63]/30 hover:border-[#075D63] text-[#10242C] font-bold text-xs sm:text-sm flex-1 py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Verify Online Certificate</span>
+                </Link>
+                <button
+                  onClick={() => alert(`Certificate ${certCode} downloaded for ${pName}!`)}
+                  className="bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold text-xs sm:text-sm flex-1 py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-[#FDE7B5]" />
+                  <span>Download PDF Certificate</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* CASE 3: REJECTED STATE */}
+          {isRejected && (
+            <div className="p-5 bg-rose-50 rounded-2xl border border-rose-200 text-rose-900 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-sm text-rose-950">
+                <AlertCircle className="w-4 h-4 text-rose-600" />
+                <span>Response Quality Verification Notice</span>
+              </div>
+              <p className="text-xs text-rose-800 font-medium leading-relaxed">
+                {participant?.admin_notes || 'Your response set did not pass quality verification checks. Please contact admin support if you believe this was an error.'}
+              </p>
+            </div>
+          )}
+
+          <div className="pt-2 text-center border-t border-slate-100">
+            <Link to="/" className="text-xs font-bold text-[#075D63] hover:underline inline-flex items-center gap-1">
+              <span>← Return to Home Page</span>
+            </Link>
           </div>
-        )}
+
+        </div>
 
       </div>
     </div>

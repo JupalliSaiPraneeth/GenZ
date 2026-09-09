@@ -36,7 +36,7 @@ export default function AdminExport() {
         const headers = ['SessionID', 'QuestionID', 'ResponseValue', 'Timestamp'];
         const rows = records.map((r) => [r.sessionId, r.questionId, String(r.value).replace(/,/g, ' '), r.timestamp]);
         const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-        downloadBlob(csvContent, `genz_all_responses_q1_q207_${Date.now()}.${fileFormat}`);
+        downloadBlob(csvContent, `genz_all_responses_q1_q75_${Date.now()}.${fileFormat}`);
       }
 
       adminAuthService.logAction('EXPORT_DATA', exportType, 'SUCCESS', `Format: ${fileFormat}`);
@@ -67,7 +67,7 @@ export default function AdminExport() {
             Dataset & Response Export Center
           </h2>
           <p className="text-xs text-[#53656A] font-medium">
-            Export full study datasets, response records (Q1–Q207), and data quality metrics
+            Export full study datasets, response records (Q1–Q75), and data quality metrics
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export default function AdminExport() {
             <div className="space-y-2">
               {[
                 { id: 'respondents', label: 'Respondent Master List (Demographics & Metadata)' },
-                { id: 'responses', label: 'All Raw Response Records (Q1 → Q207 Complete)' },
+                { id: 'responses', label: 'All Raw Response Records (Q1 → Q75 Complete)' },
                 { id: 'analytics', label: 'Calculated 18 Dimensions & Aspect Scores' },
                 { id: 'quality', label: 'Data Quality & Audit Logs' },
               ].map((opt) => (

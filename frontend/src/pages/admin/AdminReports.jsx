@@ -3,7 +3,7 @@ import { FileText, Download, Sparkles, CheckCircle2 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 
 const REPORT_TEMPLATES = [
-  { id: 'executive-summary', title: 'Executive Summary Brief', description: 'High-level population trends, KPI summary, and top dimension insights across 207 questions.', format: 'PDF / Markdown' },
+  { id: 'executive-summary', title: 'Executive Summary Brief', description: 'High-level population trends, KPI summary, and top dimension insights across 75 questions.', format: 'PDF / Markdown' },
   { id: '360-dimensions', title: '360° Life Orientation Detailed Report', description: 'Comprehensive statistical breakdown of all 18 core analytical dimensions and aspect scores.', format: 'PDF / Excel' },
   { id: 'demographic-benchmarks', title: 'Demographic & Socio-Economic Benchmarks', description: 'Cross-tabulation matrix breaking down scores by age, gender, residence, and financial background.', format: 'Excel / CSV' },
   { id: 'quality-audit', title: 'Data Quality & Integrity Audit', description: 'Methodological checks, completion speed distributions, attention check statistics, and anomaly flags.', format: 'PDF' },

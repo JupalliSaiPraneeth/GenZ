@@ -68,7 +68,7 @@ export default function AdminSegments() {
           <span>Descriptive Analytical Personas Framework</span>
         </div>
         <p className="text-xs text-[#53656A] font-medium">
-          Data-driven respondent clusters derived from 207-question response profiles. These represent descriptive analytical segments, not psychological diagnoses.
+          Data-driven respondent clusters derived from 75-question response profiles. These represent descriptive analytical segments, not psychological diagnoses.
         </p>
       </div>
 

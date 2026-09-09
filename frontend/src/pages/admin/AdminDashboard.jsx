@@ -162,7 +162,7 @@ export default function AdminDashboard() {
             <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">
               {loading ? '...' : kpis?.totalResponses}
             </h3>
-            <span className="text-xs text-[#075D63] font-bold mt-0.5 block">Across 207 Questions</span>
+            <span className="text-xs text-[#075D63] font-bold mt-0.5 block">Across 75 Questions</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#109A9B] flex items-center justify-center border border-teal-200">
             <Layers className="w-6 h-6" />
@@ -272,7 +272,7 @@ export default function AdminDashboard() {
             Major Analytical Dimensions Overview (0 – 100% Benchmark Score)
           </h3>
           <p className="text-xs text-[#53656A] font-medium">
-            Aggregated population mean index scores calculated across all 207 study items
+            Aggregated population mean index scores calculated across all 75 study items
           </p>
         </div>
 

@@ -119,85 +119,147 @@ export default function AdminRespondents() {
       {/* RESPONDENTS TABLE CONTAINER */}
       <div className="bg-white rounded-3xl border border-[#109A9B]/20 shadow-md overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-medium">
+          <table className="w-full text-left text-xs font-medium border-collapse">
             <thead className="bg-[#EAF6F6] text-[#063E46] font-bold uppercase text-[10px] tracking-wider border-b border-[#109A9B]/20">
               <tr>
-                <th className="p-4">Respondent ID</th>
-                <th className="p-4">Participant Name</th>
-                <th className="p-4">Age / Gender</th>
-                <th className="p-4">Status & Field</th>
-                <th className="p-4">Residence</th>
-                <th className="p-4">Progress %</th>
-                <th className="p-4">Duration</th>
-                <th className="p-4">Quality Status</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="py-3.5 px-4 sm:px-5">Participant</th>
+                <th className="py-3.5 px-4 sm:px-5">Email</th>
+                <th className="py-3.5 px-4 sm:px-5">Progress %</th>
+                <th className="py-3.5 px-4 sm:px-5">Evaluation Status</th>
+                <th className="py-3.5 px-4 sm:px-5">Certificate ID</th>
+                <th className="py-3.5 px-4 sm:px-5">Lucky Draw</th>
+                <th className="py-3.5 px-4 sm:px-5 text-right sticky right-0 z-10 bg-[#EAF6F6] shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="p-8 text-center text-slate-400 font-bold">
-                    Querying live database records...
+                  <td colSpan={7} className="p-8 text-center text-slate-400 font-bold">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 rounded-full border-2 border-[#109A9B] border-t-transparent animate-spin" />
+                      <span>Querying live database records...</span>
+                    </div>
                   </td>
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="p-8 text-center text-slate-500 font-bold">
+                  <td colSpan={7} className="p-8 text-center text-slate-500 font-bold">
                     No respondents found matching the current search filters.
                   </td>
                 </tr>
               ) : (
                 currentItems.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4 font-mono font-bold text-[#075D63]">{r.id}</td>
-                    <td className="p-4 font-bold text-[#10242C]">{r.name}</td>
-                    <td className="p-4">
-                      <span className="font-bold text-[#10242C]">{r.ageGroup}</span>
-                      <span className="text-[11px] text-[#53656A] block">{r.gender}</span>
-                    </td>
-                    <td className="p-4">
-                      <span className="font-bold text-[#10242C] block">{r.currentStatus}</span>
-                      <span className="text-[11px] text-[#075D63] font-semibold">{r.fieldOfStudy}</span>
-                    </td>
-                    <td className="p-4 text-[#53656A] font-semibold">{r.childhoodResidence}</td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-[#075D63]">{r.completionPct}%</span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                            r.completionStatus === 'Completed'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                              : 'bg-amber-50 text-amber-900 border-amber-200'
-                          }`}
-                        >
-                          {r.completionStatus}
-                        </span>
+                  <tr key={r.id} className="group hover:bg-[#F4FBFB]/80 transition-colors">
+                    <td className="py-3.5 px-4 sm:px-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#063E46] to-[#109A9B] text-[#FFF8E8] flex items-center justify-center font-black text-xs shadow-sm shrink-0 uppercase">
+                          {r.name ? r.name.charAt(0) : 'P'}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-[#10242C] text-xs sm:text-sm truncate group-hover:text-[#109A9B] transition-colors">
+                            {r.name || 'Anonymous Participant'}
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-400 truncate">
+                            ID: #{r.id ? r.id.substring(0, 8) : 'N/A'}
+                          </div>
+                        </div>
                       </div>
                     </td>
-                    <td className="p-4 text-[#53656A] font-mono">{r.durationMinutes}</td>
-                    <td className="p-4">
+                    <td className="py-3.5 px-4 sm:px-5">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                          r.qualityStatus === 'Verified'
-                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                            : 'bg-red-50 text-red-700 border-red-200'
-                        }`}
+                        className="text-[#53656A] font-semibold text-xs truncate max-w-[180px] sm:max-w-[220px] block"
+                        title={r.email || 'N/A'}
                       >
-                        {r.qualityStatus === 'Verified' ? (
-                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                        ) : (
-                          <AlertTriangle className="w-3 h-3 text-red-500" />
-                        )}
-                        <span>{r.qualityStatus}</span>
+                        {r.email || 'N/A'}
                       </span>
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="py-3.5 px-4 sm:px-5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex-1 bg-slate-100 h-2 rounded-full min-w-[50px] max-w-[70px] overflow-hidden hidden sm:block">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              r.completionPct === 100
+                                ? 'bg-emerald-500'
+                                : r.completionPct > 50
+                                ? 'bg-[#109A9B]'
+                                : 'bg-amber-500'
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(0, r.completionPct || 0))}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="font-extrabold text-[#075D63] text-xs">{r.completionPct || 0}%</span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${
+                              r.completionStatus === 'Completed'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : 'bg-amber-50 text-amber-900 border-amber-200'
+                            }`}
+                          >
+                            {r.completionStatus}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 sm:px-5">
+                      <div className="whitespace-nowrap">
+                        {r.evaluationStatus === 'approved' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-200 shadow-2xs">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>Approved</span>
+                          </span>
+                        )}
+                        {r.evaluationStatus === 'pending_evaluation' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-900 text-[11px] font-bold rounded-full border border-amber-200 shadow-2xs">
+                            <Clock className="w-3 h-3 text-amber-600" />
+                            <span>Pending Review</span>
+                          </span>
+                        )}
+                        {r.evaluationStatus === 'rejected' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-800 text-[11px] font-bold rounded-full border border-rose-200 shadow-2xs">
+                            <AlertTriangle className="w-3 h-3 text-rose-600" />
+                            <span>Rejected</span>
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 sm:px-5 font-mono font-semibold text-xs text-[#075D63]">
+                      <div className="whitespace-nowrap">
+                        {r.certificateId ? (
+                          <span className="px-2 py-0.5 bg-slate-100 text-[#075D63] rounded border border-slate-200">
+                            {r.certificateId}
+                          </span>
+                        ) : r.certificateStatus === 'issued' ? (
+                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">
+                            Issued
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-sans italic text-[11px]">Pending</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 sm:px-5">
+                      <div className="whitespace-nowrap">
+                        {r.luckyDrawStatus === 'winner' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-950 text-[11px] font-extrabold rounded-full border border-amber-300 shadow-2xs animate-pulse">
+                            🏆 Winner ({r.luckyDrawPrize || 'Prize Assigned'})
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 font-medium text-xs capitalize">
+                            {r.luckyDrawStatus || 'Pending'}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 sm:px-5 text-right sticky right-0 z-10 bg-white group-hover:bg-[#F4FBFB] transition-colors shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
                       <Link
                         to={`/admin/respondents/${r.id}`}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#EAF6F6] hover:bg-[#109A9B] hover:text-white text-[#075D63] font-bold text-xs border border-[#109A9B]/25 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer whitespace-nowrap"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        <span>View Profile</span>
+                        <span>Evaluate Profile</span>
                       </Link>
                     </td>
                   </tr>

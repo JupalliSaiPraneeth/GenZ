@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, HelpCircle, BarChart2, CheckCircle2, PieChart } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { OFFICIAL_207_QUESTIONS } from '../../data/surveyQuestions';
+import { OFFICIAL_75_QUESTIONS } from '../../data/surveyQuestions';
 import { adminDataService } from '../../services/adminDataService';
 
 export default function AdminResponses() {
@@ -18,7 +18,7 @@ export default function AdminResponses() {
     loadDist();
   }, [selectedQId]);
 
-  const filteredQs = OFFICIAL_207_QUESTIONS.filter(
+  const filteredQs = OFFICIAL_75_QUESTIONS.filter(
     (q) =>
       q.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -28,14 +28,14 @@ export default function AdminResponses() {
   const colors = ['#075D63', '#109A9B', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899', '#10B981'];
 
   return (
-    <AdminLayout title="All Responses Explorer (Q1 – Q207)">
+    <AdminLayout title="All Responses Explorer (Q1 – Q75)">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT COLUMN: QUESTION SELECTOR */}
         <div className="lg:col-span-4 bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-4 max-h-[620px] flex flex-col">
           <div className="space-y-2">
             <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
               <HelpCircle className="w-4 h-4 text-[#109A9B]" />
-              Select Question (207 Total)
+              Select Question (75 Total)
             </h3>
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -43,7 +43,7 @@ export default function AdminResponses() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search Q1-Q207 or keyword..."
+                placeholder="Search Q1-Q75 or keyword..."
                 className="w-full pl-9 pr-3 py-2 rounded-2xl border border-slate-200 text-xs font-semibold outline-none focus:border-[#109A9B]"
               />
             </div>

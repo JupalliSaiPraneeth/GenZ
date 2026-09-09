@@ -18,7 +18,7 @@ class FraudEngine:
         signals = []
 
         # Signal 1: Extremely rapid completion
-        if session_duration_seconds < 120: # < 2 minutes for 207 questions
+        if session_duration_seconds < 120: # < 2 minutes for 75 questions
             risk_score += 45
             signals.append("velocity_anomaly_critical")
         elif session_duration_seconds < 300:

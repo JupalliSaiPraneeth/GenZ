@@ -66,6 +66,7 @@ export default function Survey() {
 
   const [nameInput, setNameInput] = useState(participantName || '');
   const [emailInput, setEmailInput] = useState(participantEmail || '');
+  const [emailError, setEmailError] = useState('');
   const [isSavingName, setIsSavingName] = useState(false);
 
   const currentQuestion = questions[currentQuestionIndex] || questions[0];
@@ -216,9 +217,20 @@ export default function Survey() {
   const handleSaveNameAndStart = async (e) => {
     if (e) e.preventDefault();
     if (!nameInput.trim()) return;
+    if (!emailInput.trim()) {
+      setEmailError('Please enter a valid email address!');
+      return;
+    }
+    setEmailError('');
     setIsSavingName(true);
-    await setParticipantDetails(nameInput.trim(), emailInput.trim());
+    const res = await setParticipantDetails(nameInput.trim(), emailInput.trim());
     setIsSavingName(false);
+
+    if (res?.error) {
+      setEmailError(res.error);
+      return;
+    }
+
     setOnboardingStep(3);
   };
 
@@ -317,7 +329,7 @@ export default function Survey() {
 
               {/* Description */}
               <p className="text-[#53656A] text-xs sm:text-base leading-relaxed max-w-[480px] mx-auto mb-4 sm:mb-6 font-medium">
-                Welcome to India's premier youth perspective research study. We have organized the <strong className="text-[#063E46] font-bold">207 questions</strong> into <strong className="text-[#063E46] font-bold">4 simple chapters</strong> so your journey feels fast, smooth, and engaging.
+                Welcome to India's premier youth perspective research study. We have organized the <strong className="text-[#063E46] font-bold">75 questions</strong> into <strong className="text-[#063E46] font-bold">4 simple chapters</strong> so your journey feels fast, smooth, and engaging.
               </p>
 
               {/* Primary CTA Button */}
@@ -346,7 +358,7 @@ export default function Survey() {
                     <Clock className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#109A9B]" />
                   </div>
                   <div className="min-w-0">
-                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">15–20 Mins</span>
+                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">10–12 Mins</span>
                     <span className="block text-[9px] sm:text-[11px] text-[#53656A] font-medium leading-tight truncate">Quick & engaging</span>
                   </div>
                 </div>
@@ -356,7 +368,7 @@ export default function Survey() {
                     <FileText className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#109A9B]" />
                   </div>
                   <div className="min-w-0">
-                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">207 Questions</span>
+                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">75 Questions</span>
                     <span className="block text-[9px] sm:text-[11px] text-[#53656A] font-medium leading-tight truncate">Across 4 chapters</span>
                   </div>
                 </div>
@@ -429,11 +441,11 @@ export default function Survey() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 mb-2.5 py-1.5 px-2 rounded-xl bg-[#EAF6F6]/90 border border-[#109A9B]/20 font-inter">
                   <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-[#075D63] p-0.5">
                     <BarChart2 className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
-                    <span>207 Questions</span>
+                    <span>75 Questions</span>
                   </div>
                   <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-[#075D63] p-0.5">
                     <Clock className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
-                    <span>15–20 Mins</span>
+                    <span>10–12 Mins</span>
                   </div>
                   <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-[#075D63] p-0.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
@@ -459,15 +471,15 @@ export default function Survey() {
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-sora font-extrabold text-[#10242C] text-[11px] sm:text-xs tracking-wide uppercase truncate">
-                          KNOW YOUR EVERYDAY YOU
+                          PERSONAL LIFESTYLE & WELL-BEING
                         </h4>
                         <p className="text-[10px] text-[#53656A] font-inter font-medium truncate">
-                          Education • Health • Lifestyle
+                          Health • Routines • Entertainment
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-1.5">
-                      <span className="text-[10px] font-inter font-semibold text-[#075D63] bg-white px-2 py-0.5 rounded-full border border-[#109A9B]/20">Q1–35</span>
+                      <span className="text-[10px] font-inter font-semibold text-[#075D63] bg-white px-2 py-0.5 rounded-full border border-[#109A9B]/20">Q1–30</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#10242C]" />
                     </div>
                   </div>
@@ -483,15 +495,15 @@ export default function Survey() {
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-sora font-extrabold text-[#10242C] text-[11px] sm:text-xs tracking-wide uppercase truncate">
-                          YOUR WORLD & CONNECTIONS
+                          RELATIONSHIPS, CAREER & MONEY
                         </h4>
                         <p className="text-[10px] text-[#53656A] font-inter font-medium truncate">
-                          Entertainment • Career
+                          Family • Career • Future Aspirations
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-1.5">
-                      <span className="text-[10px] font-inter font-semibold text-amber-900 bg-white px-2 py-0.5 rounded-full border border-amber-200">Q36–90</span>
+                      <span className="text-[10px] font-inter font-semibold text-amber-900 bg-white px-2 py-0.5 rounded-full border border-amber-200">Q31–49</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#10242C]" />
                     </div>
                   </div>
@@ -507,15 +519,15 @@ export default function Survey() {
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-sora font-extrabold text-[#10242C] text-[11px] sm:text-xs tracking-wide uppercase truncate">
-                          BUILD YOUR FUTURE
+                          TECHNOLOGY, VALUES & CULTURE
                         </h4>
                         <p className="text-[10px] text-[#53656A] font-inter font-medium truncate">
-                          Finance • Skills • AI
+                          AI • Civic Awareness • Beliefs
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-1.5">
-                      <span className="text-[10px] font-inter font-semibold text-purple-900 bg-white px-2 py-0.5 rounded-full border border-purple-200">Q91–130</span>
+                      <span className="text-[10px] font-inter font-semibold text-purple-900 bg-white px-2 py-0.5 rounded-full border border-purple-200">Q50–66</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#10242C]" />
                     </div>
                   </div>
@@ -531,15 +543,15 @@ export default function Survey() {
                       </div>
                       <div className="min-w-0">
                         <h4 className="font-sora font-extrabold text-[#10242C] text-[11px] sm:text-xs tracking-wide uppercase truncate">
-                          YOUR VOICE, YOUR FUTURE
+                          ENGINEERING COLLEGE EXPERIENCE
                         </h4>
                         <p className="text-[10px] text-[#53656A] font-inter font-medium truncate">
-                          Society • Aspirations
+                          Campus • Facilities • Teacher Relations
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0 ml-1.5">
-                      <span className="text-[10px] font-inter font-semibold text-rose-900 bg-white px-2 py-0.5 rounded-full border border-rose-200">Q131–207</span>
+                      <span className="text-[10px] font-inter font-semibold text-rose-900 bg-white px-2 py-0.5 rounded-full border border-rose-200">Q67–75</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#10242C]" />
                     </div>
                   </div>
@@ -585,7 +597,7 @@ export default function Survey() {
   if (onboardingStep === 2) {
     return (
       <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto flex items-center justify-center pt-[72px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] touch-auto sm:touch-none overscroll-none select-none">
-        
+
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
         <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
 
@@ -691,18 +703,32 @@ export default function Survey() {
             {/* EMAIL INPUT (Directly under Name) */}
             <div className="space-y-1 sm:space-y-1.5">
               <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#063E46]">
-                Email Address (Optional - To Save & Continue Progress)
+                Email Address *
               </label>
               <input
                 type="email"
+                required
                 value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
+                onChange={(e) => {
+                  setEmailInput(e.target.value);
+                  setEmailError('');
+                }}
                 placeholder="e.g. alex@example.com"
-                className="w-full px-4 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl border-2 border-slate-200 focus:border-[#109A9B] focus:ring-4 focus:ring-[#109A9B]/15 outline-none font-medium text-sm sm:text-base text-[#10242C] transition-all"
+                className={`w-full px-4 sm:px-5 py-2.5 sm:py-3.5 rounded-2xl border-2 outline-none font-medium text-sm sm:text-base text-[#10242C] transition-all ${
+                  emailError
+                    ? 'border-rose-500 bg-rose-50/40 focus:border-rose-600 focus:ring-4 focus:ring-rose-500/20'
+                    : 'border-slate-200 focus:border-[#109A9B] focus:ring-4 focus:ring-[#109A9B]/15'
+                }`}
               />
-              <p className="text-[10px] sm:text-[11px] text-[#53656A] font-medium pl-1 leading-normal">
-                If your email is already registered, we'll restore your previous answers so you can continue where you left off.
-              </p>
+              {emailError ? (
+                <p className="text-rose-600 font-sora font-extrabold text-xs sm:text-sm pl-1 flex items-center gap-1.5 mt-1 animate-bounce">
+                  <span>⚠️ {emailError}</span>
+                </p>
+              ) : (
+                <p className="text-[10px] sm:text-[11px] text-[#53656A] font-medium pl-1 leading-normal">
+                  Each email can only create one user account.
+                </p>
+              )}
             </div>
 
             <div className="bg-[#EAF6F6] p-2.5 sm:p-3.5 rounded-2xl border border-[#109A9B]/20 text-[11px] sm:text-xs text-[#075D63] flex items-center gap-2 font-medium">
@@ -720,7 +746,7 @@ export default function Survey() {
               </button>
               <button
                 type="submit"
-                disabled={!nameInput.trim() || isSavingName}
+                disabled={!nameInput.trim() || !emailInput.trim() || isSavingName}
                 className="flex-1 py-2.5 sm:py-3.5 px-3 sm:px-4 bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs sm:text-base rounded-2xl shadow-lg shadow-teal-900/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50"
               >
                 {isSavingName ? (
@@ -856,8 +882,8 @@ export default function Survey() {
                       onClick={jumpToNextSkippedQuestion}
                       disabled={skippedCount === 0}
                       className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 rounded-full border text-[11px] sm:text-xs font-sora font-extrabold shadow-2xs transition-all ${skippedCount > 0
-                          ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 cursor-pointer hover:scale-105 active:scale-95'
-                          : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                        ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 cursor-pointer hover:scale-105 active:scale-95'
+                        : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
                         }`}
                       title={skippedCount > 0 ? `Jump to skipped question Q${nextSkippedNumber}` : "No skipped questions"}
                     >
@@ -874,7 +900,7 @@ export default function Survey() {
 
                 {/* Question Text */}
                 <h2 className="font-sora font-extrabold text-lg sm:text-xl text-[#10242C] mb-1 leading-snug tracking-tight flex-shrink-0">
-                  Q{currentQuestionIndex + 1}. {currentQuestion?.text?.replace(/^Q\d+\.\s*/, '')}
+                  Q{currentQuestionIndex + 1}. {currentQuestion?.text?.replace(/^(Q\d+|\d+)\.\s*/i, '')}
                 </h2>
 
                 {/* Guidance Subtitle */}

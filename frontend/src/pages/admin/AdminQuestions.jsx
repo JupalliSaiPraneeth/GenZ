@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Search, HelpCircle, Layers, ChevronRight, CheckCircle2 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { OFFICIAL_207_QUESTIONS, SURVEY_SECTIONS } from '../../data/surveyQuestions';
+import { OFFICIAL_75_QUESTIONS, SURVEY_SECTIONS } from '../../data/surveyQuestions';
 
 export default function AdminQuestions() {
   const [selectedSection, setSelectedSection] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredQs = OFFICIAL_207_QUESTIONS.filter((q) => {
+  const filteredQs = OFFICIAL_75_QUESTIONS.filter((q) => {
     const matchesSec = selectedSection === 'all' || q.sectionId === selectedSection;
     const matchesQuery =
       q.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -18,14 +18,14 @@ export default function AdminQuestions() {
   });
 
   return (
-    <AdminLayout title="Questionnaire Structure & Question Explorer (207 Questions)">
+    <AdminLayout title="Questionnaire Structure & Question Explorer (75 Questions)">
       {/* SECTION TABS & SEARCH TOOLBAR */}
       <div className="bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="font-heading font-extrabold text-lg text-[#10242C] flex items-center gap-2">
               <Layers className="w-5 h-5 text-[#109A9B]" />
-              Official 207-Question Study Blueprint
+              Official 75-Question Study Blueprint
             </h2>
             <p className="text-xs text-[#53656A] font-medium">
               Filter questions by questionnaire section, scale type, and construct topic
@@ -38,7 +38,7 @@ export default function AdminQuestions() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Q1-Q207 or keyword..."
+              placeholder="Search Q1-Q75 or keyword..."
               className="w-full pl-10 pr-4 py-2 rounded-2xl border border-slate-200 text-xs font-semibold outline-none focus:border-[#109A9B]"
             />
           </div>
@@ -52,7 +52,7 @@ export default function AdminQuestions() {
               selectedSection === 'all' ? 'bg-[#075D63] text-white shadow-sm' : 'bg-slate-100 text-[#53656A] hover:bg-slate-200'
             }`}
           >
-            All Sections (207 Qs)
+            All Sections (75 Qs)
           </button>
 
           {SURVEY_SECTIONS.map((sec) => (
