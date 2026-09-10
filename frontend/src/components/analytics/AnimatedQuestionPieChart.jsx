@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import {
   Sparkles,
@@ -10,6 +11,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import gsap from 'gsap';
+import { adminAuthService } from '../../services/adminAuthService';
 
 export default function AnimatedQuestionPieChart({
   questionObj,
@@ -18,11 +20,21 @@ export default function AnimatedQuestionPieChart({
   onSelectNext,
   totalQuestionsCount = 75,
   currentIndex = 0,
+  isAdmin,
 }) {
   const containerRef = useRef(null);
   const pieCardRef = useRef(null);
   const centerBadgeRef = useRef(null);
   const legendRef = useRef(null);
+
+  let location;
+  try {
+    location = useLocation();
+  } catch (e) {
+    location = { pathname: '' };
+  }
+  const isUnderAdminRoute = location?.pathname?.startsWith('/admin') ?? false;
+  const showVoteCounts = isAdmin !== undefined ? isAdmin : (isUnderAdminRoute && adminAuthService.isAuthenticated());
 
   // Trigger GSAP entrance animation whenever questionObj changes
   useEffect(() => {
@@ -166,11 +178,15 @@ export default function AnimatedQuestionPieChart({
                     ))}
                   </Pie>
                   <Tooltip
+                    wrapperStyle={{ zIndex: 100, pointerEvents: 'none' }}
                     formatter={(val, name, props) => {
                       const item = props?.payload;
                       const count = item?.count !== undefined ? item.count : 0;
                       const pct = item?.pct !== undefined ? item.pct : 0;
-                      return [`${pct}% (${count} votes)`, item?.name || name];
+                      return [
+                        showVoteCounts ? `${pct}% (${count} votes)` : `${pct}%`,
+                        item?.name || name,
+                      ];
                     }}
                   />
                 </PieChart>
@@ -179,7 +195,7 @@ export default function AnimatedQuestionPieChart({
               {/* CENTER DONUT ANIMATED BADGE */}
               <div
                 ref={centerBadgeRef}
-                className="absolute inset-0 m-auto w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white border-2 border-[#109A9B]/30 shadow-md flex flex-col items-center justify-center text-center p-1 pointer-events-none z-10"
+                className="absolute inset-0 m-auto w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-2 border-[#109A9B]/30 shadow-md flex flex-col items-center justify-center text-center p-1 pointer-events-none z-0"
               >
                 <span className="text-[9px] sm:text-[10px] font-bold text-[#53656A] uppercase tracking-tighter">
                   {analysisData.isLikert ? 'Avg Likert' : 'Top Choice %'}
@@ -196,9 +212,11 @@ export default function AnimatedQuestionPieChart({
               </div>
             </div>
 
-            <span className="text-[10px] sm:text-[11px] text-[#53656A] font-semibold mt-0.5 sm:mt-1">
-              Total Sample: {totalResponses} Recorded Answer(s)
-            </span>
+            {showVoteCounts && (
+              <span className="text-[10px] sm:text-[11px] text-[#53656A] font-semibold mt-0.5 sm:mt-1">
+                Total Sample: {totalResponses} Recorded Answer(s)
+              </span>
+            )}
           </div>
 
           {/* RIGHT: GSAP ANIMATED STAGGERED OPTION BREAKDOWN CARDS */}
@@ -224,7 +242,9 @@ export default function AnimatedQuestionPieChart({
                   </div>
 
                   <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <span className="text-[10px] sm:text-[11px] text-[#53656A] font-medium">{opt.count} votes</span>
+                    {showVoteCounts && (
+                      <span className="text-[10px] sm:text-[11px] text-[#53656A] font-medium">{opt.count} votes</span>
+                    )}
                     <span className="font-heading font-extrabold text-xs sm:text-sm text-[#075D63] bg-white px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
                       {opt.pct}%
                     </span>

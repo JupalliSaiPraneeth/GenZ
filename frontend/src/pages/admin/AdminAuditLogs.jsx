@@ -2,23 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { History, ShieldCheck, Clock, UserCheck } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminAuthService } from '../../services/adminAuthService';
+import { fetchAuditLogsFromSupabase } from '../../services/supabaseClient';
 
 export default function AdminAuditLogs() {
   const [logs, setLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const auditData = adminAuthService.getAuditLogs();
-    if (auditData.length === 0) {
-      // Baseline initial log entries
-      const baseline = [
-        { id: 'log_01', timestamp: new Date().toISOString(), action: 'LOGIN', target: 'Admin Portal', status: 'SUCCESS', details: 'Authenticated via admin credentials', actor: 'admin' },
-        { id: 'log_02', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'VIEW_RESPONDENT', target: 'RESP-9001 (Alex Rivera)', status: 'SUCCESS', details: 'Inspected 360° Radar Profile & Q1-Q75 answers', actor: 'admin' },
-        { id: 'log_03', timestamp: new Date(Date.now() - 7200000).toISOString(), action: 'EXPORT_DATA', target: 'Respondents CSV', status: 'SUCCESS', details: 'Exported active respondent dataset', actor: 'admin' },
-      ];
-      setLogs(baseline);
-    } else {
-      setLogs(auditData);
+    async function loadLogs() {
+      setIsLoading(true);
+      try {
+        const dbLogs = await fetchAuditLogsFromSupabase();
+        const localLogs = adminAuthService.getAuditLogs();
+        const combined = [...dbLogs, ...localLogs];
+        if (combined.length === 0) {
+          const baseline = [
+            { id: 'log_01', timestamp: new Date().toISOString(), action: 'LOGIN', target: 'Admin Portal', status: 'SUCCESS', details: 'Authenticated via admin credentials', actor: 'admin' },
+            { id: 'log_02', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'VIEW_RESPONDENT', target: 'RESP-9001 (Alex Rivera)', status: 'SUCCESS', details: 'Inspected 360° Radar Profile & Q1-Q75 answers', actor: 'admin' },
+            { id: 'log_03', timestamp: new Date(Date.now() - 7200000).toISOString(), action: 'EXPORT_DATA', target: 'Respondents CSV', status: 'SUCCESS', details: 'Exported active respondent dataset', actor: 'admin' },
+          ];
+          setLogs(baseline);
+        } else {
+          setLogs(combined);
+        }
+      } catch (err) {
+        console.error('Error fetching audit logs:', err);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    loadLogs();
   }, []);
 
   return (

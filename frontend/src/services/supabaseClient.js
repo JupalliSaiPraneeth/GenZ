@@ -37,7 +37,11 @@ export function ensureValidUUID(idStr) {
  * Helper to convert question code/id into canonical key format (e.g. 'q1')
  */
 export function toUuidQuestionId(questionId) {
-  return String(questionId).toLowerCase();
+  if (!questionId) return 'd0000000-0000-4000-8000-000000000001';
+  const str = String(questionId).toLowerCase().trim();
+  if (isValidUUID(str)) return str;
+  const hex = Array.from(str).map((c) => c.charCodeAt(0).toString(16)).join('').padEnd(12, '0').slice(0, 12);
+  return `d0000000-0000-4000-8000-${hex}`;
 }
 
 export function fromUuidQuestionId(uuidStr) {
@@ -212,23 +216,48 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
       }]);
     }
 
-    // 2. Upsert response row into `survey_responses`
-    const payload = {
-      participant_id: validParticipantId,
-      session_id: validSessionId,
-      question_id: qIdKey,
-      question_code: qCodeKey,
-      response_value: typeof responseValue === 'object' ? responseValue : { value: responseValue },
-      device_timestamp: deviceTimestamp,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error: upsertErr } = await supabase
+    // 2. Check if response row already exists in `survey_responses` to avoid 409 Conflict
+    const { data: existingResp } = await supabase
       .from('survey_responses')
-      .upsert([payload], { onConflict: 'participant_id,question_id' });
+      .select('id')
+      .eq('participant_id', validParticipantId)
+      .eq('question_id', qIdKey)
+      .maybeSingle();
 
-    if (upsertErr) {
-      console.warn('Supabase sync response notice:', upsertErr.message);
+    if (existingResp?.id) {
+      const { error: updateErr } = await supabase
+        .from('survey_responses')
+        .update({
+          session_id: validSessionId,
+          question_code: qCodeKey,
+          response_value: typeof responseValue === 'object' ? responseValue : { value: responseValue },
+          device_timestamp: deviceTimestamp,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingResp.id);
+
+      if (updateErr) {
+        console.warn('Supabase update response notice:', updateErr.message);
+      }
+    } else {
+      const { error: insertErr } = await supabase
+        .from('survey_responses')
+        .insert([payload]);
+
+      if (insertErr) {
+        // Fallback update if insert hits duplicate or race condition
+        await supabase
+          .from('survey_responses')
+          .update({
+            session_id: validSessionId,
+            question_code: qCodeKey,
+            response_value: typeof responseValue === 'object' ? responseValue : { value: responseValue },
+            device_timestamp: deviceTimestamp,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('participant_id', validParticipantId)
+          .eq('question_id', qIdKey);
+      }
     }
 
     // 3. Count total answers and update `participants` table
@@ -356,6 +385,242 @@ export async function evaluateParticipant(participantId, evaluationData = {}) {
     console.warn('evaluateParticipant error:', err);
     return { error: err.message || 'Failed to update evaluation' };
   }
+}
+
+let cachedAdminSystemParticipantId = null;
+
+export async function getOrCreateAdminSystemParticipant() {
+  if (cachedAdminSystemParticipantId) return cachedAdminSystemParticipantId;
+  if (!isSupabaseConfigured) return null;
+
+  try {
+    const SYSTEM_ADMIN_EMAIL = 'admin_blueprint@genzvoices.org';
+    const { data: existing } = await supabase
+      .from('participants')
+      .select('id')
+      .eq('email', SYSTEM_ADMIN_EMAIL)
+      .maybeSingle();
+
+    if (existing?.id) {
+      cachedAdminSystemParticipantId = existing.id;
+      return existing.id;
+    }
+
+    const newId = generateValidUUID();
+    const payload = {
+      id: newId,
+      name: 'ADMIN_BLUEPRINT_CONFIG',
+      email: SYSTEM_ADMIN_EMAIL,
+      status: 'completed',
+      total_answers_count: 0,
+      device_timestamp: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: created, error } = await supabase
+      .from('participants')
+      .insert([payload])
+      .select('id')
+      .maybeSingle();
+
+    if (created?.id) {
+      cachedAdminSystemParticipantId = created.id;
+      return created.id;
+    }
+
+    const { data: retryFetch } = await supabase
+      .from('participants')
+      .select('id')
+      .eq('email', SYSTEM_ADMIN_EMAIL)
+      .maybeSingle();
+
+    if (retryFetch?.id) {
+      cachedAdminSystemParticipantId = retryFetch.id;
+      return retryFetch.id;
+    }
+  } catch (err) {
+    console.warn('getOrCreateAdminSystemParticipant error:', err);
+  }
+  return null;
+}
+
+/**
+ * Upsert question into Supabase `survey_questions` table
+ */
+async function upsertToSurveyQuestions(questionObj) {
+  if (!questionObj || !isSupabaseConfigured) return false;
+  try {
+    const qId = String(questionObj.id).toLowerCase();
+    const qCode = String(questionObj.code || questionObj.question_code || '').toUpperCase();
+    const numOrder = typeof questionObj.display_order === 'number'
+      ? questionObj.display_order
+      : (parseInt(qCode.replace(/\D/g, ''), 10) || 1);
+
+    const sqPayload = {
+      id: qId,
+      question_code: qCode,
+      section_id: questionObj.sectionId || questionObj.section_id || 'sec-1',
+      topic: questionObj.topic || 'General',
+      question_text: questionObj.text || questionObj.question_text || '',
+      display_order: numOrder,
+    };
+
+    const { error } = await supabase
+      .from('survey_questions')
+      .upsert([sqPayload], { onConflict: 'id' });
+
+    if (!error) return true;
+
+    // Handle 401 Unauthorized or 42501 RLS policy gracefully
+    if (error.status === 401 || error.code === '42501') {
+      console.info('Supabase survey_questions RLS notice: To enable direct DB writes for admin questions, run the RLS policies in Supabase SQL editor.');
+      return false;
+    }
+
+    const { data: existing } = await supabase
+      .from('survey_questions')
+      .select('id')
+      .eq('id', qId)
+      .maybeSingle();
+
+    if (existing?.id) {
+      await supabase
+        .from('survey_questions')
+        .update(sqPayload)
+        .eq('id', qId);
+    } else {
+      await supabase
+        .from('survey_questions')
+        .insert([sqPayload]);
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Log to `data_logs` table in Supabase
+ */
+async function logAdminAuditAction(action, details = {}) {
+  if (!isSupabaseConfigured) return;
+  try {
+    const systemAdminId = await getOrCreateAdminSystemParticipant();
+    await supabase.from('data_logs').insert([{
+      participant_id: systemAdminId || null,
+      action,
+      device_timestamp: new Date().toISOString(),
+      details,
+      created_at: new Date().toISOString(),
+    }]);
+  } catch (e) {}
+}
+
+/**
+ * Sync Question metadata & definition to Supabase DB (survey_questions & data_logs)
+ */
+export async function syncQuestionToSupabase(questionObj, action = 'UPSERT') {
+  if (!questionObj || !isSupabaseConfigured) return false;
+  try {
+    const ok = await upsertToSurveyQuestions(questionObj);
+    await logAdminAuditAction(`ADMIN_${action}_QUESTION`, { questionId: questionObj.id, code: questionObj.code });
+    return ok;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Sync entire questions blueprint list to Supabase DB
+ */
+export async function syncAllQuestionsToSupabase(questionsList) {
+  if (!Array.isArray(questionsList) || !isSupabaseConfigured) return;
+  try {
+    for (const q of questionsList) {
+      await upsertToSurveyQuestions(q);
+    }
+    await logAdminAuditAction('SYNC_QUESTION_BLUEPRINT', { totalQuestions: questionsList.length });
+  } catch (e) {
+    console.warn('syncAllQuestionsToSupabase notice:', e);
+  }
+}
+
+/**
+ * Delete Question from Supabase DB
+ */
+export async function deleteQuestionFromSupabase(questionId) {
+  if (!questionId || !isSupabaseConfigured) return false;
+  try {
+    const qIdKey = String(questionId).toLowerCase();
+    const { error } = await supabase.from('survey_questions').delete().eq('id', qIdKey);
+    if (!error) {
+      await logAdminAuditAction('ADMIN_DELETE_QUESTION', { questionId: qIdKey });
+      return true;
+    }
+    if (error.status === 401 || error.code === '42501') {
+      console.info('Supabase survey_questions delete notice: RLS policy grant required in SQL editor.');
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Fetch stored questions blueprint from Supabase DB
+ */
+export async function fetchQuestionsFromSupabase() {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data: qData, error } = await supabase
+      .from('survey_questions')
+      .select('*')
+      .order('display_order', { ascending: true });
+
+    if (!error && qData && qData.length > 0) {
+      return qData.map((item) => ({
+        id: String(item.id).toLowerCase(),
+        code: String(item.question_code || '').toUpperCase(),
+        sectionId: item.section_id || 'sec-1',
+        topic: item.topic || 'General',
+        text: item.question_text || '',
+        display_order: item.display_order,
+      }));
+    }
+  } catch (err) {
+    console.warn('fetchQuestionsFromSupabase notice:', err);
+  }
+  return null;
+}
+
+/**
+ * Fetch stored audit logs from Supabase DB `data_logs` table
+ */
+export async function fetchAuditLogsFromSupabase() {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data, error } = await supabase
+      .from('data_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (!error && data && data.length > 0) {
+      return data.map((item) => ({
+        id: item.id,
+        timestamp: item.device_timestamp || item.created_at,
+        action: item.action,
+        target: item.details?.target || item.details?.questionId || item.details?.email || 'System Record',
+        status: 'SUCCESS',
+        details: typeof item.details === 'object' ? JSON.stringify(item.details) : String(item.details || 'System Action'),
+        actor: 'admin',
+      }));
+    }
+  } catch (e) {
+    console.warn('fetchAuditLogsFromSupabase notice:', e);
+  }
+  return [];
 }
 
 // Backward compatibility exports

@@ -6,16 +6,21 @@ import { isSupabaseConfigured } from '../../services/supabaseClient';
 
 export default function AdminDatabase() {
   const [stats, setStats] = useState(null);
+  const [tableMetrics, setTableMetrics] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadStats() {
+    async function loadData() {
       setLoading(true);
-      const res = await adminDataService.getDashboardKPIs();
-      setStats(res);
+      const [kpiRes, metricsRes] = await Promise.all([
+        adminDataService.getDashboardKPIs(),
+        adminDataService.getDatabaseTableMetrics(),
+      ]);
+      setStats(kpiRes);
+      setTableMetrics(metricsRes);
       setLoading(false);
     }
-    loadStats();
+    loadData();
   }, []);
 
   return (
@@ -71,28 +76,28 @@ export default function AdminDatabase() {
         </div>
 
         <div className="space-y-3">
-          {[
-            { table: 'survey_responses', engine: 'IndexedDB & Supabase', records: stats?.totalResponses || 12480, status: 'Synced', latency: '12ms' },
-            { table: 'survey_sessions', engine: 'IndexedDB & Supabase', records: stats?.totalRespondents || 14, status: 'Synced', latency: '18ms' },
-            { table: 'certificates', engine: 'Supabase Postgres', records: 10920, status: 'Healthy', latency: '24ms' },
-          ].map((t, idx) => (
-            <div key={idx} className="p-4 rounded-2xl border border-slate-200 bg-[#FAF7F0] flex items-center justify-between text-xs font-semibold">
-              <div>
-                <span className="font-mono font-bold text-sm text-[#075D63] block">{t.table}</span>
-                <span className="text-[#53656A] text-[11px]">Storage Layer: {t.engine}</span>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <span className="font-bold text-[#10242C] block">{t.records} Records</span>
-                  <span className="text-[10px] text-slate-400 font-mono">Latency: {t.latency}</span>
+          {loading ? (
+            <div className="p-4 text-xs text-[#53656A] font-medium animate-pulse">Loading live Supabase DB table metrics...</div>
+          ) : (
+            tableMetrics.map((t, idx) => (
+              <div key={idx} className="p-4 rounded-2xl border border-slate-200 bg-[#FAF7F0] flex items-center justify-between text-xs font-semibold">
+                <div>
+                  <span className="font-mono font-bold text-sm text-[#075D63] block">{t.table}</span>
+                  <span className="text-[#53656A] text-[11px]">Storage Layer: {t.engine}</span>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
-                  {t.status}
-                </span>
+
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <span className="font-bold text-[#10242C] block">{t.records} Records</span>
+                    <span className="text-[10px] text-slate-400 font-mono">Latency: {t.latency}</span>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
+                    {t.status}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </AdminLayout>

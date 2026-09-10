@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
@@ -18,13 +18,9 @@ import AdminResponses from './pages/admin/AdminResponses';
 import AdminQuestions from './pages/admin/AdminQuestions';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminComparative from './pages/admin/AdminComparative';
-import AdminSegments from './pages/admin/AdminSegments';
-import AdminDataQuality from './pages/admin/AdminDataQuality';
 import AdminDatabase from './pages/admin/AdminDatabase';
-import AdminReports from './pages/admin/AdminReports';
 import AdminExport from './pages/admin/AdminExport';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
-import AdminSettings from './pages/admin/AdminSettings';
 
 import { useSurveyStore } from './stores/surveyStore';
 import { syncService } from './services/syncService';
@@ -116,22 +112,8 @@ function AppLayout() {
               </AdminProtectedRoute>
             }
           />
-          <Route
-            path="/admin/segments"
-            element={
-              <AdminProtectedRoute>
-                <AdminSegments />
-              </AdminProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/data-quality"
-            element={
-              <AdminProtectedRoute>
-                <AdminDataQuality />
-              </AdminProtectedRoute>
-            }
-          />
+          <Route path="/admin/segments" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/data-quality" element={<Navigate to="/admin/dashboard" replace />} />
           <Route
             path="/admin/database"
             element={
@@ -140,14 +122,7 @@ function AppLayout() {
               </AdminProtectedRoute>
             }
           />
-          <Route
-            path="/admin/reports"
-            element={
-              <AdminProtectedRoute>
-                <AdminReports />
-              </AdminProtectedRoute>
-            }
-          />
+          <Route path="/admin/reports" element={<Navigate to="/admin/dashboard" replace />} />
           <Route
             path="/admin/export"
             element={
@@ -164,14 +139,7 @@ function AppLayout() {
               </AdminProtectedRoute>
             }
           />
-          <Route
-            path="/admin/settings"
-            element={
-              <AdminProtectedRoute>
-                <AdminSettings />
-              </AdminProtectedRoute>
-            }
-          />
+          <Route path="/admin/settings" element={<Navigate to="/admin/dashboard" replace />} />
         </Routes>
       </main>
       {!isAdminRoute && <Footer />}

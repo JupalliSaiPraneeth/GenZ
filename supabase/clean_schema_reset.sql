@@ -86,8 +86,11 @@ ALTER TABLE public.participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.survey_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.data_logs ENABLE ROW LEVEL SECURITY;
 
--- Survey Questions: Public Read
-CREATE POLICY "Allow public read on survey_questions" ON public.survey_questions FOR SELECT USING (true);
+-- Survey Questions: Public Read, Insert, Update, Delete
+CREATE POLICY "Allow public select on survey_questions" ON public.survey_questions FOR SELECT USING (true);
+CREATE POLICY "Allow public insert on survey_questions" ON public.survey_questions FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update on survey_questions" ON public.survey_questions FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete on survey_questions" ON public.survey_questions FOR DELETE USING (true);
 
 -- Participants: Public Read, Insert, Update
 CREATE POLICY "Allow public select on participants" ON public.participants FOR SELECT USING (true);

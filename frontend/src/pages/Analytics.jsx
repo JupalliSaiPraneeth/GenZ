@@ -319,30 +319,14 @@ export default function Analytics() {
     <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-y-auto overflow-x-hidden font-inter text-[#10242C]">
 
       {/* TOP TEAL HEADER ATMOSPHERE */}
-      <div className="absolute top-0 left-0 right-0 h-[520px] sm:h-[480px] bg-gradient-to-b from-[#109A9B] via-[#075D63] to-[#063E46] z-0 overflow-hidden" />
+      <div className="absolute top-0 left-0 right-0 h-[200px] sm:h-[220px] bg-gradient-to-b from-[#109A9B] via-[#075D63] to-[#063E46] z-0 overflow-hidden" />
 
       {/* BACKGROUND DECORATIVE GLOW SHAPES */}
       <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12),transparent_65%)] pointer-events-none z-0" />
       <div className="absolute top-10 -left-20 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-[#109A9B]/20 blur-3xl pointer-events-none z-0" />
 
       {/* MAIN CONTENT CONTAINER */}
-      <div className="relative z-10 pt-[85px] sm:pt-[110px] pb-16 sm:pb-24 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-8">
-
-        {/* HERO SECTION & TITLE */}
-        <div className="text-center max-w-4xl mx-auto space-y-2.5 sm:space-y-3 px-2">
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/15 border border-white/25 text-[#FFF8E8] font-bold text-[10px] sm:text-xs uppercase tracking-wider backdrop-blur-xs shadow-md">
-            <Activity className="w-3.5 h-3.5 text-[#FDE7B5]" />
-            <span>360° Life Orientation Analytics Model</span>
-          </div>
-
-          <h1 className="font-heading font-extrabold text-2xl sm:text-4xl lg:text-5xl text-[#FFF8E8] tracking-tight drop-shadow-xs">
-            Multi-Dimensional Research Dashboard
-          </h1>
-
-          <p className="text-[#FFF8E8]/90 text-xs sm:text-base font-medium leading-relaxed max-w-2xl mx-auto">
-            Comprehensive statistical analysis across the official 75-question study covering core life orientation themes and response distributions.
-          </p>
-        </div>
+      <div className="relative z-10 pt-[76px] sm:pt-[96px] pb-16 sm:pb-24 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-8">
 
         {/* 75 QUESTIONS DEEP DIVE SECTION */}
         <div className="space-y-6">
@@ -357,7 +341,7 @@ export default function Analytics() {
                 <div className="flex items-center justify-between pb-1 border-b border-slate-100">
                   <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
                     <Search className="w-4 h-4 text-[#109A9B]" />
-                    <span>Select Question (75 Total)</span>
+                    <span>Select Question</span>
                   </h3>
                   <span className="text-xs font-extrabold text-[#075D63] bg-[#EAF6F6] px-3 py-1 rounded-full border border-[#109A9B]/20">
                     {filteredQuestions.length} Questions
@@ -427,6 +411,7 @@ export default function Analytics() {
                   onSelectNext={handleSelectNextQuestion}
                   totalQuestionsCount={OFFICIAL_75_QUESTIONS.length}
                   currentIndex={selectedQuestionIndex}
+                  isAdmin={false}
                 />
               </div>
             )}
@@ -471,11 +456,10 @@ export default function Analytics() {
                     <button
                       key={q.id}
                       onClick={() => setSelectedQuestionId(q.id)}
-                      className={`w-full text-left p-3 rounded-xl border text-xs transition-all cursor-pointer flex flex-col gap-0.5 ${
-                        isSelected
-                          ? 'bg-[#075D63] text-white border-[#075D63] font-bold shadow-md ring-1 ring-[#109A9B]/40'
-                          : 'bg-white hover:bg-slate-50 text-[#10242C] border-slate-200/80 font-medium hover:border-[#109A9B]/30'
-                      }`}
+                      className={`w-full text-left p-3 rounded-xl border text-xs transition-all cursor-pointer flex flex-col gap-0.5 ${isSelected
+                        ? 'bg-[#075D63] text-white border-[#075D63] font-bold shadow-md ring-1 ring-[#109A9B]/40'
+                        : 'bg-white hover:bg-slate-50 text-[#10242C] border-slate-200/80 font-medium hover:border-[#109A9B]/30'
+                        }`}
                     >
                       <div className="flex items-center justify-between gap-1">
                         <span className={`font-mono text-[10px] ${isSelected ? 'text-[#FDE7B5]' : 'text-[#075D63]'}`}>
@@ -501,6 +485,7 @@ export default function Analytics() {
                 onSelectNext={handleSelectNextQuestion}
                 totalQuestionsCount={OFFICIAL_75_QUESTIONS.length}
                 currentIndex={selectedQuestionIndex}
+                isAdmin={false}
               />
             </div>
 

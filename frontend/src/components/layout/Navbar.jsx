@@ -32,11 +32,11 @@ export default function Navbar() {
       <div className="bg-[#FFF8E8] border border-[#109A9B]/35 rounded-full shadow-[0_12px_40px_rgba(11,31,42,0.15)] px-3 sm:px-8 h-[60px] sm:h-[80px] flex items-center justify-between gap-1.5 sm:gap-2 relative z-50">
 
         {/* Brand Logo with Responsive Scaling */}
-        <Link to="/" className="flex items-center group shrink">
+        <Link to="/" className="flex items-center group shrink-0">
           <img
             src="/logo.png"
             alt="Gen Z Voices Logo"
-            className="h-8 sm:h-[54px] max-h-[44px] sm:max-h-[58px] w-auto max-w-[125px] xs:max-w-[160px] sm:max-w-[260px] md:max-w-[300px] object-contain transition-transform duration-300 group-hover:scale-105"
+            className="h-10 sm:h-[64px] md:h-[70px] max-h-[48px] sm:max-h-[68px] md:max-h-[72px] w-auto max-w-[160px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-[360px] object-contain transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
 
@@ -69,32 +69,33 @@ export default function Navbar() {
         </nav>
 
         {/* Right Action Controls: Admin Login, Logout (if logged in) & Mobile Menu */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 font-inter">
-          {/* Admin Login Button */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 lg:gap-3 shrink-0 font-inter">
+          {/* Icon-Only Admin Login Button */}
           <Link
             to="/admin/login"
-            className="flex items-center gap-1.5 px-3.5 sm:px-4 h-[34px] sm:h-[44px] rounded-full bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold text-xs sm:text-sm border border-[#063E46] shadow-sm transition-all cursor-pointer whitespace-nowrap"
+            className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-full bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold border border-[#063E46] shadow-sm transition-all cursor-pointer flex items-center justify-center shrink-0 hover:scale-105 active:scale-95"
             title="Admin Portal Login"
+            aria-label="Admin Portal Login"
           >
-            <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FDE7B5] shrink-0" />
-            <span>Admin Login</span>
+            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#FDE7B5] shrink-0" />
           </Link>
 
+          {/* Icon-Only Logout Button */}
           {participantName && (
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 sm:px-4 h-[34px] sm:h-[44px] rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs sm:text-sm border border-rose-200 transition-colors shadow-2xs cursor-pointer whitespace-nowrap"
-              title="Logout session"
+              className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/90 transition-all shadow-2xs flex items-center justify-center cursor-pointer shrink-0 hover:scale-105 active:scale-95"
+              title={`Logout (${participantName})`}
+              aria-label="Logout session"
             >
-              <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 shrink-0" />
-              <span>Logout ({participantName.split(' ')[0]})</span>
+              <LogOut className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-rose-600 shrink-0" />
             </button>
           )}
 
           {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1 sm:p-2 rounded-full text-[#0B1F2A] hover:bg-[#109A9B]/15 transition-colors focus:outline-none cursor-pointer"
+            className="md:hidden p-1.5 sm:p-2 rounded-full text-[#0B1F2A] hover:bg-[#109A9B]/15 transition-colors focus:outline-none cursor-pointer flex items-center justify-center"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}

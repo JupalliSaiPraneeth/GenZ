@@ -1,20 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, Brain, Layers, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { LIFE_DIMENSIONS, ASPECT_DEFINITIONS } from '../../services/analyticsEngine';
+import { adminDataService } from '../../services/adminDataService';
+import { LIFE_DIMENSIONS } from '../../services/analyticsEngine';
 
 export default function AdminAnalytics() {
   const [metricMode, setMetricMode] = useState('percentage'); // 'percentage' | 'mean5'
+  const [analyticsData, setAnalyticsData] = useState(null);
 
-  const dimensions = LIFE_DIMENSIONS.map((dim, idx) => ({
-    title: dim.title,
-    pctScore: Math.round(72 + (idx * 3.5) % 25),
-    mean5: (3.8 + (idx * 0.12) % 1.1).toFixed(2),
-    aspectsCount: dim.aspectIds.length,
-    description: dim.description,
-    color: dim.color,
-  }));
+  useEffect(() => {
+    async function loadRealAnalytics() {
+      const data = await adminDataService.getRealAnalyticsData();
+      setAnalyticsData(data);
+    }
+    loadRealAnalytics();
+  }, []);
+
+  const dimScoresMap = new Map(analyticsData?.dimensionScores?.map((d) => [d.id, d]) || []);
+
+  const dimensions = LIFE_DIMENSIONS.map((dim) => {
+    const realDim = dimScoresMap.get(dim.id);
+    const pctScore = realDim?.pctScore ?? 75;
+    const mean5 = realDim?.avg5Score ? realDim.avg5Score.toFixed(2) : ((pctScore / 100) * 4 + 1).toFixed(2);
+    return {
+      title: dim.title,
+      pctScore,
+      mean5,
+      aspectsCount: dim.aspectIds.length,
+      description: dim.description,
+      color: dim.color,
+    };
+  });
 
   return (
     <AdminLayout title="Population & Section Analytics Engine">

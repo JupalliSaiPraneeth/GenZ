@@ -3,6 +3,98 @@
 // 4 Main Section Strategy (Thematically Grouped)
 // =================================================================
 
+export function resequenceQuestions(questionsList) {
+  if (!Array.isArray(questionsList)) return { resequenced: [], sectionRanges: {} };
+
+  const sectionIds = ['sec-1', 'sec-2', 'sec-3', 'sec-4'];
+  const resequenced = [];
+  const sectionRanges = {};
+
+  sectionIds.forEach((secId) => {
+    const secQuestions = questionsList.filter((q) => q.sectionId === secId);
+    const startIdx = resequenced.length;
+
+    secQuestions.forEach((q) => {
+      const qNum = resequenced.length + 1;
+      resequenced.push({
+        ...q,
+        code: `Q${qNum}`,
+      });
+    });
+
+    const count = secQuestions.length;
+    const endIdx = count > 0 ? resequenced.length - 1 : startIdx;
+    const startNum = startIdx + 1;
+    const endNum = resequenced.length;
+
+    sectionRanges[secId] = {
+      startQuestionIndex: startIdx,
+      endQuestionIndex: endIdx,
+      count,
+      questionRange: count > 0 ? `Q${startNum} – Q${endNum}` : 'No Qs',
+    };
+  });
+
+  const leftover = questionsList.filter((q) => !sectionIds.includes(q.sectionId));
+  if (leftover.length > 0) {
+    leftover.forEach((q) => {
+      const qNum = resequenced.length + 1;
+      resequenced.push({
+        ...q,
+        sectionId: 'sec-4',
+        code: `Q${qNum}`,
+      });
+    });
+    const sec4Start = sectionRanges['sec-4'].startQuestionIndex;
+    sectionRanges['sec-4'].endQuestionIndex = resequenced.length - 1;
+    sectionRanges['sec-4'].questionRange = `Q${sec4Start + 1} – Q${resequenced.length}`;
+  }
+
+  return { resequenced, sectionRanges };
+}
+
+export function getDynamicSections(questionsList) {
+  const { sectionRanges } = resequenceQuestions(questionsList);
+  return SURVEY_SECTIONS.map((sec) => {
+    const rangeInfo = sectionRanges[sec.id];
+    if (!rangeInfo) return sec;
+    return {
+      ...sec,
+      questionRange: rangeInfo.questionRange,
+      startQuestionIndex: rangeInfo.startQuestionIndex,
+      endQuestionIndex: rangeInfo.endQuestionIndex,
+    };
+  });
+}
+
+export function getStoredQuestions() {
+  try {
+    const saved = localStorage.getItem('genz_customized_questions');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const { resequenced } = resequenceQuestions(parsed);
+        return resequenced;
+      }
+    }
+  } catch (e) {
+    console.warn('LocalStorage questions error:', e);
+  }
+  const { resequenced } = resequenceQuestions(OFFICIAL_75_QUESTIONS);
+  return resequenced;
+}
+
+export function saveStoredQuestions(questions) {
+  try {
+    const { resequenced } = resequenceQuestions(questions);
+    localStorage.setItem('genz_customized_questions', JSON.stringify(resequenced));
+    return resequenced;
+  } catch (e) {
+    console.warn('LocalStorage save error:', e);
+    return questions;
+  }
+}
+
 export const SURVEY_SECTIONS = [
   {
     id: 'sec-1',

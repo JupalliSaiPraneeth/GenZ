@@ -139,6 +139,26 @@ export default function Home() {
             {/* LEFT HERO CONTENT (~50% Desktop width) */}
             <div className="lg:col-span-6 xl:col-span-6 pt-1 sm:pt-4 lg:pt-0 text-center lg:text-left z-20">
 
+              {/* Supported by NRI Institute Banner Pill */}
+              <div className="hero-fade inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-white/85 backdrop-blur-md border border-[#109A9B]/25 shadow-[0_8px_25px_rgba(6,62,70,0.08)] hover:shadow-[0_12px_30px_rgba(6,62,70,0.14)] hover:border-[#109A9B]/40 transition-all duration-300 mb-3 sm:mb-5 group cursor-default">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#109A9B] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#075D63]" />
+                </span>
+
+                <span className="font-sora font-extrabold text-[11px] sm:text-xs text-[#063E46] tracking-tight uppercase whitespace-nowrap">
+                  GenZ Voices <span className="text-[#109A9B] font-bold capitalize">supported by</span>
+                </span>
+
+                <span className="h-3.5 sm:h-4 w-[1px] bg-[#063E46]/20 shrink-0" />
+
+                <img
+                  src="/nrilogo.png"
+                  alt="NRI Institute Logo"
+                  className="h-5 sm:h-7 w-auto object-contain shrink-0 transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+
               {/* Massive Main Headline */}
               <h1 className="hero-fade font-archivo text-2xl xs:text-3xl sm:text-5xl lg:text-6xl xl:text-[72px] text-[#0B1F2A] tracking-tight sm:tracking-[-2px] leading-[1.1] sm:leading-[0.96] mb-3 sm:mb-6 drop-shadow-xs">
                 <span className="inline-block sm:whitespace-nowrap">GIVE A VOICE TO</span> <br className="hidden sm:inline" />

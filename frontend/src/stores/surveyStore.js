@@ -1,14 +1,28 @@
 import { create } from 'zustand';
 import { saveAnswerLocally, markAnswerSynced } from '../services/db';
-import { SURVEY_SECTIONS, OFFICIAL_75_QUESTIONS } from '../data/surveyQuestions';
+import { 
+  SURVEY_SECTIONS, 
+  OFFICIAL_75_QUESTIONS, 
+  getStoredQuestions, 
+  saveStoredQuestions,
+  resequenceQuestions,
+  getDynamicSections
+} from '../data/surveyQuestions';
 import { 
   registerParticipant,
   fetchResponsesForParticipant,
   syncResponseToSupabase,
   completeParticipantSurvey,
+  syncQuestionToSupabase,
+  syncAllQuestionsToSupabase,
+  deleteQuestionFromSupabase,
+  fetchQuestionsFromSupabase,
   toUuidQuestionId,
   generateValidUUID
 } from '../services/supabaseClient';
+
+const initialQuestions = getStoredQuestions();
+const initialSections = getDynamicSections(initialQuestions);
 
 export const useSurveyStore = create((set, get) => ({
   sessionId: generateValidUUID(),
@@ -16,8 +30,113 @@ export const useSurveyStore = create((set, get) => ({
   participantEmail: localStorage.getItem('genz_participant_email') || '',
   participantId: localStorage.getItem('genz_participant_id') || null,
   isResumedSession: false,
-  sections: SURVEY_SECTIONS,
-  questions: OFFICIAL_75_QUESTIONS,
+  sections: initialSections,
+  questions: initialQuestions,
+
+  loadQuestionsFromSupabase: async () => {
+    const dbQuestions = await fetchQuestionsFromSupabase();
+    if (dbQuestions && Array.isArray(dbQuestions) && dbQuestions.length > 0) {
+      const localQs = getStoredQuestions();
+      const localMap = new Map(localQs.map((q) => [q.id, q]));
+      const officialMap = new Map(OFFICIAL_75_QUESTIONS.map((q) => [q.id, q]));
+
+      const merged = dbQuestions.map((dbQ) => {
+        const localMatch = localMap.get(dbQ.id);
+        const officialMatch = officialMap.get(dbQ.id);
+        const fallbackOpts = localMatch?.options || officialMatch?.options || [
+          { label: 'Option 1', value: 'option_1' },
+          { label: 'Option 2', value: 'option_2' },
+        ];
+        return {
+          ...dbQ,
+          options: fallbackOpts,
+          selectionType: localMatch?.selectionType || officialMatch?.selectionType || 'single',
+          isMultiSelect: localMatch?.isMultiSelect || officialMatch?.isMultiSelect || false,
+        };
+      });
+
+      localQs.forEach((lq) => {
+        if (!merged.some((m) => m.id === lq.id)) {
+          merged.push(lq);
+        }
+      });
+
+      const savedResequenced = saveStoredQuestions(merged);
+      const updatedSections = getDynamicSections(savedResequenced);
+      set({
+        questions: savedResequenced,
+        sections: updatedSections,
+      });
+    }
+  },
+
+  addQuestion: (newQData) => {
+    const { questions } = get();
+    const newNum = questions.length + 1;
+    const newId = `q${newNum}`;
+    const newQuestion = {
+      id: newId,
+      code: `Q${newNum}`,
+      sectionId: newQData.sectionId || 'sec-1',
+      topic: newQData.topic || 'General Topic',
+      text: newQData.text || '',
+      isMultiSelect: Boolean(newQData.isMultiSelect || newQData.selectionType === 'multiple'),
+      selectionType: newQData.selectionType || 'single',
+      options: newQData.options && newQData.options.length > 0 ? newQData.options : [
+        { label: 'Option 1', value: 'option_1' },
+        { label: 'Option 2', value: 'option_2' },
+      ],
+    };
+
+    const updatedRaw = [...questions, newQuestion];
+    const savedResequenced = saveStoredQuestions(updatedRaw);
+    const updatedSections = getDynamicSections(savedResequenced);
+
+    set({
+      questions: savedResequenced,
+      sections: updatedSections,
+    });
+
+    const created = savedResequenced.find((q) => q.id === newId || q.text === newQuestion.text) || newQuestion;
+    
+    // Sync newly created question and updated blueprint sequence to Supabase DB asynchronously
+    syncQuestionToSupabase(created, 'CREATE');
+    syncAllQuestionsToSupabase(savedResequenced);
+
+    return created;
+  },
+
+  updateQuestion: (updatedQuestion) => {
+    const { questions } = get();
+    const updatedRaw = questions.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q));
+    const savedResequenced = saveStoredQuestions(updatedRaw);
+    const updatedSections = getDynamicSections(savedResequenced);
+
+    set({
+      questions: savedResequenced,
+      sections: updatedSections,
+    });
+
+    // Sync updated question and full blueprint sequence to Supabase DB
+    syncQuestionToSupabase(updatedQuestion, 'UPDATE');
+    syncAllQuestionsToSupabase(savedResequenced);
+  },
+
+  deleteQuestion: (questionId) => {
+    const { questions } = get();
+    const updatedRaw = questions.filter((q) => q.id !== questionId);
+    const savedResequenced = saveStoredQuestions(updatedRaw);
+    const updatedSections = getDynamicSections(savedResequenced);
+
+    set({
+      questions: savedResequenced,
+      sections: updatedSections,
+    });
+
+    // Delete question and sync remaining blueprint sequence to Supabase DB
+    deleteQuestionFromSupabase(questionId);
+    syncAllQuestionsToSupabase(savedResequenced);
+  },
   
   currentSectionIndex: 0,
   currentQuestionIndex: 0,
@@ -39,6 +158,9 @@ export const useSurveyStore = create((set, get) => ({
     const savedParticipantId = localStorage.getItem('genz_participant_id') || null;
 
     set({ sessionId: existingSession, participantName: savedName, participantEmail: savedEmail, participantId: savedParticipantId });
+
+    // Sync down custom questions blueprint from Supabase DB
+    await get().loadQuestionsFromSupabase();
 
     try {
       let fetchedAnswers = {};

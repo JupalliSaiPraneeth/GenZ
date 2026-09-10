@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminDataService } from '../../services/adminDataService';
@@ -34,6 +35,20 @@ export default function AdminRespondents() {
     }
     loadRespondents();
   }, [searchQuery, filterStatus]);
+
+  const handleDeleteParticipant = async (participantId, participantName) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete participant "${participantName || 'this user'}"?\n\nThis action will permanently delete the participant and all their survey responses from the database.`
+    );
+    if (!confirmDelete) return;
+
+    const res = await adminDataService.deleteRespondent(participantId);
+    if (res?.success) {
+      setRespondents((prev) => prev.filter((r) => r.id !== participantId));
+    } else {
+      alert(`Error deleting participant: ${res?.error || 'Failed to delete record.'}`);
+    }
+  };
 
   // Pagination logic
   const totalPages = Math.ceil(respondents.length / itemsPerPage) || 1;
@@ -121,14 +136,14 @@ export default function AdminRespondents() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-medium border-collapse">
             <thead className="bg-[#EAF6F6] text-[#063E46] font-bold uppercase text-[10px] tracking-wider border-b border-[#109A9B]/20">
-              <tr>
-                <th className="py-3.5 px-4 sm:px-5">Participant</th>
-                <th className="py-3.5 px-4 sm:px-5">Email</th>
-                <th className="py-3.5 px-4 sm:px-5">Progress %</th>
-                <th className="py-3.5 px-4 sm:px-5">Evaluation Status</th>
-                <th className="py-3.5 px-4 sm:px-5">Certificate ID</th>
-                <th className="py-3.5 px-4 sm:px-5">Lucky Draw</th>
-                <th className="py-3.5 px-4 sm:px-5 text-right sticky right-0 z-10 bg-[#EAF6F6] shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
+              <tr className="whitespace-nowrap">
+                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Participant</th>
+                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Email</th>
+                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Progress %</th>
+                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Evaluation Status</th>
+                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Certificate ID</th>
+                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Lucky Draw</th>
+                <th className="py-3.5 px-4 sm:px-5 text-right sticky right-0 z-10 bg-[#EAF6F6] shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)] whitespace-nowrap">
                   Actions
                 </th>
               </tr>
@@ -160,9 +175,6 @@ export default function AdminRespondents() {
                         <div className="min-w-0">
                           <div className="font-bold text-[#10242C] text-xs sm:text-sm truncate group-hover:text-[#109A9B] transition-colors">
                             {r.name || 'Anonymous Participant'}
-                          </div>
-                          <div className="text-[10px] font-mono text-slate-400 truncate">
-                            ID: #{r.id ? r.id.substring(0, 8) : 'N/A'}
                           </div>
                         </div>
                       </div>
@@ -253,14 +265,24 @@ export default function AdminRespondents() {
                         )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 sm:px-5 text-right sticky right-0 z-10 bg-white group-hover:bg-[#F4FBFB] transition-colors shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
-                      <Link
-                        to={`/admin/respondents/${r.id}`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs shadow-sm hover:shadow transition-all cursor-pointer whitespace-nowrap"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Evaluate Profile</span>
-                      </Link>
+                    <td className="py-3 px-3 text-right sticky right-0 z-10 bg-white group-hover:bg-[#F4FBFB] transition-colors shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                        <Link
+                          to={`/admin/respondents/${r.id}`}
+                          className="w-8 h-8 rounded-xl bg-[#063E46] hover:bg-[#075D63] text-white flex items-center justify-center shadow-2xs hover:scale-105 transition-all cursor-pointer"
+                          title="Evaluate Profile"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteParticipant(r.id, r.name)}
+                          className="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center shadow-2xs hover:scale-105 transition-all cursor-pointer"
+                          title="Delete Participant from Database"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

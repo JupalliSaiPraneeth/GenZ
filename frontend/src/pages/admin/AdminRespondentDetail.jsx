@@ -285,11 +285,10 @@ export default function AdminRespondentDetail() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-2xl font-bold text-xs transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
-                  isActive
+                className={`px-4 py-2 rounded-2xl font-bold text-xs transition-all cursor-pointer flex items-center gap-2 shrink-0 ${isActive
                     ? 'bg-[#075D63] text-white shadow-sm'
                     : 'bg-slate-100 text-[#53656A] hover:bg-slate-200'
-                }`}
+                  }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FDE7B5]' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>

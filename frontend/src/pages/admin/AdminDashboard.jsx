@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import gsap from 'gsap';
 import {
   Users,
   CheckCircle2,
@@ -30,38 +31,65 @@ import { adminDataService } from '../../services/adminDataService';
 
 export default function AdminDashboard() {
   const [kpis, setKpis] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState('7days');
+
+  const donutCardRef = useRef(null);
+  const centerBadgeRef = useRef(null);
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await adminDataService.getDashboardKPIs();
-      setKpis(data);
+      const [kpiData, realAnalytics] = await Promise.all([
+        adminDataService.getDashboardKPIs(),
+        adminDataService.getRealAnalyticsData(),
+      ]);
+      setKpis(kpiData);
+      setAnalyticsData(realAnalytics);
       setLoading(false);
     }
     loadData();
   }, [dateFilter]);
 
+  useEffect(() => {
+    if (!centerBadgeRef.current) return;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        centerBadgeRef.current,
+        { scale: 0.6, opacity: 0, rotate: -10 },
+        { scale: 1, opacity: 1, rotate: 0, duration: 0.6, delay: 0.2, ease: 'back.out(1.7)' }
+      );
+    }, donutCardRef);
+    return () => ctx.revert();
+  }, [kpis]);
+
   // Mock Trend Chart Data (Growth over time)
   const growthData = [
-    { day: 'Mon', respondents: 12, completed: 10 },
-    { day: 'Tue', respondents: 18, completed: 15 },
-    { day: 'Wed', respondents: 24, completed: 21 },
-    { day: 'Thu', respondents: 31, completed: 28 },
-    { day: 'Fri', respondents: 42, completed: 37 },
-    { day: 'Sat', respondents: 56, completed: 49 },
-    { day: 'Sun', respondents: 68, completed: 61 },
+    { day: 'Mon', respondents: Math.max(1, Math.round((kpis?.totalRespondents || 10) * 0.15)), completed: Math.max(1, Math.round((kpis?.completedSurveys || 8) * 0.15)) },
+    { day: 'Tue', respondents: Math.max(2, Math.round((kpis?.totalRespondents || 10) * 0.3)), completed: Math.max(2, Math.round((kpis?.completedSurveys || 8) * 0.3)) },
+    { day: 'Wed', respondents: Math.max(3, Math.round((kpis?.totalRespondents || 10) * 0.45)), completed: Math.max(3, Math.round((kpis?.completedSurveys || 8) * 0.45)) },
+    { day: 'Thu', respondents: Math.max(4, Math.round((kpis?.totalRespondents || 10) * 0.6)), completed: Math.max(4, Math.round((kpis?.completedSurveys || 8) * 0.6)) },
+    { day: 'Fri', respondents: Math.max(6, Math.round((kpis?.totalRespondents || 10) * 0.75)), completed: Math.max(5, Math.round((kpis?.completedSurveys || 8) * 0.75)) },
+    { day: 'Sat', respondents: Math.max(8, Math.round((kpis?.totalRespondents || 10) * 0.9)), completed: Math.max(7, Math.round((kpis?.completedSurveys || 8) * 0.9)) },
+    { day: 'Sun', respondents: kpis?.totalRespondents || 10, completed: kpis?.completedSurveys || 8 },
   ];
 
-  // Completion Pie Data
+  // Completion Ratio Statistics
+  const completedCount = kpis?.completedSurveys || 0;
+  const incompleteCount = kpis?.incompleteSurveys || 0;
+  const totalRatioCount = completedCount + incompleteCount;
+  const completedPct = totalRatioCount > 0 ? Math.round((completedCount / totalRatioCount) * 100) : 0;
+  const incompletePct = totalRatioCount > 0 ? 100 - completedPct : 0;
+
+  // Completion Pie Data with Gradient Fills
   const completionPieData = [
-    { name: 'Completed', value: kpis?.completedSurveys || 12, fill: '#075D63' },
-    { name: 'Incomplete', value: kpis?.incompleteSurveys || 2, fill: '#D97706' },
+    { name: 'Completed', value: completedCount, pct: completedPct, fill: 'url(#completedGradient)', solidColor: '#075D63' },
+    { name: 'Incomplete', value: incompleteCount, pct: incompletePct, fill: 'url(#incompleteGradient)', solidColor: '#D97706' },
   ];
 
-  // Demographics Breakdown Data
-  const ageDistribution = [
+  // Demographics Breakdown Data dynamically calculated from DB
+  const ageDistribution = analyticsData?.ageDistribution || [
     { label: '18–20', count: 35 },
     { label: '21–23', count: 48 },
     { label: '24–26', count: 12 },
@@ -69,29 +97,29 @@ export default function AdminDashboard() {
     { label: '30+', count: 1 },
   ];
 
-  const genderDistribution = [
+  const genderDistribution = analyticsData?.genderDistribution || [
     { name: 'Female', value: 52, fill: '#109A9B' },
     { name: 'Male', value: 42, fill: '#075D63' },
     { name: 'Non-Binary/Other', value: 6, fill: '#FDE7B5' },
   ];
 
-  // 15 Major Analytical Dimensions Averages Data
-  const dimensionAveragesData = [
-    { dimension: 'Mental Wellbeing', score: 78, fill: '#075D63' },
-    { dimension: 'Learning Drive', score: 84, fill: '#109A9B' },
-    { dimension: 'Career Readiness', score: 86, fill: '#3B82F6' },
-    { dimension: 'Financial Maturity', score: 89, fill: '#059669' },
-    { dimension: 'Digital Lifestyle', score: 92, fill: '#8B5CF6' },
-    { dimension: 'Health & Fitness', score: 72, fill: '#EC4899' },
-    { dimension: 'Family Orientation', score: 81, fill: '#F59E0B' },
-    { dimension: 'Peer Relations', score: 79, fill: '#6366F1' },
-    { dimension: 'Independence Drive', score: 87, fill: '#D97706' },
-    { dimension: 'Entrepreneurship', score: 83, fill: '#10B981' },
-    { dimension: 'Global Mobility', score: 74, fill: '#64748B' },
-    { dimension: 'Social Duty', score: 76, fill: '#075D63' },
-    { dimension: 'Future Adaptability', score: 85, fill: '#109A9B' },
-    { dimension: 'Risk Tolerance', score: 68, fill: '#D97706' },
-    { dimension: 'Lifestyle Values', score: 80, fill: '#3B82F6' },
+  // 15 Major Analytical Dimensions Overview (Calculated directly from Supabase DB across all 75 questions)
+  const dimensionAveragesData = analyticsData?.major15DimensionScores || [
+    { dimension: 'Mental Wellbeing', score: 75, fill: '#075D63' },
+    { dimension: 'Learning Drive', score: 75, fill: '#109A9B' },
+    { dimension: 'Career Readiness', score: 75, fill: '#3B82F6' },
+    { dimension: 'Financial Maturity', score: 75, fill: '#059669' },
+    { dimension: 'Digital Lifestyle', score: 75, fill: '#8B5CF6' },
+    { dimension: 'Health & Fitness', score: 75, fill: '#EC4899' },
+    { dimension: 'Family Orientation', score: 75, fill: '#F59E0B' },
+    { dimension: 'Peer Relations', score: 75, fill: '#6366F1' },
+    { dimension: 'Independence Drive', score: 75, fill: '#D97706' },
+    { dimension: 'Entrepreneurship', score: 75, fill: '#10B981' },
+    { dimension: 'Global Mobility', score: 75, fill: '#64748B' },
+    { dimension: 'Social Duty', score: 75, fill: '#075D63' },
+    { dimension: 'Future Adaptability', score: 75, fill: '#109A9B' },
+    { dimension: 'Risk Tolerance', score: 75, fill: '#D97706' },
+    { dimension: 'Lifestyle Values', score: 75, fill: '#3B82F6' },
   ];
 
   return (
@@ -229,36 +257,132 @@ export default function AdminDashboard() {
         </div>
 
         {/* Completion Status Donut Pie Chart */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-md flex flex-col justify-between">
+        <div
+          ref={donutCardRef}
+          className="lg:col-span-4 bg-gradient-to-b from-white via-white to-slate-50/70 p-6 rounded-3xl border border-[#109A9B]/20 shadow-md hover:shadow-xl hover:border-[#109A9B]/40 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group"
+        >
+          {/* Ambient Background Corner Glow */}
+          <div className="absolute -top-16 -right-16 w-40 h-40 bg-[#109A9B]/10 rounded-full blur-2xl pointer-events-none group-hover:bg-[#109A9B]/20 transition-all duration-500" />
+
+          {/* Card Header */}
           <div>
-            <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 mb-1">
-              <PieIcon className="w-4.5 h-4.5 text-[#109A9B]" />
-              Submission Completion Ratio
-            </h3>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
+                <PieIcon className="w-4.5 h-4.5 text-[#109A9B]" />
+                Submission Completion Ratio
+              </h3>
+              <span className="text-[10px] font-bold font-mono text-[#075D63] bg-[#EAF6F6] px-2.5 py-0.5 rounded-full border border-[#109A9B]/25">
+                Live Ratio
+              </span>
+            </div>
             <p className="text-xs text-[#53656A] font-medium">Completed vs Incomplete Sessions</p>
           </div>
 
-          <div className="h-56 w-full flex items-center justify-center my-2">
+          {/* Donut Chart with Floating Center Badge */}
+          <div className="h-56 w-full relative flex items-center justify-center my-2">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={completionPieData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value">
+                <defs>
+                  <linearGradient id="completedGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#109A9B" />
+                    <stop offset="100%" stopColor="#075D63" />
+                  </linearGradient>
+                  <linearGradient id="incompleteGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#F97316" />
+                    <stop offset="100%" stopColor="#D97706" />
+                  </linearGradient>
+                </defs>
+                <Pie
+                  data={completionPieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={86}
+                  paddingAngle={6}
+                  cornerRadius={8}
+                  dataKey="value"
+                  animationDuration={900}
+                  animationEasing="ease-out"
+                >
                   {completionPieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                    <Cell key={`cell-${index}`} fill={entry.fill} stroke="#FFF" strokeWidth={2.5} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value} Sessions`, 'Count']} />
+                <Tooltip
+                  wrapperStyle={{ zIndex: 100, pointerEvents: 'none' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const itemData = payload[0].payload;
+                      return (
+                        <div className="relative z-[100] bg-white/95 backdrop-blur-md px-3.5 py-2.5 rounded-2xl shadow-2xl border border-slate-200 text-xs space-y-1">
+                          <div className="flex items-center gap-2 font-bold text-[#10242C]">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full"
+                              style={{ backgroundColor: itemData.solidColor }}
+                            />
+                            <span>{itemData.name}</span>
+                          </div>
+                          <div className="text-[#53656A] font-semibold">
+                            {itemData.value} Sessions ({itemData.pct}%)
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
+
+            {/* Center Donut Animated Floating Badge */}
+            <div
+              ref={centerBadgeRef}
+              className="absolute inset-0 m-auto w-20 h-20 sm:w-22 sm:h-22 rounded-full bg-white/95 backdrop-blur-xs border-2 border-[#109A9B]/25 shadow-md flex flex-col items-center justify-center text-center p-1 pointer-events-none z-0 hover:scale-105 transition-transform"
+            >
+              <span className="text-[8px] sm:text-[9px] font-extrabold text-[#53656A] uppercase tracking-wider">
+                Ratio Score
+              </span>
+              <span className="font-heading font-extrabold text-xl sm:text-2xl text-[#075D63] leading-none my-0.5 drop-shadow-2xs">
+                {completedPct}%
+              </span>
+              <span className="text-[8px] sm:text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">
+                {completedCount} / {totalRatioCount} Done
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center justify-around text-xs font-bold pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#075D63]" />
-              <span>Completed ({kpis?.completedSurveys || 12})</span>
+          {/* Premium Metric Legend Cards Grid */}
+          <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-slate-100/80">
+            {/* Completed Card */}
+            <div className="bg-[#EAF6F6]/80 hover:bg-[#EAF6F6] p-2.5 rounded-2xl border border-[#109A9B]/20 transition-all flex flex-col justify-between gap-1 shadow-2xs">
+              <div className="flex items-center justify-between gap-1">
+                <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#075D63]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#075D63] animate-pulse" />
+                  Completed
+                </span>
+                <span className="text-[10px] font-extrabold text-[#075D63] bg-white px-1.5 py-0.5 rounded-md border border-[#109A9B]/20">
+                  {completedPct}%
+                </span>
+              </div>
+              <div className="font-heading font-extrabold text-lg text-[#10242C]">
+                {completedCount} <span className="text-xs font-normal text-[#53656A]">sessions</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#D97706]" />
-              <span>Incomplete ({kpis?.incompleteSurveys || 2})</span>
+
+            {/* Incomplete Card */}
+            <div className="bg-[#FFF8E8]/90 hover:bg-[#FFF8E8] p-2.5 rounded-2xl border border-amber-200/80 transition-all flex flex-col justify-between gap-1 shadow-2xs">
+              <div className="flex items-center justify-between gap-1">
+                <span className="flex items-center gap-1.5 text-[11px] font-bold text-[#D97706]">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#D97706]" />
+                  Incomplete
+                </span>
+                <span className="text-[10px] font-extrabold text-[#D97706] bg-white px-1.5 py-0.5 rounded-md border border-amber-200">
+                  {incompletePct}%
+                </span>
+              </div>
+              <div className="font-heading font-extrabold text-lg text-[#10242C]">
+                {incompleteCount} <span className="text-xs font-normal text-[#53656A]">sessions</span>
+              </div>
             </div>
           </div>
         </div>
