@@ -1,37 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GitCompare, TrendingUp, Zap, ShieldCheck, HelpCircle } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { adminDataService } from '../../services/adminDataService';
 
 export default function AdminComparative() {
   const [activeSubTab, setActiveSubTab] = useState('demographics'); // 'demographics' | 'correlations' | 'gaps'
+  const [compData, setCompData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Demographic comparison data
-  const demographicMatrix = [
-    { group: '18–20 Yrs', entrepreneurship: 78, financialInd: 84, aiAdoption: 88, marriagePriority: 55 },
-    { group: '21–23 Yrs', entrepreneurship: 84, financialInd: 89, aiAdoption: 82, marriagePriority: 62 },
-    { group: '24–26 Yrs', entrepreneurship: 75, financialInd: 91, aiAdoption: 76, marriagePriority: 71 },
-    { group: 'Metropolitan', entrepreneurship: 85, financialInd: 91, aiAdoption: 91, marriagePriority: 54 },
-    { group: 'Rural Area', entrepreneurship: 72, financialInd: 80, aiAdoption: 71, marriagePriority: 74 },
-  ];
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const res = await adminDataService.getComparativeAnalytics();
+      setCompData(res);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
 
-  // Correlation analysis pairs
-  const correlationPairs = [
-    { pair: 'Sleep Quality vs Mental Wellbeing', r: '+0.68', direction: 'Strong Positive Association', note: 'Higher sleep recovery correlates with higher stress coping.' },
-    { pair: 'Social Media Use vs Study Consistency', r: '-0.52', direction: 'Moderate Negative Association', note: 'High screen time relates to lower exam prep discipline.' },
-    { pair: 'AI Adoption Rate vs Career Self-Efficacy', r: '+0.64', direction: 'Strong Positive Association', note: 'Active AI usage correlates with high career marketability confidence.' },
-    { pair: 'Financial Literacy vs Financial Independence', r: '+0.71', direction: 'Strong Positive Association', note: 'Early budgeting & saving knowledge aligns with income diversification drive.' },
-    { pair: 'Risk Tolerance vs Entrepreneurial Drive', r: '+0.65', direction: 'Strong Positive Association', note: 'Comfort under uncertainty correlates strongly with venture interest.' },
-  ];
-
-  // Belief vs Behaviour Gaps
-  const beliefBehaviourGaps = [
-    { title: 'Physical Fitness Gap', belief: 'Believes fitness is vital for success (88%)', action: 'Maintains active weekly exercise routine (42%)', gapPct: 46 },
-    { title: 'Food & Nutrition Gap', belief: 'Aware of healthy eating importance (84%)', action: 'Eats balanced nutritious meals daily (48%)', gapPct: 36 },
-    { title: 'Digital Privacy Gap', belief: 'Concerned about data privacy & surveillance (91%)', action: 'Verifies privacy settings & 2FA regularly (52%)', gapPct: 39 },
-    { title: 'Financial Independence Gap', belief: 'Aspirations for early financial freedom (94%)', action: 'Consistent monthly saving & investing (58%)', gapPct: 36 },
-    { title: 'Skill Upskilling Gap', belief: 'Values continuous independent learning (89%)', action: 'Completes online certification courses (51%)', gapPct: 38 },
-  ];
+  const demographicMatrix = compData?.demographicMatrix || [];
+  const correlationPairs = compData?.correlationPairs || [];
+  const beliefBehaviourGaps = compData?.beliefBehaviourGaps || [];
 
   return (
     <AdminLayout title="Comparative Analysis, Correlations & Action Gaps">

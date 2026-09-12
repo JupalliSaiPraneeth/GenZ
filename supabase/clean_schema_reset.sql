@@ -19,7 +19,10 @@ CREATE TABLE public.survey_questions (
     section_id TEXT NOT NULL,                  -- e.g. 'sec-1', 'sec-2', 'sec-3', 'sec-4'
     topic TEXT NOT NULL,
     question_text TEXT NOT NULL,
-    display_order INTEGER NOT NULL UNIQUE
+    display_order INTEGER NOT NULL DEFAULT 1,
+    options JSONB,                             -- Store option choices array
+    selection_type TEXT DEFAULT 'single',      -- 'single' | 'multiple'
+    is_multi_select BOOLEAN DEFAULT false
 );
 
 -- 3. CREATE PARTICIPANTS TABLE (Strict Email Uniqueness Enforced & Admin Evaluation)

@@ -1,65 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserCheck, Sparkles, TrendingUp, Shield, Wallet, Globe, Users, Laptop, Heart } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { adminDataService } from '../../services/adminDataService';
 
-const PERSONAS = [
-  {
-    id: 'growth-explorer',
-    title: 'Growth Explorer',
-    share: '28% of Population',
-    icon: TrendingUp,
-    color: '#075D63',
-    traits: ['High career ambition', 'Entrepreneurial orientation', 'Calculated risk tolerance', 'AI adaptability'],
-    description: 'Highly ambitious respondents who prioritize career acceleration, skill mastery, startup ventures, and calculated risk-taking.',
-  },
-  {
-    id: 'financial-builder',
-    title: 'Financial Builder',
-    share: '24% of Population',
-    icon: Wallet,
-    color: '#059669',
-    traits: ['Early saving discipline', 'Multiple income streams', 'Financial literacy', 'Investments focus'],
-    description: 'Respondents driven by early financial independence, passive income avenues, smart budgeting, and long-term wealth creation.',
-  },
-  {
-    id: 'security-seeker',
-    title: 'Security Seeker',
-    share: '18% of Population',
-    icon: Shield,
-    color: '#64748B',
-    traits: ['Job stability preference', 'Government sector interest', 'Predictable growth', 'Work-life balance'],
-    description: 'Individuals valuing long-term job security, pension benefits, work-life equilibrium, and structured corporate/govt career paths.',
-  },
-  {
-    id: 'digital-native',
-    title: 'Digital Native',
-    share: '15% of Population',
-    icon: Laptop,
-    color: '#3B82F6',
-    traits: ['AI workflow integration', 'Digital privacy awareness', 'Screen immersion', 'Tech adaptability'],
-    description: 'Power users of artificial intelligence, social media platforms, and digital tools with high awareness of data privacy.',
-  },
-  {
-    id: 'global-explorer',
-    title: 'Global Explorer',
-    share: '9% of Population',
-    icon: Globe,
-    color: '#F59E0B',
-    traits: ['Migration intention', 'Travel openness', 'International work goals', 'Cross-cultural interest'],
-    description: 'Respondents actively exploring international education, global settlement, and abroad work opportunities.',
-  },
-  {
-    id: 'conscious-citizen',
-    title: 'Conscious Citizen',
-    share: '6% of Population',
-    icon: Heart,
-    color: '#EC4899',
-    traits: ['Sustainability orientation', 'Social responsibility', 'Community volunteering', 'Ethical consumption'],
-    description: 'Socially engaged individuals who emphasize climate sustainability, community volunteering, and identity-driven ethics.',
-  },
-];
+const ICON_MAP = {
+  'growth-explorer': TrendingUp,
+  'financial-builder': Wallet,
+  'security-seeker': Shield,
+  'digital-native': Laptop,
+  'global-explorer': Globe,
+  'conscious-citizen': Heart,
+};
 
 export default function AdminSegments() {
+  const [personas, setPersonas] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const res = await adminDataService.getSegmentPersonas();
+      setPersonas(res);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
   return (
     <AdminLayout title="Analytical User Personas & Respondent Segments">
       <div className="bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-2">
@@ -74,8 +39,8 @@ export default function AdminSegments() {
 
       {/* PERSONAS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {PERSONAS.map((p) => {
-          const Icon = p.icon;
+        {personas.map((p) => {
+          const Icon = ICON_MAP[p.id] || TrendingUp;
           return (
             <div key={p.id} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
               <div className="space-y-2">

@@ -70,7 +70,7 @@ export const useSurveyStore = create((set, get) => ({
     }
   },
 
-  addQuestion: (newQData) => {
+  addQuestion: async (newQData) => {
     const { questions } = get();
     const newNum = questions.length + 1;
     const newId = `q${newNum}`;
@@ -99,14 +99,13 @@ export const useSurveyStore = create((set, get) => ({
 
     const created = savedResequenced.find((q) => q.id === newId || q.text === newQuestion.text) || newQuestion;
     
-    // Sync newly created question and updated blueprint sequence to Supabase DB asynchronously
-    syncQuestionToSupabase(created, 'CREATE');
-    syncAllQuestionsToSupabase(savedResequenced);
+    // Sync newly created question directly to Supabase DB
+    const syncRes = await syncQuestionToSupabase(created, 'CREATE');
 
-    return created;
+    return { created, syncRes };
   },
 
-  updateQuestion: (updatedQuestion) => {
+  updateQuestion: async (updatedQuestion) => {
     const { questions } = get();
     const updatedRaw = questions.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q));
     const savedResequenced = saveStoredQuestions(updatedRaw);
@@ -118,11 +117,10 @@ export const useSurveyStore = create((set, get) => ({
     });
 
     // Sync updated question and full blueprint sequence to Supabase DB
-    syncQuestionToSupabase(updatedQuestion, 'UPDATE');
-    syncAllQuestionsToSupabase(savedResequenced);
+    await syncQuestionToSupabase(updatedQuestion, 'UPDATE');
   },
 
-  deleteQuestion: (questionId) => {
+  deleteQuestion: async (questionId) => {
     const { questions } = get();
     const updatedRaw = questions.filter((q) => q.id !== questionId);
     const savedResequenced = saveStoredQuestions(updatedRaw);
@@ -134,8 +132,7 @@ export const useSurveyStore = create((set, get) => ({
     });
 
     // Delete question and sync remaining blueprint sequence to Supabase DB
-    deleteQuestionFromSupabase(questionId);
-    syncAllQuestionsToSupabase(savedResequenced);
+    await deleteQuestionFromSupabase(questionId);
   },
   
   currentSectionIndex: 0,

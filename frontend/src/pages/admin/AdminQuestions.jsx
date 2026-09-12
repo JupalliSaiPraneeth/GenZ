@@ -66,7 +66,7 @@ export default function AdminQuestions() {
     setEditingQuestion(null);
   };
 
-  const handleSaveQuestion = (e) => {
+  const handleSaveQuestion = async (e) => {
     e.preventDefault();
     if (!editingQuestion) return;
 
@@ -77,22 +77,22 @@ export default function AdminQuestions() {
       selectionType: isMulti ? 'multiple' : 'single',
     };
 
-    updateQuestion(updated);
-    setSavedSuccessMsg(`Updated ${updated.code} and re-indexed section sequence!`);
+    await updateQuestion(updated);
+    setSavedSuccessMsg(`Updated ${updated.code} and synced to Supabase database!`);
     setTimeout(() => setSavedSuccessMsg(''), 4000);
     setEditingQuestion(null);
   };
 
-  const handleDeleteQuestion = (qId, qCode) => {
+  const handleDeleteQuestion = async (qId, qCode) => {
     if (window.confirm(`Are you sure you want to delete question ${qCode}? Question numbers across sections will re-sequence automatically.`)) {
-      deleteQuestion(qId);
-      setSavedSuccessMsg(`Deleted question ${qCode}. Question sequence re-indexed automatically.`);
+      await deleteQuestion(qId);
+      setSavedSuccessMsg(`Deleted question ${qCode} and synced to Supabase database.`);
       setTimeout(() => setSavedSuccessMsg(''), 4000);
       setEditingQuestion(null);
     }
   };
 
-  const handleCreateQuestionSubmit = (e) => {
+  const handleCreateQuestionSubmit = async (e) => {
     e.preventDefault();
     if (!newQuestionDraft.text.trim()) {
       alert('Please enter a question prompt text!');
@@ -103,13 +103,20 @@ export default function AdminQuestions() {
       return;
     }
 
-    const created = addQuestion(newQuestionDraft);
+    const res = await addQuestion(newQuestionDraft);
+    const created = res?.created || res;
+    const syncRes = res?.syncRes;
     const targetSec = sections.find((s) => s.id === newQuestionDraft.sectionId);
     
-    setSavedSuccessMsg(
-      `Added new question (${created?.code || 'New Q'}) into Section ${targetSec?.number || 1}! Question sequence re-indexed automatically.`
-    );
-    setTimeout(() => setSavedSuccessMsg(''), 4500);
+    if (syncRes?.success || syncRes === true) {
+      setSavedSuccessMsg(
+        `Added new question (${created?.code || 'New Q'}) into Section ${targetSec?.number || 1}! Successfully created in Supabase database.`
+      );
+      setTimeout(() => setSavedSuccessMsg(''), 4500);
+    } else {
+      const errMsg = syncRes?.error || 'Unknown Supabase write error';
+      alert(`Supabase Database Warning: Saved locally, but Supabase rejected database write.\n\nReason: ${errMsg}`);
+    }
 
     setIsCreateModalOpen(false);
     setNewQuestionDraft({

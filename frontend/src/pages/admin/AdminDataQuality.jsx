@@ -1,39 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, AlertTriangle, CheckCircle2, Clock, Activity, FileCheck } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { adminDataService } from '../../services/adminDataService';
 
 export default function AdminDataQuality() {
-  const qualityLogs = [
-    { id: 'S-9021', duration: '18m 12s', speedFlag: 'Normal', straightLine: 'Passed', attentionCheck: '100% Passed', status: 'Verified', riskLevel: 'Low' },
-    { id: 'S-9022', duration: '16m 45s', speedFlag: 'Normal', straightLine: 'Passed', attentionCheck: '100% Passed', status: 'Verified', riskLevel: 'Low' },
-    { id: 'S-9023', duration: '3m 10s', speedFlag: 'Fast Completion', straightLine: 'Detected', attentionCheck: 'Failed', status: 'Review Required', riskLevel: 'High' },
-    { id: 'S-9024', duration: '21m 05s', speedFlag: 'Normal', straightLine: 'Passed', attentionCheck: '100% Passed', status: 'Verified', riskLevel: 'Low' },
-  ];
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const res = await adminDataService.getDataQualityMetrics();
+      setMetrics(res);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
+  const qualityLogs = metrics?.qualityLogs || [];
 
   return (
     <AdminLayout title="Data Quality & Integrity Engine">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-md">
           <span className="text-[11px] text-[#53656A] font-bold uppercase block">Total Verified Records</span>
-          <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">10,920</h3>
-          <span className="text-xs text-emerald-600 font-bold mt-0.5 block">98.8% Valid Data</span>
+          <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">
+            {loading ? '...' : metrics?.totalVerifiedRecords}
+          </h3>
+          <span className="text-xs text-emerald-600 font-bold mt-0.5 block">
+            {loading ? '...' : metrics?.validDataPct}
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-md">
           <span className="text-[11px] text-[#53656A] font-bold uppercase block">Records Requiring Review</span>
-          <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">134</h3>
-          <span className="text-xs text-amber-700 font-bold mt-0.5 block">1.2% Risk Flagged</span>
+          <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">
+            {loading ? '...' : metrics?.reviewRequiredCount}
+          </h3>
+          <span className="text-xs text-amber-700 font-bold mt-0.5 block">
+            {loading ? '...' : metrics?.riskFlaggedPct}
+          </span>
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-md">
           <span className="text-[11px] text-[#53656A] font-bold uppercase block">Avg Completion Speed</span>
-          <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">18m 42s</h3>
+          <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">
+            {loading ? '...' : metrics?.avgCompletionSpeed}
+          </h3>
           <span className="text-xs text-emerald-600 font-bold mt-0.5 block">Optimal Attention Span</span>
         </div>
 
         <div className="bg-white p-5 rounded-3xl border border-[#109A9B]/20 shadow-md">
           <span className="text-[11px] text-[#53656A] font-bold uppercase block">Straight-Line Rate</span>
-          <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">0.4%</h3>
+          <h3 className="font-heading font-extrabold text-3xl text-[#10242C] mt-1">
+            {loading ? '...' : metrics?.straightLineRate}
+          </h3>
           <span className="text-xs text-emerald-600 font-bold mt-0.5 block">Low Variance Anomaly</span>
         </div>
       </div>

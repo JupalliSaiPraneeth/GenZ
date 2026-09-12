@@ -54,11 +54,15 @@ export function fromUuidQuestionId(uuidStr) {
  */
 export async function registerParticipant(participantName = '', email = '', deviceTimestamp = new Date().toISOString()) {
   try {
-    const nameStr = participantName ? participantName.trim() : 'Anonymous Gen Z Participant';
+    const nameStr = participantName ? participantName.trim() : '';
     const emailStr = email ? email.trim().toLowerCase() : '';
 
+    if (!nameStr) {
+      return { error: 'Full name is required to register!' };
+    }
+
     if (!emailStr) {
-      return { error: 'Please enter a valid email address!' };
+      return { error: 'A valid email address is required to register!' };
     }
 
     // 1. Check if email already exists in `participants` table
@@ -69,25 +73,10 @@ export async function registerParticipant(participantName = '', email = '', devi
       .maybeSingle();
 
     if (existing) {
-      // Update participant name if provided and changed
-      if (nameStr && nameStr !== existing.name) {
-        try {
-          await supabase
-            .from('participants')
-            .update({ name: nameStr, updated_at: new Date().toISOString() })
-            .eq('id', existing.id);
-          existing.name = nameStr;
-        } catch (e) {
-          console.warn('Update participant name notice:', e);
-        }
-      }
-
-      await logUserAction(existing.id, 'RESUME_PARTICIPANT', deviceTimestamp, { name: nameStr, email: emailStr });
-
       return {
-        participant: existing,
-        isResumed: true,
-        error: null,
+        participant: null,
+        isResumed: false,
+        error: 'This email address is already registered in our database! Please use a different email address to participate.',
       };
     }
 
@@ -112,17 +101,12 @@ export async function registerParticipant(participantName = '', email = '', devi
       .single();
 
     if (insertErr) {
-      // Unique constraint fallback: fetch existing participant by email
       if (insertErr.code === '23505' || insertErr.message?.includes('unique constraint') || insertErr.message?.includes('email')) {
-        const { data: retryFetch } = await supabase
-          .from('participants')
-          .select('id, name, email, status, total_answers_count')
-          .eq('email', emailStr)
-          .maybeSingle();
-
-        if (retryFetch) {
-          return { participant: retryFetch, isResumed: true, error: null };
-        }
+        return {
+          participant: null,
+          isResumed: false,
+          error: 'This email address is already registered in our database! Please use a different email address to participate.',
+        };
       }
       console.warn('Supabase insert participant notice:', insertErr);
       return { participant: payload, isResumed: false, error: null };
@@ -134,7 +118,7 @@ export async function registerParticipant(participantName = '', email = '', devi
     return { participant: created, isResumed: false, error: null };
   } catch (err) {
     console.warn('registerParticipant exception:', err);
-    return { error: null, participant: { id: generateValidUUID(), name: participantName, email }, isResumed: false };
+    return { error: 'An error occurred during registration. Please try again.', participant: null, isResumed: false };
   }
 }
 
@@ -215,6 +199,17 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
         updated_at: new Date().toISOString(),
       }]);
     }
+
+    const payload = {
+      participant_id: validParticipantId,
+      session_id: validSessionId,
+      question_id: qIdKey,
+      question_code: qCodeKey,
+      response_value: typeof responseValue === 'object' ? responseValue : { value: responseValue },
+      device_timestamp: deviceTimestamp,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
     // 2. Check if response row already exists in `survey_responses` to avoid 409 Conflict
     const { data: existingResp } = await supabase
@@ -449,7 +444,9 @@ export async function getOrCreateAdminSystemParticipant() {
  * Upsert question into Supabase `survey_questions` table
  */
 async function upsertToSurveyQuestions(questionObj) {
-  if (!questionObj || !isSupabaseConfigured) return false;
+  if (!questionObj || !isSupabaseConfigured) {
+    return { success: false, error: 'Supabase is not configured.' };
+  }
   try {
     const qId = String(questionObj.id).toLowerCase();
     const qCode = String(questionObj.code || questionObj.question_code || '').toUpperCase();
@@ -457,7 +454,19 @@ async function upsertToSurveyQuestions(questionObj) {
       ? questionObj.display_order
       : (parseInt(qCode.replace(/\D/g, ''), 10) || 1);
 
-    const sqPayload = {
+    const fullPayload = {
+      id: qId,
+      question_code: qCode,
+      section_id: questionObj.sectionId || questionObj.section_id || 'sec-1',
+      topic: questionObj.topic || 'General',
+      question_text: questionObj.text || questionObj.question_text || '',
+      display_order: numOrder,
+      options: questionObj.options || null,
+      selection_type: questionObj.selectionType || (questionObj.isMultiSelect ? 'multiple' : 'single'),
+      is_multi_select: Boolean(questionObj.isMultiSelect || questionObj.selectionType === 'multiple'),
+    };
+
+    const corePayload = {
       id: qId,
       question_code: qCode,
       section_id: questionObj.sectionId || questionObj.section_id || 'sec-1',
@@ -466,37 +475,51 @@ async function upsertToSurveyQuestions(questionObj) {
       display_order: numOrder,
     };
 
-    const { error } = await supabase
+    // Try full payload first
+    const { error: fullErr } = await supabase
       .from('survey_questions')
-      .upsert([sqPayload], { onConflict: 'id' });
+      .upsert([fullPayload], { onConflict: 'id' });
 
-    if (!error) return true;
+    if (!fullErr) return { success: true };
 
-    // Handle 401 Unauthorized or 42501 RLS policy gracefully
-    if (error.status === 401 || error.code === '42501') {
-      console.info('Supabase survey_questions RLS notice: To enable direct DB writes for admin questions, run the RLS policies in Supabase SQL editor.');
-      return false;
+    console.warn(`Supabase full upsert notice for ${qId}:`, fullErr.message);
+
+    // If display_order unique constraint clash occurs (23505), fetch current MAX display_order and retry with next unique order
+    if (fullErr?.code === '23505' || fullErr?.message?.includes('display_order')) {
+      try {
+        const { data: maxRow } = await supabase
+          .from('survey_questions')
+          .select('display_order')
+          .order('display_order', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const safeOrder = (maxRow?.display_order || 0) + 1;
+        fullPayload.display_order = safeOrder;
+        corePayload.display_order = safeOrder;
+
+        const { error: retryErr } = await supabase
+          .from('survey_questions')
+          .upsert([fullPayload], { onConflict: 'id' });
+
+        if (!retryErr) return { success: true };
+      } catch (retryE) {
+        console.warn('display_order retry exception:', retryE);
+      }
     }
 
-    const { data: existing } = await supabase
+    // Fallback to core payload if extra schema columns are missing
+    const { error: coreErr } = await supabase
       .from('survey_questions')
-      .select('id')
-      .eq('id', qId)
-      .maybeSingle();
+      .upsert([corePayload], { onConflict: 'id' });
 
-    if (existing?.id) {
-      await supabase
-        .from('survey_questions')
-        .update(sqPayload)
-        .eq('id', qId);
-    } else {
-      await supabase
-        .from('survey_questions')
-        .insert([sqPayload]);
-    }
-    return true;
+    if (!coreErr) return { success: true };
+
+    console.error(`Supabase core upsert error for ${qId}:`, coreErr.message);
+    return { success: false, error: coreErr.message || fullErr.message };
   } catch (e) {
-    return false;
+    console.error('upsertToSurveyQuestions exception:', e);
+    return { success: false, error: e.message || 'Unexpected exception' };
   }
 }
 
@@ -521,13 +544,15 @@ async function logAdminAuditAction(action, details = {}) {
  * Sync Question metadata & definition to Supabase DB (survey_questions & data_logs)
  */
 export async function syncQuestionToSupabase(questionObj, action = 'UPSERT') {
-  if (!questionObj || !isSupabaseConfigured) return false;
+  if (!questionObj || !isSupabaseConfigured) {
+    return { success: false, error: 'Supabase is not configured.' };
+  }
   try {
-    const ok = await upsertToSurveyQuestions(questionObj);
-    await logAdminAuditAction(`ADMIN_${action}_QUESTION`, { questionId: questionObj.id, code: questionObj.code });
-    return ok;
+    const res = await upsertToSurveyQuestions(questionObj);
+    logAdminAuditAction(`ADMIN_${action}_QUESTION`, { questionId: questionObj.id, code: questionObj.code }).catch(() => {});
+    return res;
   } catch (err) {
-    return false;
+    return { success: false, error: err.message };
   }
 }
 

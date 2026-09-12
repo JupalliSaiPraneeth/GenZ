@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { History, ShieldCheck, Clock, UserCheck } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminAuthService } from '../../services/adminAuthService';
+import { adminDataService, formatIST } from '../../services/adminDataService';
 import { fetchAuditLogsFromSupabase } from '../../services/supabaseClient';
 
 export default function AdminAuditLogs() {
@@ -14,17 +15,9 @@ export default function AdminAuditLogs() {
       try {
         const dbLogs = await fetchAuditLogsFromSupabase();
         const localLogs = adminAuthService.getAuditLogs();
-        const combined = [...dbLogs, ...localLogs];
-        if (combined.length === 0) {
-          const baseline = [
-            { id: 'log_01', timestamp: new Date().toISOString(), action: 'LOGIN', target: 'Admin Portal', status: 'SUCCESS', details: 'Authenticated via admin credentials', actor: 'admin' },
-            { id: 'log_02', timestamp: new Date(Date.now() - 3600000).toISOString(), action: 'VIEW_RESPONDENT', target: 'RESP-9001 (Alex Rivera)', status: 'SUCCESS', details: 'Inspected 360° Radar Profile & Q1-Q75 answers', actor: 'admin' },
-            { id: 'log_03', timestamp: new Date(Date.now() - 7200000).toISOString(), action: 'EXPORT_DATA', target: 'Respondents CSV', status: 'SUCCESS', details: 'Exported active respondent dataset', actor: 'admin' },
-          ];
-          setLogs(baseline);
-        } else {
-          setLogs(combined);
-        }
+        const map = new Map();
+        [...dbLogs, ...localLogs].forEach((l) => map.set(l.id, l));
+        setLogs(Array.from(map.values()));
       } catch (err) {
         console.error('Error fetching audit logs:', err);
       } finally {
@@ -62,7 +55,7 @@ export default function AdminAuditLogs() {
 
               <div className="sm:text-right shrink-0">
                 <span className="font-mono text-[11px] text-slate-500 block">
-                  {new Date(log.timestamp).toLocaleString()}
+                  {formatIST(log.timestamp)}
                 </span>
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 inline-block mt-0.5">
                   Status: {log.status} (Actor: {log.actor})

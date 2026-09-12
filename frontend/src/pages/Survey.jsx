@@ -63,10 +63,11 @@ export default function Survey() {
     setOnboardingStep(2.5);
   };
 
-  const hasSavedState = Boolean(participantName || Object.keys(answersById).length > 0);
+  const hasRegistered = Boolean(participantName && participantEmail);
+  const hasSavedState = Boolean(hasRegistered && Object.keys(answersById).length > 0);
 
-  // Onboarding Step State (0 = Welcome Screen, 1 = 4-Chapter Roadmap, 2 = Privacy Guarantee, 2.5 = Name Entry, 3 = Active 207-Q Survey)
-  const [onboardingStep, setOnboardingStep] = useState(hasSavedState ? 3 : 0);
+  // Onboarding Step State (0 = Welcome Screen, 1 = 4-Chapter Roadmap, 2 = Privacy Guarantee, 2.5 = Name Entry, 3 = Active 75-Q Survey)
+  const [onboardingStep, setOnboardingStep] = useState(hasRegistered ? 3 : 0);
 
   const [nameInput, setNameInput] = useState(participantName || '');
   const [emailInput, setEmailInput] = useState(participantEmail || '');
@@ -167,12 +168,14 @@ export default function Survey() {
     }, 100);
   };
 
-  // Auto-switch to active survey experience if session state is restored asynchronously
+  // Auto-switch to active survey experience ONLY if participant has completed registration (name & email)
   useEffect(() => {
-    if (hasSavedState && onboardingStep < 3) {
+    if (hasRegistered && onboardingStep < 3) {
       setOnboardingStep(3);
+    } else if (!hasRegistered && onboardingStep === 3) {
+      setOnboardingStep(2.5);
     }
-  }, [hasSavedState]);
+  }, [hasRegistered, onboardingStep]);
 
   // Sync Name/Email Input if store updates
   useEffect(() => {
@@ -226,7 +229,10 @@ export default function Survey() {
 
   const handleSaveNameAndStart = async (e) => {
     if (e) e.preventDefault();
-    if (!nameInput.trim()) return;
+    if (!nameInput.trim()) {
+      setEmailError('Please enter your full name!');
+      return;
+    }
     if (!emailInput.trim()) {
       setEmailError('Please enter a valid email address!');
       return;
@@ -747,7 +753,7 @@ export default function Survey() {
                 Your Details
               </h2>
               <p className="text-[#53656A] text-xs sm:text-sm mt-0.5 sm:mt-1 font-medium leading-normal">
-                Enter your details to personalize your research record. Entering a previously used email will automatically restore your saved answers so you can continue.
+                Enter your details to register and participate in the research study. Both Name and Email are required, and each email address must be unique.
               </p>
             </div>
 

@@ -64,15 +64,15 @@ export default function AdminDashboard() {
     return () => ctx.revert();
   }, [kpis]);
 
-  // Mock Trend Chart Data (Growth over time)
-  const growthData = [
-    { day: 'Mon', respondents: Math.max(1, Math.round((kpis?.totalRespondents || 10) * 0.15)), completed: Math.max(1, Math.round((kpis?.completedSurveys || 8) * 0.15)) },
-    { day: 'Tue', respondents: Math.max(2, Math.round((kpis?.totalRespondents || 10) * 0.3)), completed: Math.max(2, Math.round((kpis?.completedSurveys || 8) * 0.3)) },
-    { day: 'Wed', respondents: Math.max(3, Math.round((kpis?.totalRespondents || 10) * 0.45)), completed: Math.max(3, Math.round((kpis?.completedSurveys || 8) * 0.45)) },
-    { day: 'Thu', respondents: Math.max(4, Math.round((kpis?.totalRespondents || 10) * 0.6)), completed: Math.max(4, Math.round((kpis?.completedSurveys || 8) * 0.6)) },
-    { day: 'Fri', respondents: Math.max(6, Math.round((kpis?.totalRespondents || 10) * 0.75)), completed: Math.max(5, Math.round((kpis?.completedSurveys || 8) * 0.75)) },
-    { day: 'Sat', respondents: Math.max(8, Math.round((kpis?.totalRespondents || 10) * 0.9)), completed: Math.max(7, Math.round((kpis?.completedSurveys || 8) * 0.9)) },
-    { day: 'Sun', respondents: kpis?.totalRespondents || 10, completed: kpis?.completedSurveys || 8 },
+  // Dynamic Growth Trend Chart Data derived directly from DB participant timestamps
+  const growthData = kpis?.growthData || [
+    { day: 'Mon', respondents: 1, completed: 1 },
+    { day: 'Tue', respondents: 2, completed: 2 },
+    { day: 'Wed', respondents: 3, completed: 3 },
+    { day: 'Thu', respondents: 4, completed: 4 },
+    { day: 'Fri', respondents: 5, completed: 5 },
+    { day: 'Sat', respondents: 6, completed: 6 },
+    { day: 'Sun', respondents: kpis?.totalRespondents || 7, completed: kpis?.completedSurveys || 7 },
   ];
 
   // Completion Ratio Statistics
