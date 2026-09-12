@@ -263,7 +263,12 @@ export const useSurveyStore = create((set, get) => ({
     // Determine first unanswered question index (where user left off)
     let firstUnansweredIdx = 0;
     const unansweredIdx = questions.findIndex(q => {
-      const hasAns = mergedAnswers[q.id] !== undefined || (q.code && mergedAnswers[q.code] !== undefined);
+      const qIdKey = String(q.id).toLowerCase();
+      const qCodeKey = String(q.code || '').toLowerCase();
+      const hasAns =
+        mergedAnswers[q.id] !== undefined ||
+        mergedAnswers[qIdKey] !== undefined ||
+        (qCodeKey && mergedAnswers[qCodeKey] !== undefined);
       return !hasAns;
     });
 

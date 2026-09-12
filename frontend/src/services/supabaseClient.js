@@ -73,11 +73,24 @@ export async function registerParticipant(participantName = '', email = '', devi
       .maybeSingle();
 
     if (existing) {
-      return {
-        participant: null,
-        isResumed: false,
-        error: 'This email address is already registered in our database! Please use a different email address to participate.',
-      };
+      const existingNameNormalized = (existing.name || '').trim().toLowerCase();
+      const inputNameNormalized = nameStr.trim().toLowerCase();
+
+      if (existingNameNormalized === inputNameNormalized) {
+        // Same Name & Same Email -> Allow Login & Resume Session
+        return {
+          participant: existing,
+          isResumed: true,
+          error: null,
+        };
+      } else {
+        // Different Name for Email in DB -> Reject Login
+        return {
+          participant: null,
+          isResumed: false,
+          error: `This email address (${emailStr}) is already registered under a different name in our database. Please enter the correct matching name to log in, or use a different email address.`,
+        };
+      }
     }
 
     // 2. Insert new participant row if email is not found
@@ -102,10 +115,23 @@ export async function registerParticipant(participantName = '', email = '', devi
 
     if (insertErr) {
       if (insertErr.code === '23505' || insertErr.message?.includes('unique constraint') || insertErr.message?.includes('email')) {
+        const { data: retryExisting } = await supabase
+          .from('participants')
+          .select('id, name, email, status, total_answers_count')
+          .eq('email', emailStr)
+          .maybeSingle();
+
+        if (retryExisting) {
+          const retryNameNormalized = (retryExisting.name || '').trim().toLowerCase();
+          if (retryNameNormalized === nameStr.trim().toLowerCase()) {
+            return { participant: retryExisting, isResumed: true, error: null };
+          }
+        }
+
         return {
           participant: null,
           isResumed: false,
-          error: 'This email address is already registered in our database! Please use a different email address to participate.',
+          error: `This email address (${emailStr}) is already registered under a different name in our database. Please enter the correct matching name to log in, or use a different email address.`,
         };
       }
       console.warn('Supabase insert participant notice:', insertErr);
@@ -158,9 +184,11 @@ export async function fetchResponsesForParticipant(participantId) {
 
     const answersById = {};
     responses.forEach((r) => {
-      const qKey = r.question_id || r.question_code?.toLowerCase();
+      const qKey = String(r.question_id || '').toLowerCase();
+      const qCodeKey = String(r.question_code || '').toLowerCase();
       const val = typeof r.response_value === 'object' ? r.response_value?.value : r.response_value;
       if (qKey) answersById[qKey] = val;
+      if (qCodeKey) answersById[qCodeKey] = val;
     });
 
     return answersById;
