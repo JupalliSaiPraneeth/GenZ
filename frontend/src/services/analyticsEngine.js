@@ -228,18 +228,46 @@ export function calculateAnalyticsDataset(responseRecords = []) {
 
   if (responseRecords && responseRecords.length > 0) {
     responseRecords.forEach((rec) => {
-      const qKey = String(rec.questionId).toLowerCase();
-      const qObj = allQuestions.find(
-        (q) => String(q.id).toLowerCase() === qKey || String(q.code || '').toLowerCase() === qKey
-      );
-      const score = getQuestionScore(qObj, rec.value);
-      if (!rawValuesMap.has(qKey)) rawValuesMap.set(qKey, []);
-      rawValuesMap.get(qKey).push(rec.value);
+      const rawQId = String(rec.questionId || '').toLowerCase().trim();
+      const rawQCode = String(rec.questionCode || '').toLowerCase().trim();
 
-      if (score !== null && score !== undefined) {
-        if (!qMap.has(qKey)) qMap.set(qKey, []);
-        qMap.get(qKey).push(score);
+      const qObj = allQuestions.find(
+        (q) =>
+          String(q.id).toLowerCase() === rawQId ||
+          String(q.code || '').toLowerCase() === rawQId ||
+          String(q.id).toLowerCase() === rawQCode ||
+          String(q.code || '').toLowerCase() === rawQCode ||
+          String(q.id).toLowerCase() === `q${rawQId}` ||
+          String(q.id).replace(/\D/g, '') === rawQId.replace(/\D/g, '')
+      );
+
+      const score = getQuestionScore(qObj, rec.value);
+
+      const keysToRegister = new Set();
+      if (rawQId) keysToRegister.add(rawQId);
+      if (rawQCode) keysToRegister.add(rawQCode);
+      if (rawQId && !rawQId.startsWith('q') && !isNaN(parseInt(rawQId, 10))) {
+        keysToRegister.add(`q${rawQId}`);
       }
+      if (qObj) {
+        if (qObj.id) keysToRegister.add(String(qObj.id).toLowerCase());
+        if (qObj.code) keysToRegister.add(String(qObj.code).toLowerCase());
+        const numOnly = String(qObj.id).replace(/\D/g, '');
+        if (numOnly) {
+          keysToRegister.add(numOnly);
+          keysToRegister.add(`q${numOnly}`);
+        }
+      }
+
+      keysToRegister.forEach((k) => {
+        if (!rawValuesMap.has(k)) rawValuesMap.set(k, []);
+        rawValuesMap.get(k).push(rec.value);
+
+        if (score !== null && score !== undefined) {
+          if (!qMap.has(k)) qMap.set(k, []);
+          qMap.get(k).push(score);
+        }
+      });
     });
   }
 

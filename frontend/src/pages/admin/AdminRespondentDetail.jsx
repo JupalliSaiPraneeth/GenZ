@@ -67,7 +67,7 @@ export default function AdminRespondentDetail() {
     return (
       <AdminLayout title="Respondent Profile">
         <div className="p-12 text-center font-bold text-[#063E46]">
-          Loading full respondent 360° profile and Q1–Q75 database responses...
+          Loading full respondent 360° profile and database responses...
         </div>
       </AdminLayout>
     );
@@ -273,7 +273,7 @@ export default function AdminRespondentDetail() {
         <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-slate-100">
           {[
             { id: 'profile', label: 'Demographics Profile', icon: User },
-            { id: 'responses', label: 'All Responses (Q1–Q75)', icon: ListFilter },
+            { id: 'responses', label: `All Responses (${fullResponses?.length ? `Q1–Q${fullResponses.length}` : 'Questions'})`, icon: ListFilter },
             { id: 'analytics', label: '360° Radar Analytics', icon: Brain },
             { id: 'quality', label: 'Data Quality & Checks', icon: ShieldCheck },
             { id: 'activity', label: 'Activity Logs', icon: History },
@@ -339,7 +339,7 @@ export default function AdminRespondentDetail() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="font-heading font-extrabold text-base text-[#10242C]">
-                Official Q1–Q75 Research Responses ({fullResponses.length} Items)
+                Official Research Responses ({fullResponses.length} Items)
               </h3>
               <p className="text-xs text-[#53656A]">
                 Exact database records logged for participant {respondent.name}

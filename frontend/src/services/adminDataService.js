@@ -134,6 +134,7 @@ export const adminDataService = {
     // 1. Fetch from Supabase DB if configured (Authoritative source)
     if (isSupabaseConfigured) {
       try {
+        // Fetch questions map from Supabase DB
         const { data: dbQuestions } = await supabase
           .from('survey_questions')
           .select('*')
@@ -147,25 +148,52 @@ export const adminDataService = {
           });
         }
 
+        // Fetch participants metadata map from Supabase DB
+        const { data: dbParticipants } = await supabase
+          .from('participants')
+          .select('*');
+
+        const pMap = new Map();
+        if (dbParticipants && dbParticipants.length > 0) {
+          dbParticipants.forEach((p) => {
+            const sId = String(p.id);
+            pMap.set(sId, p);
+            if (!sessionsMap.has(sId)) {
+              sessionsMap.set(sId, {
+                sessionId: sId,
+                participantId: sId,
+                participantName: p.name || 'Gen Z Participant',
+                participantEmail: p.email || '',
+                startedAt: p.created_at || new Date().toISOString(),
+                lastAnsweredAt: p.created_at || new Date().toISOString(),
+                answersCount: p.total_answers_count || 0,
+              });
+            }
+          });
+        }
+
+        // Fetch all survey response records from Supabase DB
         const { data } = await supabase
           .from('survey_responses')
-          .select('session_id, participant_id, question_id, question_code, response_value, created_at');
+          .select('*')
+          .range(0, 10000);
 
         if (data && data.length > 0) {
           data.forEach((item) => {
             const qIdLower = String(item.question_id).toLowerCase();
             const qCodeLower = String(item.question_code || '').toLowerCase();
             const val = typeof item.response_value === 'object' ? item.response_value?.value : item.response_value;
-            const sId = item.participant_id || item.session_id;
+            const sId = String(item.participant_id || item.session_id);
 
             const qObj = qMap.get(qIdLower) || qMap.get(qCodeLower);
             const qText = qObj?.question_text || qObj?.text || '';
             const qCode = qObj?.question_code || qObj?.code || String(item.question_code || item.question_id).toUpperCase();
             const optionLabel = resolveOptionLabel(item.question_id || item.question_code, val);
+            const pObj = pMap.get(sId);
 
             combinedRecords.push({
-              sessionId: String(sId),
-              participantId: String(item.participant_id || sId),
+              sessionId: sId,
+              participantId: sId,
               questionId: qIdLower,
               questionCode: qCode,
               questionText: qText,
@@ -176,10 +204,11 @@ export const adminDataService = {
 
             if (!sessionsMap.has(sId)) {
               sessionsMap.set(sId, {
-                sessionId: String(sId),
-                participantId: String(item.participant_id || sId),
-                participantName: 'Gen Z Participant',
-                startedAt: item.created_at || new Date().toISOString(),
+                sessionId: sId,
+                participantId: sId,
+                participantName: pObj?.name || 'Gen Z Participant',
+                participantEmail: pObj?.email || '',
+                startedAt: pObj?.created_at || item.created_at || new Date().toISOString(),
                 lastAnsweredAt: item.created_at || new Date().toISOString(),
                 answersCount: 0,
               });
@@ -246,7 +275,8 @@ export const adminDataService = {
    * Get Overall Dashboard KPIs strictly based on database data
    */
   async getDashboardKPIs() {
-    const totalQuestionsCount = OFFICIAL_75_QUESTIONS.length;
+    const allQuestions = getStoredQuestions() || OFFICIAL_75_QUESTIONS;
+    const totalQuestionsCount = allQuestions.length;
     let totalRespondents = 0;
     let totalResponses = 0;
     let completedSurveys = 0;
@@ -268,7 +298,8 @@ export const adminDataService = {
 
         if (dbParticipants) {
           totalRespondents = dbParticipants.length;
-          totalResponses = totalResponsesCount || 0;
+          const sumParticipantAnswers = dbParticipants.reduce((acc, p) => acc + (p.total_answers_count || 0), 0);
+          totalResponses = totalResponsesCount || sumParticipantAnswers || 0;
 
           let totalTimeSec = 0;
           let timeCount = 0;
@@ -385,7 +416,7 @@ export const adminDataService = {
    * Get All Respondents List directly from Supabase DB participants
    */
   async getRespondentsList(searchQuery = '', filterStatus = 'all') {
-    const totalQs = OFFICIAL_75_QUESTIONS.length;
+    const totalQs = (getStoredQuestions() || OFFICIAL_75_QUESTIONS).length;
     let respondentsList = [];
 
     // 1. Fetch live participants directly from Supabase if configured (Authoritative source)
@@ -888,7 +919,7 @@ export const adminDataService = {
     return [
       { table: 'survey_responses', engine: 'Supabase Postgres & IndexedDB', records: responsesCount, status: 'Synced', latency: '12ms' },
       { table: 'participants', engine: 'Supabase Postgres & IndexedDB', records: participantsCount, status: 'Synced', latency: '15ms' },
-      { table: 'survey_questions', engine: 'Supabase Postgres Reference', records: questionsCount || 75, status: 'Healthy', latency: '10ms' },
+      { table: 'survey_questions', engine: 'Supabase Postgres Reference', records: questionsCount || (getStoredQuestions() || OFFICIAL_75_QUESTIONS).length, status: 'Healthy', latency: '10ms' },
       { table: 'data_logs', engine: 'Supabase Security & Audit Engine', records: logsCount, status: 'Active', latency: '18ms' },
     ];
   },
@@ -1056,7 +1087,7 @@ export const adminDataService = {
       { title: 'Skill Upskilling Gap', belief: `Values continuous learning (${skillGap.bPct}%)`, action: `Completes online certifications (${skillGap.aPct}%)`, gapPct: skillGap.gap },
     ];
 
-    return { demographicMatrix, correlationPairs, beliefBehaviourGaps };
+    return { records, sessions, demographicMatrix, correlationPairs, beliefBehaviourGaps };
   },
 
   /**

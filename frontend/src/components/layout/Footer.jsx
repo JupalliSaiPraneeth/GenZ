@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Sparkles, Shield, Heart, Award, ArrowUpRight } from 'lucide-react';
+import { getStoredQuestions } from '../../data/surveyQuestions';
 
 export default function Footer() {
   const location = useLocation();
@@ -85,7 +86,7 @@ export default function Footer() {
           <div className="flex items-center gap-3 sm:gap-6 text-[11px] sm:text-xs text-[#FFF8E8]/70">
             <span>Privacy First</span>
             <span>•</span>
-            <span>75 Questions</span>
+            <span>{getStoredQuestions().length} Questions</span>
             <span>•</span>
             <span>Offline Resilient</span>
           </div>

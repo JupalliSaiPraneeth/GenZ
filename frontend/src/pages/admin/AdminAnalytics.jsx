@@ -22,11 +22,12 @@ export default function AdminAnalytics() {
   const dimensions = LIFE_DIMENSIONS.map((dim) => {
     const realDim = dimScoresMap.get(dim.id);
     const pctScore = realDim?.pctScore !== undefined ? realDim.pctScore : 0;
-    const mean5 = realDim?.avg5Score !== undefined ? realDim.avg5Score.toFixed(2) : (pctScore > 0 ? ((pctScore / 100) * 4 + 1).toFixed(2) : '0.00');
+    const mean5Num = realDim?.avg5Score !== undefined ? realDim.avg5Score : (pctScore > 0 ? (pctScore / 100) * 4 + 1 : 0);
     return {
       title: dim.title,
       pctScore,
-      mean5,
+      mean5: Math.round(mean5Num * 100) / 100,
+      mean5Formatted: mean5Num.toFixed(2),
       aspectsCount: dim.aspectIds.length,
       description: dim.description,
       color: dim.color,
@@ -62,7 +63,7 @@ export default function AdminAnalytics() {
           </div>
         </div>
         <p className="text-[#53656A] font-medium leading-relaxed">
-          Aggregated scores calculated across population survey submissions. 5-point Likert and frequency items code to 1–5 means and normalized 0–100% construct indices. Categorical items (Q1–Q10, Q157–Q161) act as segmentation parameters.
+          Aggregated construct scores calculated strictly across Supabase DB population survey submissions. 5-point Likert and frequency items code to 1–5 means and normalized 0–100% construct indices. Categorical items act as segmentation parameters.
         </p>
       </div>
 
@@ -73,15 +74,40 @@ export default function AdminAnalytics() {
             <BarChart3 className="w-5 h-5 text-[#075D63]" />
             Core Research Construct Dimensions
           </h3>
-          <p className="text-xs text-[#53656A] font-medium">Population average scores per construct index</p>
+          <p className="text-xs text-[#53656A] font-medium">Population average scores per construct index calculated from Supabase DB</p>
         </div>
 
-        <div className="h-72 w-full">
+        <div className="h-80 w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dimensions} margin={{ top: 10, right: 10, left: 0, bottom: 40 }}>
-              <XAxis dataKey="title" interval={0} angle={-25} textAnchor="end" tick={{ fontSize: 10, fontWeight: 700 }} />
+            <BarChart data={dimensions} margin={{ top: 15, right: 15, left: -15, bottom: 75 }}>
+              <XAxis
+                dataKey="title"
+                interval={0}
+                tick={({ x, y, payload }) => {
+                  const rawLabel = String(payload.value || '');
+                  const displayLabel = rawLabel.length > 18 ? rawLabel.slice(0, 16) + '…' : rawLabel;
+                  return (
+                    <g transform={`translate(${x},${y})`}>
+                      <text
+                        x={0}
+                        y={0}
+                        dx={-4}
+                        dy={8}
+                        textAnchor="end"
+                        transform="rotate(-30)"
+                        fill="#334155"
+                        fontSize={10}
+                        fontWeight={700}
+                      >
+                        <title>{rawLabel}</title>
+                        {displayLabel}
+                      </text>
+                    </g>
+                  );
+                }}
+              />
               <YAxis domain={metricMode === 'percentage' ? [0, 100] : [1, 5]} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(val) => [metricMode === 'percentage' ? `${val}%` : `${val} / 5`, 'Construct Score']} />
+              <Tooltip formatter={(val) => [metricMode === 'percentage' ? `${val}%` : `${val} / 5.0`, 'Construct Score']} />
               <Bar dataKey={metricMode === 'percentage' ? 'pctScore' : 'mean5'} radius={[6, 6, 0, 0]}>
                 {dimensions.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />

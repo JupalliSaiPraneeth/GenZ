@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Award, CheckCircle2, ShieldCheck, Download, Clock, Sparkles, RefreshCw, Gift, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Award, CheckCircle2, FileCheck2, Gift, Sparkles, Download, ArrowRight, ShieldCheck, RefreshCw, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
+import { getStoredQuestions } from '../data/surveyQuestions';
 import { useSurveyStore } from '../stores/surveyStore';
 import { fetchParticipantStatus } from '../services/supabaseClient';
 import GridModal from '../components/common/GridModal';
@@ -8,9 +9,12 @@ import GridModal from '../components/common/GridModal';
 export default function SurveyComplete() {
   const { participantName, participantEmail, participantId } = useSurveyStore();
   const [participant, setParticipant] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+  const totalQs = (getStoredQuestions() || []).length || 75;
 
   const loadStatus = async () => {
     setIsRefreshing(true);
@@ -67,7 +71,7 @@ export default function SurveyComplete() {
             Responses Submitted Successfully!
           </h1>
           <p className="text-[#FFF8E8]/90 text-xs sm:text-base max-w-xl mx-auto font-medium leading-relaxed">
-            Thank you <strong className="text-white font-bold">{pName}</strong>! Your 75 responses have been securely logged in our research database.
+            Thank you <strong className="text-white font-bold">{pName}</strong>! Your {totalQs} responses have been securely logged in our research database.
           </p>
         </div>
 
@@ -118,7 +122,7 @@ export default function SurveyComplete() {
                   <span>Admin Evaluation in Progress</span>
                 </div>
                 <p className="text-xs leading-relaxed text-amber-900/90 font-medium">
-                  Our research evaluation team is reviewing your 75 survey responses. Once evaluated and verified by the admin, your official <strong>Certificate of Participation</strong> will be generated here, and your <strong>Lucky Draw Entry</strong> will be announced!
+                  Our research evaluation team is reviewing your {totalQs} survey responses. Once evaluated and verified by the admin, your official <strong>Certificate of Participation</strong> will be generated here, and your <strong>Lucky Draw Entry</strong> will be announced!
                 </p>
               </div>
 

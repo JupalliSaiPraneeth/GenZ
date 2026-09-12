@@ -3,7 +3,7 @@ import { Search, Activity, ArrowLeft, ChevronRight, BarChart3 } from 'lucide-rea
 import { useSurveyStore } from '../stores/surveyStore';
 import { db } from '../services/db';
 import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
-import { OFFICIAL_75_QUESTIONS } from '../data/surveyQuestions';
+import { OFFICIAL_75_QUESTIONS, getStoredQuestions } from '../data/surveyQuestions';
 import AnimatedQuestionPieChart from '../components/analytics/AnimatedQuestionPieChart';
 
 export default function Analytics() {
@@ -134,34 +134,36 @@ export default function Analytics() {
     return dbResponses.length > 0 ? dbResponses : personalRecords;
   }, [dbResponses, personalRecords]);
 
+  const allQuestions = useMemo(() => getStoredQuestions() || OFFICIAL_75_QUESTIONS, []);
+
   // Filtered Questions List for Deep Dive
   const filteredQuestions = useMemo(() => {
-    return OFFICIAL_75_QUESTIONS.filter(
+    return allQuestions.filter(
       (q) =>
         q.code.toLowerCase().includes(questionSearch.toLowerCase()) ||
         q.text.toLowerCase().includes(questionSearch.toLowerCase()) ||
         q.topic.toLowerCase().includes(questionSearch.toLowerCase())
     );
-  }, [questionSearch]);
+  }, [questionSearch, allQuestions]);
 
   // Currently Selected Question for Level 1 Analysis
   const selectedQuestionObj = useMemo(() => {
-    return OFFICIAL_75_QUESTIONS.find((q) => q.id === selectedQuestionId) || OFFICIAL_75_QUESTIONS[0];
-  }, [selectedQuestionId]);
+    return allQuestions.find((q) => q.id === selectedQuestionId) || allQuestions[0];
+  }, [selectedQuestionId, allQuestions]);
 
   const selectedQuestionIndex = useMemo(() => {
-    const idx = OFFICIAL_75_QUESTIONS.findIndex((q) => q.id === selectedQuestionId);
+    const idx = allQuestions.findIndex((q) => q.id === selectedQuestionId);
     return idx !== -1 ? idx : 0;
-  }, [selectedQuestionId]);
+  }, [selectedQuestionId, allQuestions]);
 
   const handleSelectPrevQuestion = () => {
-    const prevIdx = selectedQuestionIndex > 0 ? selectedQuestionIndex - 1 : OFFICIAL_75_QUESTIONS.length - 1;
-    setSelectedQuestionId(OFFICIAL_75_QUESTIONS[prevIdx].id);
+    const prevIdx = selectedQuestionIndex > 0 ? selectedQuestionIndex - 1 : allQuestions.length - 1;
+    setSelectedQuestionId(allQuestions[prevIdx].id);
   };
 
   const handleSelectNextQuestion = () => {
-    const nextIdx = selectedQuestionIndex < OFFICIAL_75_QUESTIONS.length - 1 ? selectedQuestionIndex + 1 : 0;
-    setSelectedQuestionId(OFFICIAL_75_QUESTIONS[nextIdx].id);
+    const nextIdx = selectedQuestionIndex < allQuestions.length - 1 ? selectedQuestionIndex + 1 : 0;
+    setSelectedQuestionId(allQuestions[nextIdx].id);
   };
 
   // Mobile Question Click Handler: selects question AND opens analytics sheet
@@ -354,7 +356,7 @@ export default function Analytics() {
                     type="text"
                     value={questionSearch}
                     onChange={(e) => setQuestionSearch(e.target.value)}
-                    placeholder="Search Q1-Q75 or keyword..."
+                    placeholder={`Search Q1-Q${allQuestions.length} or keyword...`}
                     className="w-full px-4 py-2.5 pl-10 rounded-2xl border border-slate-200 focus:border-[#109A9B] focus:ring-2 focus:ring-[#109A9B]/20 outline-none text-xs font-semibold bg-slate-50/50 shadow-xs"
                   />
                   <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -428,10 +430,10 @@ export default function Analytics() {
                 <div className="flex items-center justify-between">
                   <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
                     <Search className="w-4 h-4 text-[#109A9B]" />
-                    <span>Select Question (75 Total)</span>
+                    <span>Select Question ({allQuestions.length} Total)</span>
                   </h3>
                   <span className="text-[11px] font-extrabold text-[#075D63] bg-[#EAF6F6] px-2.5 py-0.5 rounded-full border border-[#109A9B]/20">
-                    Q{selectedQuestionIndex + 1}/75
+                    Q{selectedQuestionIndex + 1}/{allQuestions.length}
                   </span>
                 </div>
 
@@ -441,7 +443,7 @@ export default function Analytics() {
                     type="text"
                     value={questionSearch}
                     onChange={(e) => setQuestionSearch(e.target.value)}
-                    placeholder="Search Q1-Q75 or keyword..."
+                    placeholder={`Search Q1-Q${allQuestions.length} or keyword...`}
                     className="w-full px-3.5 py-2 pl-9 rounded-2xl border border-slate-200 focus:border-[#109A9B] focus:ring-2 focus:ring-[#109A9B]/20 outline-none text-xs font-semibold bg-slate-50/50 transition-all"
                   />
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />

@@ -398,7 +398,7 @@ export default function Survey() {
 
               {/* Description */}
               <p className="text-[#53656A] text-xs sm:text-base leading-relaxed max-w-[480px] mx-auto mb-4 sm:mb-6 font-medium">
-                Welcome to India's premier youth perspective research study. We have organized the <strong className="text-[#063E46] font-bold">75 questions</strong> into <strong className="text-[#063E46] font-bold">4 simple chapters</strong> so your journey feels fast, smooth, and engaging.
+                Welcome to India's premier youth perspective research study. We have organized the <strong className="text-[#063E46] font-bold">{questions.length} questions</strong> into <strong className="text-[#063E46] font-bold">{sections.length} simple chapters</strong> so your journey feels fast, smooth, and engaging.
               </p>
 
               {/* Primary CTA Button */}
@@ -437,7 +437,7 @@ export default function Survey() {
                     <FileText className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#109A9B]" />
                   </div>
                   <div className="min-w-0">
-                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">75 Questions</span>
+                    <span className="block font-heading font-extrabold text-[#10242C] text-[11px] sm:text-sm leading-tight">{questions.length} Questions</span>
                     <span className="block text-[9px] sm:text-[11px] text-[#53656A] font-medium leading-tight truncate">Across 4 chapters</span>
                   </div>
                 </div>
@@ -511,7 +511,7 @@ export default function Survey() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 mb-2.5 py-1.5 px-2 rounded-xl bg-[#EAF6F6]/90 border border-[#109A9B]/20 font-inter">
                   <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-[#075D63] p-0.5">
                     <BarChart2 className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
-                    <span>75 Questions</span>
+                    <span>{questions.length} Questions</span>
                   </div>
                   <div className="flex items-center justify-center gap-1 text-[10px] font-semibold text-[#075D63] p-0.5">
                     <Clock className="w-3.5 h-3.5 text-[#109A9B] flex-shrink-0" />
@@ -1429,7 +1429,7 @@ export default function Survey() {
                 Survey Incomplete
               </h3>
               <p className="text-xs sm:text-sm font-medium text-[#53656A] mt-1.5 leading-relaxed">
-                You must respond to all <strong className="text-[#063E46]">75 questions</strong> before submitting. You currently have <strong className="text-amber-700 font-bold">{unansweredCount} unanswered question{unansweredCount > 1 ? 's' : ''}</strong> remaining.
+                You must respond to all <strong className="text-[#063E46]">{questions.length} questions</strong> before submitting. You currently have <strong className="text-amber-700 font-bold">{unansweredCount} unanswered question{unansweredCount > 1 ? 's' : ''}</strong> remaining.
               </p>
             </div>
             <div className="pt-2">

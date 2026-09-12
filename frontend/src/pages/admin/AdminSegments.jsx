@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { UserCheck, Sparkles, TrendingUp, Shield, Wallet, Globe, Users, Laptop, Heart } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminDataService } from '../../services/adminDataService';
+import { getStoredQuestions } from '../../data/surveyQuestions';
 
 const ICON_MAP = {
   'growth-explorer': TrendingUp,
@@ -33,7 +34,7 @@ export default function AdminSegments() {
           <span>Descriptive Analytical Personas Framework</span>
         </div>
         <p className="text-xs text-[#53656A] font-medium">
-          Data-driven respondent clusters derived from 75-question response profiles. These represent descriptive analytical segments, not psychological diagnoses.
+          Data-driven respondent clusters derived from {getStoredQuestions().length}-question response profiles. These represent descriptive analytical segments, not psychological diagnoses.
         </p>
       </div>
 

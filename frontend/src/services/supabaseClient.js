@@ -262,7 +262,12 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
       .eq('participant_id', validParticipantId);
 
     const answeredCount = count || 1;
-    const isCompleted = answeredCount >= 75;
+    const { count: totalQuestionsCount } = await supabase
+      .from('survey_questions')
+      .select('id', { count: 'exact', head: true });
+
+    const requiredCount = totalQuestionsCount || 75;
+    const isCompleted = answeredCount >= requiredCount;
 
     await supabase
       .from('participants')
@@ -625,22 +630,59 @@ export async function fetchQuestionsFromSupabase() {
 export async function fetchAuditLogsFromSupabase() {
   if (!isSupabaseConfigured) return [];
   try {
+    // 1. Fetch participants map from Supabase DB to resolve participant_id -> participant name
+    const { data: pData } = await supabase
+      .from('participants')
+      .select('id, name, email');
+
+    const pMap = new Map();
+    if (pData && pData.length > 0) {
+      pData.forEach((p) => {
+        const displayName = (p.name && p.name !== 'Gen Z Participant' && p.name !== 'ADMIN_BLUEPRINT_CONFIG')
+          ? p.name
+          : (p.email ? p.email.split('@')[0] : 'Gen Z Participant');
+        if (p.id) pMap.set(p.id, displayName);
+      });
+    }
+
+    // 2. Fetch logs from data_logs table
     const { data, error } = await supabase
       .from('data_logs')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(200);
 
     if (!error && data && data.length > 0) {
-      return data.map((item) => ({
-        id: item.id,
-        timestamp: item.device_timestamp || item.created_at,
-        action: item.action,
-        target: item.details?.target || item.details?.questionId || item.details?.email || 'System Record',
-        status: 'SUCCESS',
-        details: typeof item.details === 'object' ? JSON.stringify(item.details) : String(item.details || 'System Action'),
-        actor: 'admin',
-      }));
+      return data.map((item) => {
+        let actorName = 'admin';
+        if (item.action.startsWith('ADMIN_') || item.action === 'LOGIN' || item.action === 'LOGOUT') {
+          actorName = 'admin';
+        } else if (item.participant_id && pMap.has(item.participant_id)) {
+          actorName = pMap.get(item.participant_id);
+        } else if (item.details?.participantName) {
+          actorName = item.details.participantName;
+        } else if (item.details?.name) {
+          actorName = item.details.name;
+        } else if (item.details?.email) {
+          actorName = item.details.email.split('@')[0];
+        } else if (item.participant_id) {
+          actorName = `Participant ${item.participant_id.slice(0, 8)}`;
+        } else {
+          actorName = 'system';
+        }
+
+        return {
+          id: item.id,
+          timestamp: item.device_timestamp || item.created_at,
+          action: item.action,
+          target: item.details?.questionId || item.details?.target || item.details?.email || 'System Record',
+          status: 'SUCCESS',
+          details: typeof item.details === 'object' ? JSON.stringify(item.details) : String(item.details || 'System Action'),
+          actor: actorName,
+          actorName: actorName,
+          participantId: item.participant_id
+        };
+      });
     }
   } catch (e) {
     console.warn('fetchAuditLogsFromSupabase notice:', e);

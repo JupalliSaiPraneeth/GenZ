@@ -5,6 +5,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { adminDataService } from '../../services/adminDataService';
 import { adminAuthService } from '../../services/adminAuthService';
 import { fetchAuditLogsFromSupabase } from '../../services/supabaseClient';
+import { getStoredQuestions, OFFICIAL_75_QUESTIONS } from '../../data/surveyQuestions';
 import GridModal from '../../components/common/GridModal';
 
 export default function AdminExport() {
@@ -282,7 +283,7 @@ export default function AdminExport() {
           downloadCSV(headers, rows, `genz_questions_blueprint_${Date.now()}.csv`);
         } else {
           generatePDF(
-            'Official Questionnaire Blueprint (Q1 → Q75 Master List)',
+            `Official Questionnaire Blueprint (Q1 → Q${questionsList.length} Master List)`,
             `Total Questions in Supabase DB: ${questionsList.length}`,
             headers,
             rows,
@@ -346,7 +347,7 @@ export default function AdminExport() {
                 {[
                   { id: 'respondents', label: 'Respondent Master List (Demographics & Metadata)' },
                   { id: 'single_participant', label: 'Individual Participant Responses (Select Respondent)' },
-                  { id: 'questions', label: 'Questionnaire Blueprint & Questions Master List (Q1 → Q75)' },
+                  { id: 'questions', label: `Questionnaire Blueprint & Questions Master List (Q1 → Q${(getStoredQuestions() || OFFICIAL_75_QUESTIONS).length})` },
                   { id: 'quality', label: 'Data Quality & Audit Logs' },
                 ].map((opt) => (
                   <button

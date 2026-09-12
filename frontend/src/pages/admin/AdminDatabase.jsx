@@ -3,6 +3,7 @@ import { Database, Activity, CheckCircle2, RefreshCw, Server, Shield, Layers } f
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminDataService } from '../../services/adminDataService';
 import { isSupabaseConfigured } from '../../services/supabaseClient';
+import { getStoredQuestions } from '../../data/surveyQuestions';
 
 export default function AdminDatabase() {
   const [stats, setStats] = useState(null);
@@ -57,7 +58,7 @@ export default function AdminDatabase() {
             <h3 className="font-heading font-extrabold text-2xl text-[#10242C] mt-1">
               {loading ? '...' : stats?.totalResponses}
             </h3>
-            <span className="text-xs text-[#53656A] font-bold mt-0.5 block">Across Q1–Q75</span>
+            <span className="text-xs text-[#53656A] font-bold mt-0.5 block">Across Q1–Q{getStoredQuestions().length}</span>
           </div>
           <div className="w-10 h-10 rounded-2xl bg-[#FAF7F0] text-[#109A9B] flex items-center justify-center border border-slate-200">
             <Layers className="w-5 h-5" />
