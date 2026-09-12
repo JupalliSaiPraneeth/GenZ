@@ -95,19 +95,22 @@ CREATE POLICY "Allow public insert on survey_questions" ON public.survey_questio
 CREATE POLICY "Allow public update on survey_questions" ON public.survey_questions FOR UPDATE USING (true);
 CREATE POLICY "Allow public delete on survey_questions" ON public.survey_questions FOR DELETE USING (true);
 
--- Participants: Public Read, Insert, Update
+-- Participants: Public Read, Insert, Update, Delete
 CREATE POLICY "Allow public select on participants" ON public.participants FOR SELECT USING (true);
 CREATE POLICY "Allow public insert on participants" ON public.participants FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update on participants" ON public.participants FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete on participants" ON public.participants FOR DELETE USING (true);
 
--- Survey Responses: Public Read, Insert, Update
+-- Survey Responses: Public Read, Insert, Update, Delete
 CREATE POLICY "Allow public select on survey_responses" ON public.survey_responses FOR SELECT USING (true);
 CREATE POLICY "Allow public insert on survey_responses" ON public.survey_responses FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow public update on survey_responses" ON public.survey_responses FOR UPDATE USING (true);
+CREATE POLICY "Allow public delete on survey_responses" ON public.survey_responses FOR DELETE USING (true);
 
--- Data Logs: Public Read, Insert
+-- Data Logs: Public Read, Insert, Delete
 CREATE POLICY "Allow public select on data_logs" ON public.data_logs FOR SELECT USING (true);
 CREATE POLICY "Allow public insert on data_logs" ON public.data_logs FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public delete on data_logs" ON public.data_logs FOR DELETE USING (true);
 
 -- 7. SEED ALL 75 RESEARCH QUESTIONS
 INSERT INTO public.survey_questions (id, question_code, section_id, topic, question_text, display_order) VALUES

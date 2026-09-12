@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useSurveyStore } from '../../stores/surveyStore';
+import GridModal from '../../components/common/GridModal';
 
 export default function AdminQuestions() {
   const { questions, sections, addQuestion, updateQuestion, deleteQuestion, loadQuestionsFromSupabase } = useSurveyStore();
@@ -28,6 +29,22 @@ export default function AdminQuestions() {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [savedSuccessMsg, setSavedSuccessMsg] = useState('');
+
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: null,
+  });
+
+  const showAlert = (title, message, type = 'warning') => {
+    setModalConfig({ isOpen: true, title, message, type, onConfirm: null });
+  };
+
+  const showConfirm = (title, message, onConfirm, type = 'confirm') => {
+    setModalConfig({ isOpen: true, title, message, type, onConfirm });
+  };
 
   // Draft state for new question modal
   const [newQuestionDraft, setNewQuestionDraft] = useState({
@@ -84,22 +101,27 @@ export default function AdminQuestions() {
   };
 
   const handleDeleteQuestion = async (qId, qCode) => {
-    if (window.confirm(`Are you sure you want to delete question ${qCode}? Question numbers across sections will re-sequence automatically.`)) {
-      await deleteQuestion(qId);
-      setSavedSuccessMsg(`Deleted question ${qCode} and synced to Supabase database.`);
-      setTimeout(() => setSavedSuccessMsg(''), 4000);
-      setEditingQuestion(null);
-    }
+    showConfirm(
+      'Confirm Deletion',
+      `Are you sure you want to delete question ${qCode}? Question numbers across sections will re-sequence automatically.`,
+      async () => {
+        await deleteQuestion(qId);
+        setSavedSuccessMsg(`Deleted question ${qCode} and synced to Supabase database.`);
+        setTimeout(() => setSavedSuccessMsg(''), 4000);
+        setEditingQuestion(null);
+      },
+      'confirm'
+    );
   };
 
   const handleCreateQuestionSubmit = async (e) => {
     e.preventDefault();
     if (!newQuestionDraft.text.trim()) {
-      alert('Please enter a question prompt text!');
+      showAlert('Missing Information', 'Please enter a question prompt text!', 'warning');
       return;
     }
     if (!newQuestionDraft.topic.trim()) {
-      alert('Please enter a topic or construct category!');
+      showAlert('Missing Information', 'Please enter a topic or construct category!', 'warning');
       return;
     }
 
@@ -107,7 +129,7 @@ export default function AdminQuestions() {
     const created = res?.created || res;
     const syncRes = res?.syncRes;
     const targetSec = sections.find((s) => s.id === newQuestionDraft.sectionId);
-    
+
     if (syncRes?.success || syncRes === true) {
       setSavedSuccessMsg(
         `Added new question (${created?.code || 'New Q'}) into Section ${targetSec?.number || 1}! Successfully created in Supabase database.`
@@ -115,7 +137,7 @@ export default function AdminQuestions() {
       setTimeout(() => setSavedSuccessMsg(''), 4500);
     } else {
       const errMsg = syncRes?.error || 'Unknown Supabase write error';
-      alert(`Supabase Database Warning: Saved locally, but Supabase rejected database write.\n\nReason: ${errMsg}`);
+      showAlert('Supabase Database Warning', `Saved locally, but Supabase rejected database write.\n\nReason: ${errMsg}`, 'warning');
     }
 
     setIsCreateModalOpen(false);
@@ -152,7 +174,7 @@ export default function AdminQuestions() {
   const handleRemoveOption = (idx) => {
     if (!editingQuestion) return;
     if (editingQuestion.options.length <= 1) {
-      alert('A question must have at least one option!');
+      showAlert('Action Not Allowed', 'A question must have at least one option!', 'warning');
       return;
     }
     const newOptions = editingQuestion.options.filter((_, i) => i !== idx);
@@ -177,7 +199,7 @@ export default function AdminQuestions() {
 
   const handleRemoveDraftOption = (idx) => {
     if (newQuestionDraft.options.length <= 1) {
-      alert('A question must have at least one option!');
+      showAlert('Action Not Allowed', 'A question must have at least one option!', 'warning');
       return;
     }
     const newOptions = newQuestionDraft.options.filter((_, i) => i !== idx);
@@ -830,6 +852,15 @@ export default function AdminQuestions() {
           </div>
         </div>
       )}
+
+      <GridModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        onConfirm={modalConfig.onConfirm}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </AdminLayout>
   );
 }

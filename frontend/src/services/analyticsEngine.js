@@ -4,6 +4,8 @@
 // Correlations, and Action Gaps from Survey Response Data.
 // =================================================================
 
+import { OFFICIAL_75_QUESTIONS, getStoredQuestions } from '../data/surveyQuestions';
+
 // 1. Helper to convert any raw response value into a 1 to 5 scale score (and 0-100 percentage)
 export function normalizeScore(val) {
   if (val === undefined || val === null || val === '') return null;
@@ -28,6 +30,51 @@ export function normalizeScore(val) {
   }
 
   return 3; // Default neutral fallback
+}
+
+// Helper to convert question response value into precise 1 to 5 score based on option position/value
+export function getQuestionScore(q, userVal) {
+  if (userVal === undefined || userVal === null || userVal === '') return null;
+
+  let actualVal = userVal;
+  if (typeof userVal === 'object' && userVal !== null) {
+    actualVal = userVal.value !== undefined ? userVal.value : (userVal.label !== undefined ? userVal.label : userVal);
+  }
+
+  const str = String(actualVal).trim().toLowerCase();
+
+  if (['strongly_agree', 'very_often', 'daily', 'always', '5'].includes(str)) return 5;
+  if (['agree', 'often', 'weekly', 'frequently', '4'].includes(str)) return 4;
+  if (['neutral', 'sometimes', 'occasionally', 'moderate', '3'].includes(str)) return 3;
+  if (['disagree', 'rarely', 'monthly', 'seldom', '2'].includes(str)) return 2;
+  if (['strongly_disagree', 'never', 'rarely_never', '1'].includes(str)) return 1;
+
+  if (q && Array.isArray(q.options) && q.options.length > 0) {
+    const matchedIdx = q.options.findIndex((opt) => {
+      const optVal = String(opt.value ?? '').trim().toLowerCase();
+      const optLbl = String(opt.label ?? '').trim().toLowerCase();
+      return (
+        optVal === str ||
+        optLbl === str ||
+        optVal.replaceAll('_', '-') === str ||
+        optVal.replaceAll('-', '_') === str ||
+        optVal.replaceAll(' ', '_') === str
+      );
+    });
+
+    if (matchedIdx !== -1) {
+      if (q.options.length === 1) return 5;
+      return 1 + (matchedIdx / (q.options.length - 1)) * 4;
+    }
+  }
+
+  const num = parseFloat(str);
+  if (!isNaN(num)) {
+    if (num >= 1 && num <= 5) return num;
+    if (num >= 0 && num <= 100) return (num / 100) * 4 + 1;
+  }
+
+  return normalizeScore(actualVal) || 3;
 }
 
 // 2. Aspect Definitions (15 Core Thematic Aspects mapping 75 Questions)
@@ -177,15 +224,19 @@ export function calculateAnalyticsDataset(responseRecords = []) {
   // Create a map of normalized scores per question ID
   const qMap = new Map();
   const rawValuesMap = new Map();
+  const allQuestions = getStoredQuestions() || OFFICIAL_75_QUESTIONS;
 
   if (responseRecords && responseRecords.length > 0) {
     responseRecords.forEach((rec) => {
       const qKey = String(rec.questionId).toLowerCase();
-      const score = normalizeScore(rec.value);
+      const qObj = allQuestions.find(
+        (q) => String(q.id).toLowerCase() === qKey || String(q.code || '').toLowerCase() === qKey
+      );
+      const score = getQuestionScore(qObj, rec.value);
       if (!rawValuesMap.has(qKey)) rawValuesMap.set(qKey, []);
       rawValuesMap.get(qKey).push(rec.value);
 
-      if (score !== null) {
+      if (score !== null && score !== undefined) {
         if (!qMap.has(qKey)) qMap.set(qKey, []);
         qMap.get(qKey).push(score);
       }
@@ -199,7 +250,7 @@ export function calculateAnalyticsDataset(responseRecords = []) {
     const pct = Math.round(((avg5 - 1) / 4) * 100);
     qScores[qKey] = {
       avg5: Math.round(avg5 * 100) / 100,
-      pct: Math.max(10, Math.min(100, pct)),
+      pct: Math.max(0, Math.min(100, pct)),
       count: scores.length,
     };
   });
@@ -207,7 +258,7 @@ export function calculateAnalyticsDataset(responseRecords = []) {
   // Helper to get average percentage score for a set of question IDs
   const getAvgPctForQuestions = (qIdList) => {
     const validPcts = qIdList.map((q) => qScores[q]?.pct).filter((p) => p !== undefined && p !== null);
-    if (validPcts.length === 0) return 75; // Default baseline if question has no responses yet
+    if (validPcts.length === 0) return 0; // Return 0 if question has no responses yet
     return Math.round(validPcts.reduce((a, b) => a + b, 0) / validPcts.length);
   };
 
@@ -227,7 +278,7 @@ export function calculateAnalyticsDataset(responseRecords = []) {
 
   // 2. Calculate 10 Life Dimensions Scores
   const dimensionScores = LIFE_DIMENSIONS.map((dim) => {
-    const aspectPcts = dim.aspectIds.map((aId) => aspectMap.get(aId)?.pctScore || 75);
+    const aspectPcts = dim.aspectIds.map((aId) => aspectMap.get(aId)?.pctScore || 0);
     const pct = Math.round(aspectPcts.reduce((a, b) => a + b, 0) / aspectPcts.length);
     const avg5 = Math.round(((pct / 100) * 4 + 1) * 100) / 100;
     return {

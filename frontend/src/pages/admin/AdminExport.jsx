@@ -1,16 +1,40 @@
-import React, { useState } from 'react';
-import { Download, FileText, ShieldAlert, CheckCircle2, FileSpreadsheet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Download, FileText, ShieldAlert, CheckCircle2, FileSpreadsheet, UserCheck, Search, Users } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminDataService } from '../../services/adminDataService';
 import { adminAuthService } from '../../services/adminAuthService';
 import { fetchAuditLogsFromSupabase } from '../../services/supabaseClient';
+import GridModal from '../../components/common/GridModal';
 
 export default function AdminExport() {
   const [exportType, setExportType] = useState('respondents');
   const [fileFormat, setFileFormat] = useState('csv');
   const [confirmModal, setConfirmModal] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [respondents, setRespondents] = useState([]);
+  const [selectedParticipantId, setSelectedParticipantId] = useState('');
+  const [participantSearch, setParticipantSearch] = useState('');
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'error' });
+
+  useEffect(() => {
+    adminDataService.getRespondentsList().then((list) => {
+      setRespondents(list || []);
+      if (list && list.length > 0) {
+        setSelectedParticipantId(list[0].id || list[0].sessionId);
+      }
+    });
+  }, []);
+
+  const filteredRespondents = respondents.filter((r) => {
+    if (!participantSearch.trim()) return true;
+    const q = participantSearch.toLowerCase();
+    return (
+      r.name?.toLowerCase().includes(q) ||
+      (r.email && r.email.toLowerCase().includes(q)) ||
+      r.id?.toLowerCase().includes(q)
+    );
+  });
 
   const downloadCSV = (headers, rows, filename) => {
     const csvContent = [
@@ -29,85 +53,180 @@ export default function AdminExport() {
   };
 
   const generatePDF = (title, subtitle, headers, rows, filename) => {
-    const doc = new jsPDF();
+    const isLandscape = headers.length > 5;
+    const doc = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait' });
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const printableWidth = pageWidth - margin * 2;
+    const fontSize = isLandscape ? 8 : 7.5;
 
-    // Header Title
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(7, 93, 99); // #075D63
-    doc.text('GEN Z VOICES — RESEARCH PLATFORM', 14, 18);
+    const fitText = (d, txt, maxW) => {
+      let str = String(txt ?? '').trim();
+      if (!str) return '';
+      if (d.getTextWidth(str) <= maxW) return str;
+      let truncated = str;
+      while (truncated.length > 1 && d.getTextWidth(truncated + '…') > maxW) {
+        truncated = truncated.slice(0, -1);
+      }
+      return truncated.length > 0 ? truncated + '…' : '';
+    };
 
-    doc.setFontSize(12);
-    doc.setTextColor(16, 36, 44); // #10242C
-    doc.text(title, 14, 26);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(83, 101, 106); // #53656A
-    doc.text(`${subtitle} | Exported: ${new Date().toLocaleString()}`, 14, 32);
-
-    doc.setDrawColor(16, 154, 155);
-    doc.setLineWidth(0.5);
-    doc.line(14, 36, pageWidth - 14, 36);
-
-    let y = 44;
-    doc.setFontSize(8);
-
-    // Print headers
-    doc.setFont('helvetica', 'bold');
-    doc.setFillColor(234, 246, 246);
-    doc.rect(14, y - 4, pageWidth - 28, 8, 'F');
-    doc.setTextColor(7, 93, 99);
-
-    const colWidth = (pageWidth - 28) / headers.length;
-    headers.forEach((h, i) => {
-      doc.text(String(h).slice(0, 16), 16 + i * colWidth, y);
+    // Measure exact text widths for headers & data cells in mm
+    doc.setFontSize(fontSize);
+    const desiredWidths = headers.map((h, colIdx) => {
+      doc.setFont('helvetica', 'bold');
+      let maxW = doc.getTextWidth(String(h));
+      doc.setFont('helvetica', 'normal');
+      rows.forEach((r) => {
+        const cellW = doc.getTextWidth(String(r[colIdx] ?? ''));
+        if (cellW > maxW) maxW = cellW;
+      });
+      return Math.max(maxW + 4, 12);
     });
 
-    y += 8;
+    const totalDesired = desiredWidths.reduce((a, b) => a + b, 0) || headers.length;
+    const colWidths = desiredWidths.map((w) => (w / totalDesired) * printableWidth);
+
+    const colPositions = [];
+    let currentX = margin;
+    colWidths.forEach((w) => {
+      colPositions.push(currentX);
+      currentX += w;
+    });
+
+    // Header Title Block
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(7, 93, 99); // #075D63
+    doc.text('GEN Z VOICES — RESEARCH PLATFORM', margin, 15);
+
+    doc.setFontSize(10.5);
+    doc.setTextColor(16, 36, 44); // #10242C
+    doc.text(title, margin, 22);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(83, 101, 106); // #53656A
+    doc.text(`${subtitle} | Exported: ${new Date().toLocaleString()}`, margin, 27);
+
+    // Header Border Line
+    doc.setDrawColor(16, 154, 155);
+    doc.setLineWidth(0.5);
+    doc.line(margin, 30, pageWidth - margin, 30);
+
+    let y = 37;
+    const rowHeight = 7.5;
+
+    const renderTableHeader = (currentY) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFillColor(7, 93, 99); // Solid dark teal header
+      doc.rect(margin, currentY - 5, printableWidth, rowHeight, 'F');
+      doc.setTextColor(255, 255, 255); // White text
+      doc.setFontSize(fontSize);
+
+      headers.forEach((h, i) => {
+        const maxCellW = colWidths[i] - 2;
+        const safeText = fitText(doc, String(h), maxCellW);
+        doc.text(safeText, colPositions[i] + 1.5, currentY - 0.5);
+      });
+    };
+
+    renderTableHeader(y);
+
+    y += rowHeight;
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(16, 36, 44);
 
     rows.forEach((row, rowIndex) => {
-      if (y > 275) {
+      if (y > pageHeight - 16) {
         doc.addPage();
         y = 20;
-
-        // Print header on new page
-        doc.setFont('helvetica', 'bold');
-        doc.setFillColor(234, 246, 246);
-        doc.rect(14, y - 4, pageWidth - 28, 8, 'F');
-        doc.setTextColor(7, 93, 99);
-        headers.forEach((h, i) => {
-          doc.text(String(h).slice(0, 16), 16 + i * colWidth, y);
-        });
-        y += 8;
+        renderTableHeader(y);
+        y += rowHeight;
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(16, 36, 44);
       }
 
+      // Alternating row background
       if (rowIndex % 2 === 1) {
-        doc.setFillColor(250, 247, 240);
-        doc.rect(14, y - 4, pageWidth - 28, 7, 'F');
+        doc.setFillColor(244, 249, 249);
+        doc.rect(margin, y - 5, printableWidth, rowHeight, 'F');
+      } else {
+        doc.setFillColor(255, 255, 255);
+        doc.rect(margin, y - 5, printableWidth, rowHeight, 'F');
       }
 
+      // Border line under each row
+      doc.setDrawColor(230, 235, 237);
+      doc.setLineWidth(0.1);
+      doc.line(margin, y + 2.5, pageWidth - margin, y + 2.5);
+
+      doc.setFontSize(fontSize);
       row.forEach((cell, i) => {
-        doc.text(String(cell ?? '').slice(0, 18), 16 + i * colWidth, y);
+        const maxCellW = colWidths[i] - 2;
+        const safeText = fitText(doc, String(cell ?? ''), maxCellW);
+        doc.text(safeText, colPositions[i] + 1.5, y - 0.5);
       });
-      y += 7;
+
+      y += rowHeight;
     });
 
-    // Footer page numbers
+    // Footer with Page Numbers
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
-      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
       doc.setTextColor(120, 120, 120);
-      doc.text(`Page ${i} of ${pageCount} — Gen Z Voices Confidential Export`, pageWidth - 14, 288, { align: 'right' });
+      doc.text(
+        `Page ${i} of ${pageCount} — Gen Z Voices Confidential Administrative Export`,
+        pageWidth - margin,
+        pageHeight - 6,
+        { align: 'right' }
+      );
     }
 
     doc.save(filename);
+  };
+
+  const handleDownloadParticipantResponses = async (pId, format = 'pdf') => {
+    setExporting(true);
+    try {
+      const detail = await adminDataService.getRespondentDetail(pId);
+      if (!detail || !detail.respondent) {
+        throw new Error('Participant responses record not found in database.');
+      }
+
+      const { respondent, fullResponses } = detail;
+      const headers = ['Code', 'Category / Topic', 'Question Text', 'Participant Answer', 'Raw Value'];
+      const rows = fullResponses.map((r) => [
+        r.code,
+        r.topic,
+        r.questionText,
+        r.selectedOptionLabel,
+        r.storedValue,
+      ]);
+
+      const safeName = (respondent.name || 'Participant').replace(/[^a-zA-Z0-9]/g, '_');
+
+      if (format === 'csv') {
+        downloadCSV(headers, rows, `genz_responses_${safeName}_${Date.now()}.csv`);
+      } else {
+        generatePDF(
+          `Individual Response Record: ${respondent.name}`,
+          `Email: ${respondent.email || 'N/A'} | Status: ${respondent.completionStatus} (${respondent.completionPct}%) | Progress: ${respondent.answersCount}/75 Qs Answered`,
+          headers,
+          rows,
+          `genz_responses_${safeName}_${Date.now()}.pdf`
+        );
+      }
+      adminAuthService.logAction('EXPORT_DATA', 'single_participant', 'SUCCESS', `Format: ${format}, Participant: ${pId}`);
+    } catch (e) {
+      setModalConfig({ isOpen: true, title: 'Export Failed', message: e.message, type: 'error' });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleExecuteExport = async () => {
@@ -116,9 +235,9 @@ export default function AdminExport() {
 
     try {
       if (exportType === 'respondents') {
-        const respondents = await adminDataService.getRespondentsList();
+        const list = await adminDataService.getRespondentsList();
         const headers = ['ID', 'Name', 'Email', 'Age Group', 'Gender', 'Status', 'Field', 'Completion', 'Quality'];
-        const rows = respondents.map((r) => [
+        const rows = list.map((r) => [
           r.id?.slice(0, 8),
           r.name,
           r.email,
@@ -135,54 +254,39 @@ export default function AdminExport() {
         } else {
           generatePDF(
             'Respondent Master List (Demographics & Metadata)',
-            `Total Respondents: ${respondents.length}`,
+            `Total Respondents: ${list.length}`,
             ['ID', 'Name', 'Email', 'Age', 'Gender', 'Status', 'Field', 'Progress', 'Quality'],
             rows,
             `genz_respondents_dataset_${Date.now()}.pdf`
           );
         }
-      } else if (exportType === 'responses') {
-        const { records } = await adminDataService.fetchRawDatabaseRecords();
-        const headers = ['Session ID', 'Question ID', 'Response Value', 'Timestamp'];
-        const rows = records.map((r) => [
-          String(r.sessionId).slice(0, 12),
-          r.questionId,
-          String(r.value),
-          new Date(r.timestamp).toLocaleDateString(),
-        ]);
-
-        if (fileFormat === 'csv') {
-          downloadCSV(headers, rows, `genz_all_responses_q1_q75_${Date.now()}.csv`);
-        } else {
-          generatePDF(
-            'All Raw Response Records (Q1 -> Q75 Complete)',
-            `Total Response Records: ${records.length}`,
-            ['Session ID', 'Question ID', 'Response Value', 'Date'],
-            rows,
-            `genz_all_responses_q1_q75_${Date.now()}.pdf`
-          );
+      } else if (exportType === 'single_participant') {
+        if (!selectedParticipantId) {
+          throw new Error('Please select a participant from the list!');
         }
-      } else if (exportType === 'analytics') {
-        const analytics = await adminDataService.getRealAnalyticsData();
-        const aspectScores = analytics?.aspectScores || [];
-        const headers = ['Aspect ID', 'Aspect Title', 'Life Dimension', 'Score (%)', 'Status'];
-        const rows = aspectScores.map((a) => [
-          a.id || 'A-ID',
-          a.title || a.name || 'Aspect Score',
-          a.dimensionTitle || 'Gen Z Index',
-          `${a.scorePct || a.score || 0}%`,
-          a.status || 'Verified',
+        await handleDownloadParticipantResponses(selectedParticipantId, fileFormat);
+        return;
+      } else if (exportType === 'questions') {
+        const questionsList = await adminDataService.getQuestionsList();
+        const headers = ['Code', 'Section', 'Topic / Category', 'Question Text', 'Type', 'Options'];
+        const rows = questionsList.map((q) => [
+          q.code,
+          `Sec ${q.sectionNumber || 1}`,
+          q.topic,
+          q.text,
+          q.isMultiSelect ? 'Multi-Select' : 'Single Option',
+          q.options?.map((o) => o.label).join(' | ') || '',
         ]);
 
         if (fileFormat === 'csv') {
-          downloadCSV(headers, rows, `genz_analytics_dimensions_${Date.now()}.csv`);
+          downloadCSV(headers, rows, `genz_questions_blueprint_${Date.now()}.csv`);
         } else {
           generatePDF(
-            'Calculated 18 Dimensions & Aspect Intelligence Report',
-            `Aggregated Score Metrics across all 75 Survey Questions`,
+            'Official Questionnaire Blueprint (Q1 → Q75 Master List)',
+            `Total Questions in Supabase DB: ${questionsList.length}`,
             headers,
-            rows.length > 0 ? rows : [['A01', 'Digital Wellbeing', 'Tech Life', '84%', 'Verified']],
-            `genz_analytics_dimensions_${Date.now()}.pdf`
+            rows,
+            `genz_questions_blueprint_${Date.now()}.pdf`
           );
         }
       } else if (exportType === 'quality') {
@@ -192,7 +296,7 @@ export default function AdminExport() {
         const headers = ['Log ID', 'Timestamp', 'Action', 'Target', 'Status', 'Actor'];
         const rows = logs.map((l) => [
           String(l.id).slice(0, 10),
-          new Date(l.timestamp).toLocaleDateString(),
+          adminDataService.formatIST(l.timestamp),
           l.action,
           l.target,
           l.status || 'SUCCESS',
@@ -206,7 +310,7 @@ export default function AdminExport() {
             'Data Quality & Administrative Audit Trail Report',
             `Total Security & Data Logs: ${logs.length}`,
             headers,
-            rows.length > 0 ? rows : [['LOG-01', new Date().toLocaleDateString(), 'LOGIN', 'Admin Portal', 'SUCCESS', 'admin']],
+            rows.length > 0 ? rows : [['LOG-01', adminDataService.formatIST(new Date()), 'LOGIN', 'Admin Portal', 'SUCCESS', 'admin']],
             `genz_quality_audit_logs_${Date.now()}.pdf`
           );
         }
@@ -214,7 +318,7 @@ export default function AdminExport() {
 
       adminAuthService.logAction('EXPORT_DATA', exportType, 'SUCCESS', `Format: ${fileFormat}`);
     } catch (e) {
-      alert('Export failed: ' + e.message);
+      setModalConfig({ isOpen: true, title: 'Export Failed', message: e.message, type: 'error' });
     } finally {
       setExporting(false);
     }
@@ -229,31 +333,33 @@ export default function AdminExport() {
             Dataset & Response Export Center
           </h2>
           <p className="text-xs text-[#53656A] font-medium">
-            Export full study datasets, response records (Q1–Q75), and data quality metrics
+            Export full study datasets, participant individual responses, question blueprints, and audit logs
           </p>
         </div>
 
         {/* EXPORT OPTIONS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-[#063E46]">Select Dataset Type</label>
+          <div className="space-y-4">
             <div className="space-y-2">
-              {[
-                { id: 'respondents', label: 'Respondent Master List (Demographics & Metadata)' },
-                { id: 'responses', label: 'All Raw Response Records (Q1 → Q75 Complete)' },
-                { id: 'analytics', label: 'Calculated 18 Dimensions & Aspect Scores' },
-                { id: 'quality', label: 'Data Quality & Audit Logs' },
-              ].map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => setExportType(opt.id)}
-                  className={`w-full text-left p-3.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
-                    exportType === opt.id ? 'bg-[#075D63] text-white border-[#075D63] shadow-sm' : 'bg-[#FAF7F0] text-[#10242C] border-slate-200'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#063E46]">Select Dataset Type</label>
+              <div className="space-y-2">
+                {[
+                  { id: 'respondents', label: 'Respondent Master List (Demographics & Metadata)' },
+                  { id: 'single_participant', label: 'Individual Participant Responses (Select Respondent)' },
+                  { id: 'questions', label: 'Questionnaire Blueprint & Questions Master List (Q1 → Q75)' },
+                  { id: 'quality', label: 'Data Quality & Audit Logs' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setExportType(opt.id)}
+                    className={`w-full text-left p-3.5 rounded-2xl border text-xs font-bold transition-all cursor-pointer ${
+                      exportType === opt.id ? 'bg-[#075D63] text-white border-[#075D63] shadow-sm' : 'bg-[#FAF7F0] text-[#10242C] border-slate-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -295,6 +401,116 @@ export default function AdminExport() {
             </button>
           </div>
         </div>
+
+        {/* ALL USERS SELECTION GRID & CARDS (Shown when single_participant option is selected) */}
+        {exportType === 'single_participant' && (
+          <div className="bg-[#EAF6F6]/60 p-5 sm:p-6 rounded-3xl border border-[#109A9B]/30 space-y-4 animate-fade-in shadow-xs pt-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#109A9B]/20">
+              <div className="space-y-0.5">
+                <h3 className="font-heading font-extrabold text-sm sm:text-base text-[#10242C] flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#075D63]" />
+                  <span>Select User / Participant ({respondents.length} Total Registered Users)</span>
+                </h3>
+                <p className="text-xs text-[#53656A] font-medium">
+                  Click any participant card to select or use the direct CSV/PDF download buttons to export all responses for that user.
+                </p>
+              </div>
+
+              {/* Search Bar for Participants */}
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                <input
+                  type="text"
+                  value={participantSearch}
+                  onChange={(e) => setParticipantSearch(e.target.value)}
+                  placeholder="Search by name, email, or ID..."
+                  className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white outline-none focus:border-[#109A9B] shadow-xs"
+                />
+              </div>
+            </div>
+
+            {/* Participants Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-96 overflow-y-auto pr-1 scrollbar-thin">
+              {filteredRespondents.map((r) => {
+                const pId = r.id || r.sessionId;
+                const isSelected = pId === selectedParticipantId;
+
+                return (
+                  <div
+                    key={pId}
+                    onClick={() => setSelectedParticipantId(pId)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${
+                      isSelected
+                        ? 'bg-white border-[#075D63] ring-2 ring-[#075D63]/30 shadow-md scale-[1.01]'
+                        : 'bg-white border-slate-200/90 hover:border-[#109A9B]/60 hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#075D63] shrink-0" />}
+                          <h4 className="font-bold text-xs sm:text-sm text-[#10242C] truncate">{r.name}</h4>
+                        </div>
+                        <p className="text-[11px] text-[#53656A] font-medium truncate mt-0.5">{r.email || `ID: ${r.id?.slice(0, 8)}`}</p>
+                      </div>
+
+                      <span
+                        className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0 ${
+                          r.completionStatus === 'Completed'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        }`}
+                      >
+                        {r.completionPct}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 gap-2">
+                      <span className="text-[11px] font-bold text-slate-500 truncate">
+                        {r.answersCount || 0}/75 Qs Answered
+                      </span>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedParticipantId(pId);
+                            handleDownloadParticipantResponses(pId, 'csv');
+                          }}
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-[#109A9B] hover:text-white text-[#075D63] font-bold text-[10.5px] rounded-lg transition-colors cursor-pointer flex items-center gap-1 border border-slate-200"
+                          title="Download Responses as CSV"
+                        >
+                          <FileSpreadsheet className="w-3 h-3" />
+                          <span>CSV</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedParticipantId(pId);
+                            handleDownloadParticipantResponses(pId, 'pdf');
+                          }}
+                          className="px-2.5 py-1 bg-[#075D63] hover:bg-[#109A9B] text-white font-bold text-[10.5px] rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1"
+                          title="Download Responses as PDF"
+                        >
+                          <FileText className="w-3 h-3 text-[#FDE7B5]" />
+                          <span>PDF</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredRespondents.length === 0 && (
+                <div className="col-span-full py-8 text-center text-xs text-[#53656A] font-bold">
+                  No matching participants found. Try adjusting your search query.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CONFIRMATION DIALOG MODAL */}
@@ -327,6 +543,14 @@ export default function AdminExport() {
           </div>
         </div>
       )}
+
+      <GridModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </AdminLayout>
   );
 }

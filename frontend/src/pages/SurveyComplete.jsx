@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { Award, CheckCircle2, ShieldCheck, Download, Clock, Sparkles, RefreshCw, Gift, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useSurveyStore } from '../stores/surveyStore';
 import { fetchParticipantStatus } from '../services/supabaseClient';
+import GridModal from '../components/common/GridModal';
 
 export default function SurveyComplete() {
   const { participantName, participantEmail, participantId } = useSurveyStore();
   const [participant, setParticipant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
 
   const loadStatus = async () => {
     setIsRefreshing(true);
@@ -193,7 +195,14 @@ export default function SurveyComplete() {
                   <span>Verify Online Certificate</span>
                 </Link>
                 <button
-                  onClick={() => alert(`Certificate ${certCode} downloaded for ${pName}!`)}
+                  onClick={() =>
+                    setModalConfig({
+                      isOpen: true,
+                      title: 'Certificate Downloaded',
+                      message: `Certificate ${certCode} downloaded successfully for ${pName}!`,
+                      type: 'success',
+                    })
+                  }
                   className="bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold text-xs sm:text-sm flex-1 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
                 >
                   <Download className="w-4 h-4 text-[#FDE7B5] shrink-0" />
@@ -226,6 +235,14 @@ export default function SurveyComplete() {
         </div>
 
       </div>
+
+      <GridModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 }

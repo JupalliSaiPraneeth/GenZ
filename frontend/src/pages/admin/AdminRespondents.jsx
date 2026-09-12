@@ -23,6 +23,9 @@ export default function AdminRespondents() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const itemsPerPage = 10;
 
@@ -36,17 +39,24 @@ export default function AdminRespondents() {
     loadRespondents();
   }, [searchQuery, filterStatus]);
 
-  const handleDeleteParticipant = async (participantId, participantName) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete participant "${participantName || 'this user'}"?\n\nThis action will permanently delete the participant and all their survey responses from the database.`
-    );
-    if (!confirmDelete) return;
+  const handleDeleteParticipant = (respondentObj) => {
+    setDeleteError('');
+    setDeleteTarget(respondentObj);
+  };
 
-    const res = await adminDataService.deleteRespondent(participantId);
+  const confirmDeleteParticipant = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    setDeleteError('');
+
+    const res = await adminDataService.deleteRespondent(deleteTarget.id);
+    setIsDeleting(false);
+
     if (res?.success) {
-      setRespondents((prev) => prev.filter((r) => r.id !== participantId));
+      setRespondents((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } else {
-      alert(`Error deleting participant: ${res?.error || 'Failed to delete record.'}`);
+      setDeleteError(res?.error || 'Failed to delete participant from database.');
     }
   };
 
@@ -276,7 +286,7 @@ export default function AdminRespondents() {
                         </Link>
                         <button
                           type="button"
-                          onClick={() => handleDeleteParticipant(r.id, r.name)}
+                          onClick={() => handleDeleteParticipant(r)}
                           className="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center shadow-2xs hover:scale-105 transition-all cursor-pointer"
                           title="Delete Participant from Database"
                         >
@@ -315,6 +325,79 @@ export default function AdminRespondents() {
           </div>
         </div>
       </div>
+
+      {/* CENTERED CONFIRMATION GRID MODAL */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full border border-slate-200 shadow-2xl space-y-4 relative overflow-hidden">
+            {/* AMBIENT GLOW ACCENT */}
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            {/* HEADER WITH ICON */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-200 shrink-0">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-heading font-extrabold text-lg text-[#10242C]">
+                  Delete Participant?
+                </h3>
+                <p className="text-xs text-slate-500 font-semibold">
+                  Confirm permanent removal from Supabase DB
+                </p>
+              </div>
+            </div>
+
+            {/* CONFIRMATION GRID */}
+            <div className="p-4 rounded-2xl bg-[#FAF7F0] border border-slate-200 text-xs font-semibold space-y-2">
+              <div className="flex justify-between items-center text-[#10242C]">
+                <span className="text-[#53656A]">Participant Name:</span>
+                <span className="font-bold">{deleteTarget.name || 'Anonymous User'}</span>
+              </div>
+              {deleteTarget.email && (
+                <div className="flex justify-between items-center text-[#10242C]">
+                  <span className="text-[#53656A]">Email Address:</span>
+                  <span className="font-mono text-slate-700">{deleteTarget.email}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-[#10242C]">
+                <span className="text-[#53656A]">Progress:</span>
+                <span className="font-bold text-[#075D63]">{deleteTarget.completionPct}% ({deleteTarget.completionStatus})</span>
+              </div>
+              <p className="text-[11px] text-rose-700 font-medium pt-2 border-t border-slate-200/80 leading-snug">
+                ⚠️ Deleting this user will permanently erase their profile record and all associated survey responses from the database.
+              </p>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-800">
+                {deleteError}
+              </div>
+            )}
+
+            {/* ACTION BUTTONS */}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-[#10242C] font-bold text-xs rounded-xl cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={confirmDeleteParticipant}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-1.5 disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isDeleting ? 'Deleting...' : 'Confirm & Delete'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

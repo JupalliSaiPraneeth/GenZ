@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Users,
   CheckCircle2,
@@ -7,8 +7,10 @@ import {
   Gift,
   Activity,
 } from 'lucide-react';
+import GridModal from '../components/common/GridModal';
 
 export default function AdminDashboard() {
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
   return (
     <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-x-hidden">
 
@@ -137,7 +139,14 @@ export default function AdminDashboard() {
             </p>
 
             <button
-              onClick={() => alert('Executing cryptographically verifiable lucky draw batch... Winner ID: S-9024 selected!')}
+              onClick={() =>
+                setModalConfig({
+                  isOpen: true,
+                  title: 'Lucky Draw Execution',
+                  message: 'Executing cryptographically verifiable lucky draw batch...\n\nWinner ID: S-9024 selected!',
+                  type: 'success',
+                })
+              }
               className="bg-[#FDE7B5] hover:bg-white text-[#075D63] font-bold text-sm w-full py-3.5 rounded-2xl shadow-md transition-all cursor-pointer"
             >
               <span>Execute Lucky Draw Batch</span>
@@ -158,6 +167,14 @@ export default function AdminDashboard() {
         </div>
 
       </div>
+
+      <GridModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 }

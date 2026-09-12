@@ -21,8 +21,8 @@ export default function AdminAnalytics() {
 
   const dimensions = LIFE_DIMENSIONS.map((dim) => {
     const realDim = dimScoresMap.get(dim.id);
-    const pctScore = realDim?.pctScore ?? 75;
-    const mean5 = realDim?.avg5Score ? realDim.avg5Score.toFixed(2) : ((pctScore / 100) * 4 + 1).toFixed(2);
+    const pctScore = realDim?.pctScore !== undefined ? realDim.pctScore : 0;
+    const mean5 = realDim?.avg5Score !== undefined ? realDim.avg5Score.toFixed(2) : (pctScore > 0 ? ((pctScore / 100) * 4 + 1).toFixed(2) : '0.00');
     return {
       title: dim.title,
       pctScore,

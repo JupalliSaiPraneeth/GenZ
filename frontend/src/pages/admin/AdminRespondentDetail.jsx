@@ -275,7 +275,6 @@ export default function AdminRespondentDetail() {
             { id: 'profile', label: 'Demographics Profile', icon: User },
             { id: 'responses', label: 'All Responses (Q1–Q75)', icon: ListFilter },
             { id: 'analytics', label: '360° Radar Analytics', icon: Brain },
-            { id: 'behaviour', label: 'Behaviour Profile', icon: Activity },
             { id: 'quality', label: 'Data Quality & Checks', icon: ShieldCheck },
             { id: 'activity', label: 'Activity Logs', icon: History },
           ].map((tab) => {
@@ -407,18 +406,6 @@ export default function AdminRespondentDetail() {
               </RadarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      )}
-
-      {/* TAB CONTENT 4: BEHAVIOUR PROFILE */}
-      {activeTab === 'behaviour' && (
-        <div className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-4">
-          <h3 className="font-heading font-extrabold text-base text-[#10242C]">
-            Attitudinal & Behavioral Archetype Summary
-          </h3>
-          <p className="text-xs text-[#53656A] font-medium leading-relaxed">
-            Based on the participant's cross-section responses in Section 1 to Section 4, this participant demonstrates high engagement with self-driven learning and digital technology adoption.
-          </p>
         </div>
       )}
 

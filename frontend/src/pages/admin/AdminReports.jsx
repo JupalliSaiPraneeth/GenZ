@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Download, Sparkles, CheckCircle2 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
+import GridModal from '../../components/common/GridModal';
 
 const REPORT_TEMPLATES = [
   { id: 'executive-summary', title: 'Executive Summary Brief', description: 'High-level population trends, KPI summary, and top dimension insights across 75 questions.', format: 'PDF / Markdown' },
@@ -11,11 +12,17 @@ const REPORT_TEMPLATES = [
 
 export default function AdminReports() {
   const [downloading, setDownloading] = useState(null);
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
 
   const handleGenerate = (id) => {
     setDownloading(id);
     setTimeout(() => {
-      alert(`Report generated successfully! Pre-formatted analytical summary ready for download.`);
+      setModalConfig({
+        isOpen: true,
+        title: 'Report Generated Successfully',
+        message: 'Pre-formatted analytical summary is ready for download.',
+        type: 'success',
+      });
       setDownloading(null);
     }, 1200);
   };
@@ -56,6 +63,14 @@ export default function AdminReports() {
           </div>
         ))}
       </div>
+
+      <GridModal
+        isOpen={modalConfig.isOpen}
+        onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </AdminLayout>
   );
 }
