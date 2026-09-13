@@ -24,7 +24,9 @@ import {
   Award,
   BookOpen,
   Info,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  Download
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -117,8 +119,8 @@ function GenZPulseCard({ analyticsData, activePulse, setActivePulse }) {
               key={item.id}
               onClick={() => setActivePulse(isActive ? 'all' : item.id)}
               className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-3 ${isActive
-                  ? 'bg-slate-800 border-teal-400 shadow-md scale-105'
-                  : 'bg-slate-900/60 border-slate-800 hover:bg-slate-800/80 hover:border-slate-700'
+                ? 'bg-slate-800 border-teal-400 shadow-md scale-105'
+                : 'bg-slate-900/60 border-slate-800 hover:bg-slate-800/80 hover:border-slate-700'
                 }`}
             >
               <div className="flex items-center justify-between">
@@ -168,13 +170,21 @@ function SegmentedPillBarCard({ rawRecords }) {
     const malePct = q2Responses.length > 0 ? Math.round((male / total) * 100) : 44;
     const otherPct = Math.max(0, 100 - femalePct - malePct);
 
+    const isFemaleDominant = femalePct >= malePct;
+    const dominantGender = isFemaleDominant ? 'Female' : 'Male';
+    const dominantPct = isFemaleDominant ? femalePct : malePct;
+    const dominantCount = isFemaleDominant ? (female || (q2Responses.length > 0 ? female : 52)) : (male || (q2Responses.length > 0 ? male : 44));
+    const dominantImg = isFemaleDominant ? '/female.png' : '/male.png';
+
     return {
       total,
       female,
       male,
       other,
-      dominant: femalePct >= malePct ? 'Female' : 'Male',
-      dominantPct: Math.max(femalePct, malePct),
+      dominantGender,
+      dominantPct,
+      dominantCount,
+      dominantImg,
       items: [
         { label: 'Female', pct: femalePct, count: female || 52, color: '#109A9B' },
         { label: 'Male', pct: malePct, count: male || 44, color: '#075D63' },
@@ -187,73 +197,39 @@ function SegmentedPillBarCard({ rawRecords }) {
     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-md space-y-5 flex flex-col justify-between">
       {/* Header */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
-            <Users className="w-4.5 h-4.5 text-[#109A9B]" />
-            Gender Distribution (100% Segmented Pill)
-          </h3>
-          <span className="text-[10px] font-mono font-bold bg-[#EAF6F6] text-[#075D63] px-2 py-0.5 rounded-full border border-[#109A9B]/20">
-            Q2 Response DB
-          </span>
-        </div>
+        <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 leading-snug">
+          <Users className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
+          <span>Gender Distribution (100% Segmented Pill)</span>
+        </h3>
         <p className="text-xs text-[#53656A] font-medium">Proportional segmentation of active survey participants</p>
       </div>
 
-      {/* GENDER DYNAMIC SVG LOGO BADGES */}
-      <div className="grid grid-cols-2 gap-2.5">
-        {genderData.items.map((item) => {
-          if (item.pct <= 0) return null;
-          const isFemale = item.label.toLowerCase().includes('female');
-          const isMale = item.label.toLowerCase() === 'male';
+      {/* DOMINANT DEMOGRAPHIC HIGHLIGHT SPOTLIGHT BANNER */}
+      <div className="bg-gradient-to-br from-[#EAF6F6]/90 via-[#F4FAF8] to-emerald-50/70 p-4 sm:p-4.5 rounded-2xl border border-[#109A9B]/30 shadow-sm relative overflow-hidden flex flex-row items-center justify-between gap-3 sm:gap-4 transition-all duration-300 hover:shadow-md">
 
-          return (
-            <div
-              key={item.label}
-              className="p-3 rounded-2xl border border-[#109A9B]/20 bg-[#EAF6F6]/60 flex items-center justify-between shadow-2xs transition-all hover:bg-[#EAF6F6]"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className={`w-8.5 h-8.5 rounded-xl flex items-center justify-center border shrink-0 shadow-2xs ${
-                    isFemale
-                      ? 'bg-teal-100/90 border-teal-300 text-[#109A9B]'
-                      : isMale
-                      ? 'bg-emerald-100/90 border-emerald-300 text-[#075D63]'
-                      : 'bg-amber-100/90 border-amber-300 text-amber-600'
-                  }`}
-                >
-                  {isFemale ? (
-                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="9" r="5" />
-                      <path d="M12 14v7" />
-                      <path d="M9 18h6" />
-                    </svg>
-                  ) : isMale ? (
-                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="10" cy="14" r="5" />
-                      <path d="M13.5 10.5L19 5" />
-                      <path d="M14 5h5v5" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="5" />
-                      <path d="M12 7V2" />
-                      <path d="M9 4h6" />
-                    </svg>
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[10px] font-bold text-[#53656A] block leading-none truncate">{item.label}</span>
-                  <span className="font-mono text-xs font-extrabold text-[#075D63] mt-1 block leading-none">
-                    {item.pct}%
-                  </span>
-                </div>
-              </div>
-              <span className="text-[10px] font-mono font-bold text-slate-600 bg-white px-2 py-0.5 rounded-full border border-slate-200 shrink-0 shadow-2xs">
-                {item.count}
-              </span>
-            </div>
-          );
-        })}
+        {/* Decorative Background Lighting Circle */}
+        <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-[#109A9B]/10 rounded-full blur-xl pointer-events-none" />
+
+        {/* Left Information Content */}
+        <div className="space-y-1 min-w-0 flex-1 relative z-10">
+          <h4 className="font-sora font-extrabold text-base sm:text-xl text-[#0B1F2A] tracking-tight leading-tight truncate">
+            {genderData.dominantGender} <span className="text-[#109A9B] font-black">({genderData.dominantPct}%)</span>
+          </h4>
+
+          <p className="text-[11px] sm:text-xs text-[#53656A] font-inter font-medium leading-relaxed">
+            Highest participation group with <strong className="text-[#075D63] font-bold">{genderData.dominantCount} responses</strong> recorded in survey database.
+          </p>
+        </div>
+
+        {/* Right Avatar Image Container */}
+        <div className="relative shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/90 border border-[#109A9B]/30 p-1.5 shadow-sm flex items-center justify-center z-10 group cursor-pointer hover:border-[#109A9B]/60 transition-colors">
+          <img
+            src={genderData.dominantImg}
+            alt={`${genderData.dominantGender} demographic representation`}
+            className="w-full h-full object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+
       </div>
 
       {/* TALL 100% SEGMENTED PILL BAR */}
@@ -330,15 +306,10 @@ function WaffleChartCard({ rawRecords }) {
   return (
     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-md space-y-5 flex flex-col justify-between">
       <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
-            <Tv className="w-4.5 h-4.5 text-[#109A9B]" />
-            Daily Screen Time (Waffle Chart 100-Grid)
-          </h3>
-          <span className="text-[10px] font-mono font-bold bg-[#EAF6F6] text-[#075D63] px-2 py-0.5 rounded-full border border-[#109A9B]/20">
-            Q22 Response DB
-          </span>
-        </div>
+        <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 leading-snug">
+          <Tv className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
+          <span>Daily Screen Time (Waffle Chart 100-Grid)</span>
+        </h3>
         <p className="text-xs text-[#53656A] font-medium">Each square represents 1% of survey population</p>
       </div>
 
@@ -411,15 +382,10 @@ function LollipopChartCard({ rawRecords }) {
     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-md space-y-5 flex flex-col justify-between">
       {/* Header */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
-            <Calendar className="w-4.5 h-4.5 text-[#109A9B]" />
-            Age Group Distribution (Lollipop Chart)
-          </h3>
-          <span className="text-[10px] font-mono font-bold bg-[#EAF6F6] text-[#075D63] px-2 py-0.5 rounded-full border border-[#109A9B]/20">
-            Q1 Response DB
-          </span>
-        </div>
+        <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 leading-snug">
+          <Calendar className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
+          <span>Age Group Distribution (Lollipop Chart)</span>
+        </h3>
         <p className="text-xs text-[#53656A] font-medium">Research-grade distribution comparison</p>
       </div>
 
@@ -467,43 +433,418 @@ function LollipopChartCard({ rawRecords }) {
 }
 
 // =========================================================================
-// 5. STORY CARD VISUALIZATION (SLEEP & DAILY HEALTH HABITS)
+// 5. STORY CARD VISUALIZATION - INTERACTIVE EXPLODED GSAP PIE CHART
+// (DAILY SLEEP DURATION BREAKDOWN Q17 & Q19)
 // =========================================================================
 function StoryCardVisualization({ rawRecords }) {
+  const containerRef = useRef(null);
+  const svgRef = useRef(null);
+  const sliceRefs = useRef([]);
+  const counterRefs = useRef([]);
+  const legendRefs = useRef([]);
+  const tooltipRef = useRef(null);
+
+  const [activeHoverIdx, setActiveHoverIdx] = useState(null);
+  const [tooltipState, setTooltipState] = useState({
+    visible: false,
+    label: '',
+    pct: 0,
+    count: 0,
+    x: 0,
+    y: 0,
+  });
+
+  // Calculate sleep breakdown data
+  const sleepData = useMemo(() => {
+    const sleepRecords = rawRecords.filter(
+      (r) =>
+        String(r.questionId).toLowerCase() === 'q17' ||
+        String(r.questionId).toLowerCase() === 'q19' ||
+        String(r.questionId) === '17' ||
+        String(r.questionId) === '19' ||
+        String(r.questionCode || '').toLowerCase().includes('sleep')
+    );
+
+    let idealCount = 0;
+    let deprivedCount = 0;
+    let severeCount = 0;
+    let totalCount = sleepRecords.length;
+
+    sleepRecords.forEach((r) => {
+      const val = String(r.value ?? '').toLowerCase();
+      if (val.includes('6_8') || val.includes('ideal') || val.includes('6-8') || val.includes('7')) {
+        idealCount++;
+      } else if (val.includes('4_6') || val.includes('deprived') || val.includes('4-6') || val.includes('5')) {
+        deprivedCount++;
+      } else {
+        severeCount++;
+      }
+    });
+
+    const hasData = totalCount > 0;
+    const slicesRaw = [
+      {
+        label: '6–8 Hours (Ideal Sleep)',
+        shortLabel: '6–8 Hours',
+        count: hasData ? idealCount : 62,
+        pct: hasData && totalCount > 0 ? Math.round((idealCount / totalCount) * 100) : 62,
+        color: '#109A9B',
+        gradientFrom: '#075D63',
+        gradientTo: '#2DD4BF',
+        glowColor: 'rgba(16, 154, 155, 0.35)',
+        isExploded: true,
+      },
+      {
+        label: '4–6 Hours (Sleep Deprived)',
+        shortLabel: '4–6 Hours',
+        count: hasData ? deprivedCount : 24,
+        pct: hasData && totalCount > 0 ? Math.round((deprivedCount / totalCount) * 100) : 24,
+        color: '#F59E0B',
+        gradientFrom: '#D97706',
+        gradientTo: '#FBBF24',
+        glowColor: 'rgba(245, 158, 11, 0.35)',
+        isExploded: false,
+      },
+      {
+        label: '<4 Hours (Severe Deprivation)',
+        shortLabel: '<4 Hours',
+        count: hasData ? severeCount : 14,
+        pct: hasData && totalCount > 0 ? Math.max(1, 100 - (Math.round((idealCount / totalCount) * 100) + Math.round((deprivedCount / totalCount) * 100))) : 14,
+        color: '#F87171',
+        gradientFrom: '#E11D48',
+        gradientTo: '#FB7185',
+        glowColor: 'rgba(248, 113, 113, 0.35)',
+        isExploded: false,
+      },
+    ];
+
+    // SVG Mathematical arc path calculation (cx = 100, cy = 100, r = 84)
+    const cx = 100;
+    const cy = 100;
+    const r = 84;
+    let cumAngle = 0;
+
+    const slices = slicesRaw.map((item) => {
+      const angleLength = (item.pct / 100) * 360;
+      const startAngle = cumAngle;
+      const endAngle = cumAngle + angleLength;
+      cumAngle = endAngle;
+
+      const midAngle = (startAngle + endAngle) / 2;
+      const startRad = ((startAngle - 90) * Math.PI) / 180;
+      const endRad = ((endAngle - 90) * Math.PI) / 180;
+      const midRad = ((midAngle - 90) * Math.PI) / 180;
+
+      const x1 = cx + r * Math.cos(startRad);
+      const y1 = cy + r * Math.sin(startRad);
+      const x2 = cx + r * Math.cos(endRad);
+      const y2 = cy + r * Math.sin(endRad);
+
+      const largeArcFlag = angleLength > 180 ? 1 : 0;
+      const pathD = `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${largeArcFlag} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+
+      // Direction vector for exploded translation
+      const dx = Math.cos(midRad);
+      const dy = Math.sin(midRad);
+
+      // Base exploded translation distance (5px for dominant slice 0)
+      const explodeDist = item.isExploded ? 5 : 0;
+      const baseTx = dx * explodeDist;
+      const baseTy = dy * explodeDist;
+
+      return {
+        ...item,
+        pathD,
+        midAngle,
+        midRad,
+        dx,
+        dy,
+        baseTx,
+        baseTy,
+      };
+    });
+
+    return slices;
+  }, [rawRecords]);
+
+  // GSAP Entrance Animation & Lifecycle Management with gsap.context()
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      // 1. Card Container Entrance
+      gsap.fromTo(
+        containerRef.current,
+        { scale: 0.95, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.7, ease: 'power2.out' }
+      );
+
+      // 2. Pie Slices Radial Staggered Entrance
+      if (sliceRefs.current.length > 0) {
+        gsap.fromTo(
+          sliceRefs.current,
+          { scale: 0, opacity: 0, transformOrigin: '100px 100px' },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.08,
+            ease: 'back.out(1.7)',
+          }
+        );
+
+        // Exploded dominant slice offset animation
+        sleepData.forEach((slice, idx) => {
+          const el = sliceRefs.current[idx];
+          if (el && slice.isExploded) {
+            gsap.fromTo(
+              el,
+              { x: 0, y: 0 },
+              {
+                x: slice.baseTx,
+                y: slice.baseTy,
+                duration: 0.9,
+                delay: 0.3,
+                ease: 'elastic.out(1, 0.5)',
+              }
+            );
+          }
+        });
+      }
+
+      // 3. Count-up Text Numbers for percentages
+      counterRefs.current.forEach((el, idx) => {
+        if (!el || !sleepData[idx]) return;
+        const targetVal = sleepData[idx].pct;
+        const counterObj = { val: 0 };
+
+        gsap.to(counterObj, {
+          val: targetVal,
+          duration: 1.2,
+          ease: 'power2.out',
+          onUpdate: () => {
+            el.innerText = `${Math.round(counterObj.val)}%`;
+          },
+        });
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, [sleepData]);
+
+  // Handle Hover Interaction Sync
+  const handleMouseEnter = (idx, e) => {
+    setActiveHoverIdx(idx);
+    const targetSlice = sleepData[idx];
+
+    // Move floating tooltip pill
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX ? e.clientX - rect.left : rect.width / 2;
+      const mouseY = e.clientY ? e.clientY - rect.top : rect.height / 2;
+
+      setTooltipState({
+        visible: true,
+        label: targetSlice.label,
+        pct: targetSlice.pct,
+        count: targetSlice.count,
+        x: mouseX,
+        y: mouseY - 45,
+      });
+    }
+
+    // Animate GSAP slices on hover
+    sliceRefs.current.forEach((sliceEl, i) => {
+      if (!sliceEl) return;
+      const isCurrent = i === idx;
+      const sliceInfo = sleepData[i];
+
+      if (isCurrent) {
+        const hoverOffset = 8;
+        const targetX = sliceInfo.baseTx + sliceInfo.dx * hoverOffset;
+        const targetY = sliceInfo.baseTy + sliceInfo.dy * hoverOffset;
+
+        gsap.to(sliceEl, {
+          x: targetX,
+          y: targetY,
+          scale: 1.06,
+          opacity: 1,
+          duration: 0.3,
+          ease: 'power3.out',
+        });
+      } else {
+        gsap.to(sliceEl, {
+          opacity: 0.4,
+          scale: 0.97,
+          duration: 0.3,
+          ease: 'power2.inOut',
+        });
+      }
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (containerRef.current && tooltipState.visible) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      gsap.to(tooltipRef.current, {
+        left: mouseX,
+        top: mouseY - 45,
+        duration: 0.2,
+        ease: 'power3.out',
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setActiveHoverIdx(null);
+    setTooltipState((prev) => ({ ...prev, visible: false }));
+
+    // Reset GSAP slices to idle default
+    sliceRefs.current.forEach((sliceEl, i) => {
+      if (!sliceEl) return;
+      const sliceInfo = sleepData[i];
+
+      gsap.to(sliceEl, {
+        x: sliceInfo.baseTx,
+        y: sliceInfo.baseTy,
+        scale: 1,
+        opacity: 1,
+        duration: 0.4,
+        ease: 'power2.out',
+      });
+    });
+  };
+
   return (
-    <div className="bg-gradient-to-br from-[#EAF6F6] via-white to-teal-50 p-6 rounded-3xl border border-[#109A9B]/30 shadow-md space-y-4 flex flex-col justify-between">
-      <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#075D63] bg-white px-2.5 py-0.5 rounded-full border border-[#109A9B]/30 flex items-center gap-1">
-            <Moon className="w-3.5 h-3.5 text-[#109A9B]" />
-            Story Card Insight • Q17 & Q19
-          </span>
-          <span className="font-mono text-xs font-bold text-[#075D63]">Supabase Live</span>
-        </div>
-        <h3 className="font-heading font-extrabold text-xl text-[#10242C]">
-          62% of Gen Z Report 6–8 Hours Daily Sleep
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      className="bg-white text-[#10242C] p-6 rounded-3xl border border-slate-200 shadow-md relative overflow-hidden flex flex-col justify-between space-y-5 select-none"
+    >
+      {/* HEADER SECTION */}
+      <div className="space-y-1 relative z-10">
+        <h3 className="font-heading font-extrabold text-base sm:text-lg text-[#10242C] tracking-tight leading-snug flex items-center gap-2">
+          <Moon className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
+          <span>Daily Sleep Duration Breakdown</span>
         </h3>
+        <p className="text-xs text-[#53656A] font-medium">Proportional segmentation of daily sleep hours reported by respondents</p>
       </div>
 
-      <div className="space-y-3">
-        {/* HERO NUMBER & PROGRESS SPECTRUM */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
-          <div className="flex items-baseline justify-between">
-            <span className="text-3xl font-extrabold text-[#075D63] font-heading">62%</span>
-            <span className="text-xs font-bold text-slate-500">Sleep Duration Ideal</span>
-          </div>
-          <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden flex">
-            <div className="h-full bg-emerald-500 w-[62%]" />
-            <div className="h-full bg-amber-400 w-[24%]" />
-            <div className="h-full bg-rose-400 w-[14%]" />
-          </div>
-          <div className="flex justify-between text-[10px] text-slate-500 font-bold pt-1">
-            <span>6–8 hrs (62%)</span>
-            <span>4–6 hrs (24%)</span>
-            <span>&lt;4 hrs (14%)</span>
-          </div>
+      {/* MAIN CHART & LEGEND AREA */}
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-center relative z-10 pt-1">
+        {/* CENTER-LEFT: SVG EXPLODED PIE CHART (INCREASED SIZE) */}
+        <div className="sm:col-span-7 flex justify-center items-center relative min-h-[220px]">
+          <svg
+            ref={svgRef}
+            viewBox="0 0 200 200"
+            className="w-52 h-52 sm:w-60 sm:h-60 overflow-visible drop-shadow-md"
+            onMouseLeave={handleMouseLeave}
+          >
+            <defs>
+              {sleepData.map((slice, idx) => (
+                <linearGradient key={idx} id={`sleepGradient-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor={slice.gradientTo} />
+                  <stop offset="100%" stopColor={slice.gradientFrom} />
+                </linearGradient>
+              ))}
+            </defs>
+
+            {sleepData.map((slice, idx) => {
+              const isHovered = activeHoverIdx === idx;
+              return (
+                <g key={idx}>
+                  <path
+                    ref={(el) => (sliceRefs.current[idx] = el)}
+                    d={slice.pathD}
+                    fill={`url(#sleepGradient-${idx})`}
+                    stroke="#FFFFFF"
+                    strokeWidth="2.5"
+                    strokeLinejoin="round"
+                    className="cursor-pointer transition-all duration-200"
+                    style={{
+                      transformOrigin: '100px 100px',
+                      filter: isHovered
+                        ? `brightness(1.15) drop-shadow(0px 8px 16px ${slice.glowColor})`
+                        : slice.isExploded
+                        ? `drop-shadow(0px 6px 12px ${slice.glowColor})`
+                        : 'none',
+                    }}
+                    onMouseEnter={(e) => handleMouseEnter(idx, e)}
+                  />
+                </g>
+              );
+            })}
+
+            {/* CENTER SLEEP BADGE ICON */}
+            <circle cx="100" cy="100" r="26" fill="#10242C" stroke="#E2E8F0" strokeWidth="2" />
+            <foreignObject x="84" y="84" width="32" height="32">
+              <div className="w-full h-full flex items-center justify-center text-[#109A9B]">
+                <Moon className="w-5 h-5 animate-pulse" />
+              </div>
+            </foreignObject>
+          </svg>
         </div>
 
+        {/* CENTER-RIGHT: VERTICAL CUSTOM LEGEND (COMPACT SIZE) */}
+        <div className="sm:col-span-5 space-y-2">
+          {sleepData.map((slice, idx) => {
+            const isHovered = activeHoverIdx === idx;
+            return (
+              <div
+                key={idx}
+                ref={(el) => (legendRefs.current[idx] = el)}
+                onMouseEnter={(e) => handleMouseEnter(idx, e)}
+                onMouseLeave={handleMouseLeave}
+                className={`py-2 sm:py-2.5 px-3 rounded-xl border transition-all duration-300 cursor-pointer flex items-center justify-between gap-2 ${
+                  isHovered
+                    ? 'bg-[#EAF6F6] border-[#109A9B]/60 shadow-md scale-[1.02]'
+                    : slice.isExploded
+                    ? 'bg-slate-50/90 border-slate-200/90 hover:bg-slate-100/90'
+                    : 'bg-slate-50/50 border-slate-200/60 hover:bg-slate-100/70'
+                }`}
+              >
+                {/* LEGEND BADGE + NAME */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="w-3 h-3 rounded-full shrink-0 shadow-xs ring-2 ring-white"
+                    style={{ backgroundColor: slice.color }}
+                  />
+                  <h4 className="text-[11px] sm:text-xs font-bold text-[#10242C] truncate">{slice.shortLabel}</h4>
+                </div>
+
+                {/* COUNT-UP PERCENTAGE & RESPONSES */}
+                <div className="text-right shrink-0 leading-tight">
+                  <span
+                    ref={(el) => (counterRefs.current[idx] = el)}
+                    className="text-xs sm:text-sm font-extrabold font-mono text-[#075D63] block"
+                  >
+                    0%
+                  </span>
+                  <span className="text-[9px] text-[#53656A] font-semibold">{slice.count} resp.</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* FLOATING GLASSMORPHIC TOOLTIP */}
+      <div
+        ref={tooltipRef}
+        className={`absolute z-30 pointer-events-none px-3.5 py-2 rounded-xl bg-slate-900/95 border border-slate-700/80 text-white shadow-2xl backdrop-blur-md transition-opacity duration-200 flex flex-col gap-0.5 transform -translate-x-1/2 ${
+          tooltipState.visible ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          left: tooltipState.x,
+          top: tooltipState.y,
+        }}
+      >
+        <span className="text-[11px] font-bold text-slate-300">{tooltipState.label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-extrabold font-mono text-[#14B8A6]">{tooltipState.pct}%</span>
+          <span className="text-[10px] text-slate-400">({tooltipState.count} responses)</span>
+        </div>
       </div>
     </div>
   );
@@ -690,23 +1031,14 @@ function SpectrumBarCard({ rawRecords }) {
     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-md space-y-5 flex flex-col justify-between">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2.5 rounded-2xl bg-[#EAF6F6] text-[#075D63] border border-[#109A9B]/20 shadow-2xs shrink-0">
-            <Zap className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-100 text-[#075D63] border border-slate-200">
-                Q50
-              </span>
-              <h3 className="font-heading font-extrabold text-base text-[#10242C] truncate">
-                Technology Optimism
-              </h3>
-            </div>
-            <p className="text-xs text-[#53656A] font-medium line-clamp-1 mt-0.5">
-              GSAP Animated Exploded Pie Chart representation of Q50 responses
-            </p>
-          </div>
+        <div className="min-w-0">
+          <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
+            <Zap className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
+            <span>Technology Optimism</span>
+          </h3>
+          <p className="text-xs text-[#53656A] font-medium line-clamp-1 mt-0.5">
+            GSAP Animated Exploded Pie Chart representation of Q50 responses
+          </p>
         </div>
 
         <div className="text-right shrink-0">
@@ -813,11 +1145,10 @@ function SpectrumBarCard({ rawRecords }) {
           {spectrumData.slices.map((slice, idx) => (
             <div
               key={slice.id}
-              className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-xs ${
-                activeIdx === idx
+              className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-xs ${activeIdx === idx
                   ? 'bg-[#EAF6F6] border-[#109A9B]/40 shadow-xs scale-[1.02]'
                   : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80'
-              }`}
+                }`}
               onMouseEnter={() => handleMouseEnter(idx)}
               onMouseLeave={handleMouseLeave}
             >
@@ -998,15 +1329,10 @@ function RankingProgressCard({ rawRecords }) {
     >
       {/* Card Header */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
-            <Award className="w-4.5 h-4.5 text-[#109A9B]" />
-            Top AI Tools Usage Ranking (Concentric Gauge)
-          </h3>
-          <span className="text-[10px] font-mono font-bold bg-[#EAF6F6] text-[#075D63] px-2 py-0.5 rounded-full border border-[#109A9B]/20">
-            Top #1: {rankingData.topRankedPct}%
-          </span>
-        </div>
+        <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 leading-snug">
+          <Award className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
+          <span>Top AI Tools Usage Ranking (Concentric Gauge)</span>
+        </h3>
         <p className="text-xs text-[#53656A] font-medium">
           GSAP Staggered Concentric Gauge Animation with Scale & Dim Hover Focus
         </p>
@@ -1128,11 +1454,10 @@ function RankingProgressCard({ rawRecords }) {
         {rankingData.rings.map((ring, idx) => (
           <div
             key={ring.id}
-            className={`p-2.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${
-              activeIdx === idx
+            className={`p-2.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${activeIdx === idx
                 ? 'bg-[#EAF6F6] border-[#109A9B]/40 shadow-xs scale-[1.02]'
                 : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80'
-            }`}
+              }`}
             onMouseEnter={() => handleMouseEnter(idx)}
             onMouseLeave={handleMouseLeave}
           >
@@ -1320,15 +1645,10 @@ function SubmissionCompletionGsapPieCard({ kpis }) {
   return (
     <div className="lg:col-span-4 bg-gradient-to-b from-white via-white to-slate-50/70 p-6 rounded-3xl border border-[#109A9B]/20 shadow-md flex flex-col justify-between relative overflow-hidden">
       <div>
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
-            <PieIcon className="w-4.5 h-4.5 text-[#109A9B]" />
-            Submission Completion Ratio
-          </h3>
-          <span className="text-[10px] font-bold font-mono text-[#075D63] bg-[#EAF6F6] px-2.5 py-0.5 rounded-full border border-[#109A9B]/25">
-            GSAP Animated
-          </span>
-        </div>
+        <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 mb-1">
+          <PieIcon className="w-4.5 h-4.5 text-[#109A9B]" />
+          Submission Completion Ratio
+        </h3>
         <p className="text-xs text-[#53656A] font-medium">
           Powered by GSAP: SVG Path Animation | Percentage Counters | Hover States
         </p>
@@ -1427,10 +1747,7 @@ function SubmissionCompletionGsapPieCard({ kpis }) {
             <span className="w-3 h-3 rounded-full bg-[#109A9B] shrink-0" />
             <span className="text-[#075D63] truncate">Completed</span>
           </div>
-          <div className="font-mono text-right shrink-0">
-            <span className="text-[#075D63] font-extrabold">{completedPct}%</span>
-            <span className="text-[10px] text-[#075D63]/70 font-semibold block">{completedCount} / {totalRatioCount}</span>
-          </div>
+          <span className="font-mono text-[#075D63] font-extrabold text-sm shrink-0">{completedPct}%</span>
         </div>
 
         <div className="bg-amber-50 p-2.5 rounded-xl flex items-center justify-between border border-amber-200">
@@ -1438,10 +1755,7 @@ function SubmissionCompletionGsapPieCard({ kpis }) {
             <span className="w-3 h-3 rounded-full bg-[#F97316] shrink-0" />
             <span className="text-[#D97706] truncate">Incomplete</span>
           </div>
-          <div className="font-mono text-right shrink-0">
-            <span className="text-[#D97706] font-extrabold">{incompletePct}%</span>
-            <span className="text-[10px] text-[#D97706]/70 font-semibold block">{incompleteCount} / {totalRatioCount}</span>
-          </div>
+          <span className="font-mono text-[#D97706] font-extrabold text-sm shrink-0">{incompletePct}%</span>
         </div>
       </div>
     </div>
@@ -1544,8 +1858,8 @@ export default function AdminDashboard() {
                   key={btn.id}
                   onClick={() => setDateFilter(btn.id)}
                   className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${dateFilter === btn.id
-                      ? 'bg-[#075D63] text-white shadow-xs'
-                      : 'text-[#53656A] hover:bg-slate-200'
+                    ? 'bg-[#075D63] text-white shadow-xs'
+                    : 'text-[#53656A] hover:bg-slate-200'
                     }`}
                 >
                   {btn.label}
@@ -1625,17 +1939,12 @@ export default function AdminDashboard() {
         {/* 2. CHARTS GRID SECTION: GROWTH TREND & HIGH-PERFORMANCE INTERACTIVE EXPLODING DONUT (TOP FEATURED) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-8 bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-md flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
-                  <TrendingUp className="w-4.5 h-4.5 text-[#109A9B]" />
-                  Respondent Growth Trend
-                </h3>
-                <p className="text-xs text-[#53656A] font-medium">Daily new study submissions & completions</p>
-              </div>
-              <span className="text-xs font-mono font-bold text-[#075D63] bg-[#EAF6F6] px-2.5 py-1 rounded-full border border-[#109A9B]/20">
-                Live Database Stream
-              </span>
+            <div>
+              <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
+                <TrendingUp className="w-4.5 h-4.5 text-[#109A9B]" />
+                Respondent Growth Trend
+              </h3>
+              <p className="text-xs text-[#53656A] font-medium">Daily new study submissions & completions</p>
             </div>
 
             <div className="flex-1 w-full min-h-[340px] pt-2">

@@ -150,6 +150,7 @@ export default function AdminRespondents() {
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Participant</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Email</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Progress %</th>
+                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Time Taken</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Evaluation Status</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Certificate ID</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Lucky Draw</th>
@@ -161,7 +162,7 @@ export default function AdminRespondents() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400 font-bold">
+                  <td colSpan={8} className="p-8 text-center text-slate-400 font-bold">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 rounded-full border-2 border-[#109A9B] border-t-transparent animate-spin" />
                       <span>Querying live database records...</span>
@@ -170,7 +171,7 @@ export default function AdminRespondents() {
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 font-bold">
+                  <td colSpan={8} className="p-8 text-center text-slate-500 font-bold">
                     No respondents found matching the current search filters.
                   </td>
                 </tr>
@@ -223,6 +224,15 @@ export default function AdminRespondents() {
                             {r.completionStatus}
                           </span>
                         </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 sm:px-5">
+                      <div
+                        className="flex items-center gap-1.5 whitespace-nowrap font-mono text-xs font-semibold text-[#075D63]"
+                        title={`Logged in: ${r.startedAtFormatted || 'N/A'}`}
+                      >
+                        <Clock className="w-3.5 h-3.5 text-[#109A9B] shrink-0" />
+                        <span>{r.durationMinutes || 'N/A'}</span>
                       </div>
                     </td>
                     <td className="py-3.5 px-4 sm:px-5">
@@ -364,8 +374,9 @@ export default function AdminRespondents() {
                 <span className="text-[#53656A]">Progress:</span>
                 <span className="font-bold text-[#075D63]">{deleteTarget.completionPct}% ({deleteTarget.completionStatus})</span>
               </div>
-              <p className="text-[11px] text-rose-700 font-medium pt-2 border-t border-slate-200/80 leading-snug">
-                ⚠️ Deleting this user will permanently erase their profile record and all associated survey responses from the database.
+              <p className="text-[11px] text-rose-700 font-medium pt-2 border-t border-slate-200/80 leading-snug flex items-start gap-1">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                <span>Deleting this user will permanently erase their profile record and all associated survey responses from the database.</span>
               </p>
             </div>
 

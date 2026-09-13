@@ -30,6 +30,7 @@ export const useSurveyStore = create((set, get) => ({
   participantEmail: localStorage.getItem('genz_participant_email') || '',
   participantId: localStorage.getItem('genz_participant_id') || null,
   isResumedSession: false,
+  isCompletedSession: localStorage.getItem('genz_participant_completed') === 'true',
   sections: initialSections,
   questions: initialQuestions,
 
@@ -203,6 +204,7 @@ export const useSurveyStore = create((set, get) => ({
     localStorage.removeItem('genz_participant_name');
     localStorage.removeItem('genz_participant_email');
     localStorage.removeItem('genz_participant_id');
+    localStorage.removeItem('genz_participant_completed');
     
     const newSession = generateValidUUID();
     localStorage.setItem('genz_active_session', newSession);
@@ -216,6 +218,7 @@ export const useSurveyStore = create((set, get) => ({
       currentQuestionIndex: 0,
       currentSectionIndex: 0,
       isResumedSession: false,
+      isCompletedSession: false,
       syncStatus: 'synced'
     });
   },
@@ -228,8 +231,9 @@ export const useSurveyStore = create((set, get) => ({
     const trimmedName = name.trim();
     const trimmedEmail = email ? email.trim().toLowerCase() : '';
     const deviceTimestamp = new Date().toISOString();
+    const { sessionId } = get();
 
-    const res = await registerParticipant(trimmedName, trimmedEmail, deviceTimestamp);
+    const res = await registerParticipant(trimmedName, trimmedEmail, deviceTimestamp, sessionId);
 
     if (res?.error) {
       return res;
@@ -248,13 +252,20 @@ export const useSurveyStore = create((set, get) => ({
       fetchedAnswers = await fetchResponsesForParticipant(pId);
     }
 
-    const { questions, sections, answersById, sessionId } = get();
+    const { questions, sections, answersById } = get();
 
     // Merge DB answers with current local answersById
     const mergedAnswers = { ...(fetchedAnswers || {}), ...(answersById || {}) };
 
-    // Sync any unpersisted local answers to Supabase under the participant ID
-    if (pId && answersById && Object.keys(answersById).length > 0) {
+    const isCompleted = res.participant?.status === 'completed';
+    if (isCompleted) {
+      localStorage.setItem('genz_participant_completed', 'true');
+    } else {
+      localStorage.removeItem('genz_participant_completed');
+    }
+
+    // Sync any unpersisted local answers to Supabase under the participant ID if not already completed
+    if (!isCompleted && pId && answersById && Object.keys(answersById).length > 0) {
       Object.entries(answersById).forEach(([qId, val]) => {
         syncResponseToSupabase(pId, sessionId, qId, val, deviceTimestamp);
       });
@@ -290,10 +301,11 @@ export const useSurveyStore = create((set, get) => ({
       answersById: mergedAnswers,
       currentQuestionIndex: Math.max(0, firstUnansweredIdx),
       currentSectionIndex: Math.max(0, sectionIdx),
-      isResumedSession: isResumed
+      isResumedSession: isResumed,
+      isCompletedSession: isCompleted,
     });
 
-    return { success: true, participant: res.participant, isResumed };
+    return { success: true, participant: res.participant, isResumed, isCompleted };
   },
 
   setParticipantName: async (name) => {
@@ -301,7 +313,11 @@ export const useSurveyStore = create((set, get) => ({
   },
 
   setAnswer: async (questionId, value) => {
-    const { sessionId, participantId, answersById } = get();
+    const { sessionId, participantId, answersById, isCompletedSession } = get();
+    if (isCompletedSession) {
+      console.warn('Survey is completed and locked. Modifying answers is disabled.');
+      return;
+    }
     const updatedAnswers = { ...answersById, [questionId]: value };
     const deviceTimestamp = new Date().toISOString();
     
@@ -388,5 +404,15 @@ export const useSurveyStore = create((set, get) => ({
     const { answersById, questions } = get();
     const answeredCount = questions.filter(q => Boolean(answersById[q.id] && answersById[q.id] !== 'skipped')).length;
     return Math.round((answeredCount / questions.length) * 100);
+  },
+
+  completeSurvey: async () => {
+    const { participantId, sessionId } = get();
+    const targetId = participantId || localStorage.getItem('genz_participant_id') || sessionId;
+    localStorage.setItem('genz_participant_completed', 'true');
+    set({ isCompletedSession: true });
+    if (targetId) {
+      await completeParticipantSurvey(targetId);
+    }
   },
 }));

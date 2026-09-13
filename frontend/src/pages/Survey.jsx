@@ -23,6 +23,7 @@ import {
   Square,
   ChevronDown,
   ChevronUp,
+  Award,
 } from 'lucide-react';
 
 export default function Survey() {
@@ -47,8 +48,10 @@ export default function Survey() {
     resetSession,
     logoutParticipant,
     isResumedSession,
+    isCompletedSession,
     syncStatus,
     lastSyncedAt,
+    completeSurvey,
   } = useSurveyStore();
 
   // Smooth Card Moving Animation State
@@ -251,7 +254,7 @@ export default function Survey() {
   };
 
   const handleOptionSelect = (val) => {
-    if (!currentQuestion || isTransitioning) return;
+    if (!currentQuestion || isTransitioning || isCompletedSession) return;
 
     const isMulti = Boolean(currentQuestion?.isMultiSelect || currentQuestion?.selectionType === 'multiple');
 
@@ -284,12 +287,15 @@ export default function Survey() {
     }
   };
 
-  const handleFinishSurvey = () => {
+  const handleFinishSurvey = async () => {
     const unansweredIdx = questions.findIndex(q => !answersById[q.id] || answersById[q.id] === 'skipped');
     if (unansweredIdx !== -1) {
       jumpToQuestion(unansweredIdx);
       setShowIncompleteModal(true);
       return;
+    }
+    if (completeSurvey) {
+      await completeSurvey();
     }
     navigate('/survey-complete');
   };
@@ -840,7 +846,7 @@ export default function Survey() {
 
   // ACTIVE 207-QUESTION SURVEY EXPERIENCE (Step 3: Master Prompt Implementation)
   return (
-    <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto sm:overflow-hidden bg-[#FAF7F0] flex flex-col justify-center items-center pt-[64px] sm:pt-[96px] lg:pt-[110px] pb-4 sm:pb-8 touch-auto sm:touch-none overscroll-none select-none">
+    <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-between items-center pt-[76px] sm:pt-[96px] lg:pt-[104px] pb-6 select-none">
 
       {/* ==================================================== */}
       {/* OVERALL PAGE BACKGROUND — ORIGINAL TEAL ATMOSPHERIC GRADIENT */}
@@ -870,9 +876,83 @@ export default function Survey() {
       <div className="absolute bottom-12 right-0 w-[380px] h-[260px] bg-[#FDE7B5]/40 rounded-tl-[180px] blur-2xl pointer-events-none z-0" />
 
       {/* MAIN CONTAINER */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-center my-auto py-2 sm:py-4">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-center my-auto py-4 sm:py-6">
 
-        {/* 4-SECTION RECTANGULAR NAVIGATION BAR */}
+        {isCompletedSession ? (
+          /* CLEAN FULL-PAGE COMPLETED ANNOUNCEMENT CARD (NO 4 SECTIONS, NO QUESTIONS GRID) */
+          <div className="w-full max-w-[900px] mx-auto bg-[#FFFDF9] rounded-3xl p-6 sm:p-10 border-2 border-[#109A9B]/40 shadow-2xl text-center relative overflow-hidden z-30 font-inter my-auto animate-fade-in">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-emerald-100/80 text-emerald-800 flex items-center justify-center border-2 border-emerald-300 mx-auto mb-4 shadow-xs">
+              <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600" />
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-mono font-extrabold uppercase tracking-wider mb-3">
+              <Lock className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Submission Locked & Recorded</span>
+            </div>
+
+            <h2 className="font-sora font-extrabold text-2xl sm:text-4xl text-[#10242C] tracking-tight mb-2">
+              You Have Already Submitted the Survey!
+            </h2>
+
+            <p className="text-[#53656A] text-sm sm:text-base font-medium max-w-xl mx-auto mb-6 leading-relaxed">
+              Thank you <strong className="text-[#10242C] font-bold">{participantName || 'Participant'}</strong> ({participantEmail || 'registered email'})! Your research responses have been logged and locked in our database.
+            </p>
+
+            {/* STATS HIGHLIGHT ROW */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-8 text-left font-inter">
+              <div className="bg-[#EAF6F6] p-3.5 rounded-2xl border border-[#109A9B]/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#075D63] block mb-0.5">Status</span>
+                <span className="font-sora font-extrabold text-sm text-[#063E46] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  100% Completed
+                </span>
+              </div>
+              <div className="bg-[#EAF6F6] p-3.5 rounded-2xl border border-[#109A9B]/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#075D63] block mb-0.5">Questions</span>
+                <span className="font-sora font-extrabold text-sm text-[#063E46]">
+                  {questions.length} Responded
+                </span>
+              </div>
+              <div className="bg-[#EAF6F6] p-3.5 rounded-2xl border border-[#109A9B]/30">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#075D63] block mb-0.5">Record</span>
+                <span className="font-sora font-extrabold text-sm text-[#063E46] flex items-center gap-1">
+                  <ShieldCheck className="w-4 h-4 text-[#109A9B]" />
+                  Verified Entry
+                </span>
+              </div>
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-md mx-auto">
+              <Link
+                to="/survey-complete"
+                className="w-full sm:w-auto flex-1 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#063E46] to-[#109A9B] hover:from-[#075D63] hover:to-[#0D8788] text-[#FFF8E8] font-sora font-extrabold text-sm shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
+              >
+                <Award className="w-5 h-5 text-[#FDE7B5]" />
+                <span>View Certificate</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleLogoutSession}
+                className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-sora font-bold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                title="Logout to switch participant account"
+              >
+                <LogOut className="w-4.5 h-4.5 text-rose-600" />
+                <span>Switch Account</span>
+              </button>
+            </div>
+
+            {/* FOOTER REASSURANCE */}
+            <div className="mt-8 pt-4 border-t border-slate-200/80 text-xs text-[#53656A] font-medium flex items-center justify-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#109A9B] shrink-0" />
+              <span>Your responses are anonymized and locked. Changing responses is disabled.</span>
+            </div>
+
+          </div>
+        ) : (
+          <>
+            {/* 4-SECTION RECTANGULAR NAVIGATION BAR */}
         <div className="mb-3 sm:mb-5 w-full relative z-30 font-inter">
           {/* Backdrop overlay to close expanded dropdown when clicking outside */}
           {(expandedSectionId || isMobileSectionsOpen) && (
@@ -964,11 +1044,10 @@ export default function Survey() {
                           return (
                             <div
                               key={sec.id}
-                              className={`rounded-xl border transition-all duration-200 overflow-hidden ${
-                                isCurrentSec
-                                  ? 'bg-[#FFFDF9] border-[#109A9B] shadow-md ring-2 ring-[#109A9B]/30'
-                                  : 'bg-[#FFFDF9]/90 border-[#109A9B]/20 hover:bg-[#FFFDF9]'
-                              }`}
+                              className={`rounded-xl border transition-all duration-200 overflow-hidden ${isCurrentSec
+                                ? 'bg-[#FFFDF9] border-[#109A9B] shadow-md ring-2 ring-[#109A9B]/30'
+                                : 'bg-[#FFFDF9]/90 border-[#109A9B]/20 hover:bg-[#FFFDF9]'
+                                }`}
                             >
                               <div
                                 onClick={() => {
@@ -979,13 +1058,12 @@ export default function Survey() {
                               >
                                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                   <div
-                                    className={`w-7 h-7 rounded-lg font-heading font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs ${
-                                      isCurrentSec
-                                        ? 'bg-[#063E46] text-[#FFF8E8]'
-                                        : secPct === 100
+                                    className={`w-7 h-7 rounded-lg font-heading font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs ${isCurrentSec
+                                      ? 'bg-[#063E46] text-[#FFF8E8]'
+                                      : secPct === 100
                                         ? 'bg-emerald-500 text-white'
                                         : 'bg-[#EAF6F6] text-[#075D63] border border-[#109A9B]/20'
-                                    }`}
+                                      }`}
                                   >
                                     {sec.number}
                                   </div>
@@ -1009,11 +1087,10 @@ export default function Survey() {
                                     e.stopPropagation();
                                     setExpandedSectionId(isExpanded ? null : sec.id);
                                   }}
-                                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                                    isExpanded
-                                      ? 'bg-[#075D63] text-white shadow-xs rotate-180'
-                                      : 'bg-slate-100/90 text-[#53656A] hover:bg-[#EAF6F6] hover:text-[#075D63]'
-                                  }`}
+                                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer shrink-0 ${isExpanded
+                                    ? 'bg-[#075D63] text-white shadow-xs rotate-180'
+                                    : 'bg-slate-100/90 text-[#53656A] hover:bg-[#EAF6F6] hover:text-[#075D63]'
+                                    }`}
                                   title={isExpanded ? "Collapse Questions" : "Expand Questions"}
                                 >
                                   <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200" />
@@ -1046,13 +1123,12 @@ export default function Survey() {
                                             setExpandedSectionId(null);
                                             setIsMobileSectionsOpen(false);
                                           }}
-                                          className={`w-7.5 h-7.5 rounded-full font-heading font-bold text-[10.5px] flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
-                                            isCurrent
-                                              ? 'bg-[#1B4950] text-white ring-2 ring-[#1B4950]/30 shadow-md scale-105 z-10'
-                                              : isAnswered
+                                          className={`w-7.5 h-7.5 rounded-full font-heading font-bold text-[10.5px] flex items-center justify-center transition-all cursor-pointer active:scale-90 ${isCurrent
+                                            ? 'bg-[#1B4950] text-white ring-2 ring-[#1B4950]/30 shadow-md scale-105 z-10'
+                                            : isAnswered
                                               ? 'bg-[#52B788] text-white font-extrabold shadow-2xs'
                                               : 'bg-white text-[#10242C] border border-[#CBD5E1] hover:border-[#109A9B] hover:bg-[#EAF6F6]'
-                                          }`}
+                                            }`}
                                         >
                                           {qNum}
                                         </button>
@@ -1198,8 +1274,8 @@ export default function Survey() {
           })()}
         </div>
 
-        {/* 3-COLUMN MAIN CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto">
+        {/* 2-COLUMN MAIN CONTENT GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto w-full">
 
           {/* LEFT SIDE VISUAL AREA */}
           <div className="hidden lg:flex lg:col-span-4 flex-col items-center relative pr-4 lg:pr-8">
@@ -1219,7 +1295,7 @@ export default function Survey() {
                 src="/GenZ-removebg-preview.png"
                 onError={(e) => { e.currentTarget.src = "/GenZ.png"; }}
                 alt="Gen Z Student Visual"
-                className="w-full max-w-[460px] lg:max-w-[490px] max-h-[calc(100vh-220px)] object-contain filter drop-shadow-2xl transition-transform duration-300 origin-bottom"
+                className="w-full max-w-[300px] lg:max-w-[330px] max-h-[calc(100vh-290px)] object-contain filter drop-shadow-2xl transition-transform duration-300 origin-bottom"
               />
             </div>
 
@@ -1232,49 +1308,40 @@ export default function Survey() {
           </div>
 
           {/* CENTER COLUMN: MAIN SURVEY QUESTIONNAIRE CARD WITH CARD ANIMATION */}
-          <div className="col-span-1 lg:col-span-7 max-w-[580px] w-full mx-auto">
-            <div className={`bg-[#FFF8E8] rounded-2xl sm:rounded-[28px] p-3.5 sm:p-6 md:p-7 border border-white/70 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] relative z-20 transition-all duration-300 min-h-[440px] sm:h-[490px] lg:h-[510px] max-h-[calc(100vh-120px)] flex flex-col justify-between overflow-hidden ${cardAnimClass}`}>
+          <div className="col-span-1 lg:col-span-8 max-w-[760px] xl:max-w-[820px] w-full mx-auto">
+            <div className={`bg-[#FFF8E8] rounded-2xl sm:rounded-[28px] p-3.5 sm:p-6 md:p-7 border border-white/70 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] relative z-20 transition-all duration-300 min-h-[420px] sm:min-h-[470px] lg:min-h-[490px] flex flex-col justify-between overflow-hidden ${cardAnimClass}`}>
 
               <div className="flex-1 flex flex-col justify-start min-h-0">
-                {/* Header Participant & Response Progress Bar */}
-                <div className="flex flex-col gap-1.5 mb-2 pb-2 border-b border-slate-200/80 font-inter flex-shrink-0">
+                {/* Header Participant & Response Progress Bar (Single Line Row) */}
+                <div className="flex items-center justify-between gap-1.5 sm:gap-2 mb-2 pb-2 border-b border-slate-200/80 font-inter flex-shrink-0 flex-wrap sm:flex-nowrap">
 
-                  {/* Top Row: Participant & Progress Indicator */}
-                  <div className="flex items-center justify-between gap-1.5 text-xs font-semibold flex-wrap sm:flex-nowrap">
-                    <div className="flex items-center gap-1.5 min-w-0 max-w-[65%] sm:max-w-none">
-                      <span className="text-[10px] sm:text-[11px] font-bold text-[#075D63] bg-[#109A9B]/10 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#109A9B]/20 truncate inline-block whitespace-nowrap">
-                        Participant: {participantName || 'Gen Z Study'}
-                      </span>
+                  {/* Left Badges Group */}
+                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-wrap sm:flex-nowrap">
+                    {/* Participant Badge */}
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#075D63] bg-[#109A9B]/10 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#109A9B]/20 truncate inline-block whitespace-nowrap shrink-0">
+                      Participant: {participantName || 'Gen Z Study'}
+                    </span>
 
-                      {/* Resume Progress Action Button (only shown when reviewing earlier question) */}
-                      {isReviewingEarlierQuestion && (
-                        <button
-                          type="button"
-                          onClick={jumpToResumeQuestion}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-sora font-extrabold text-[10px] border border-[#063E46]/40 shadow-2xs transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
-                          title={`Resume progress at Q${resumeQuestionIndex + 1}`}
-                        >
-                          <RotateCcw className="w-3 h-3 text-[#109A9B]" />
-                          <span>Resume Q{resumeQuestionIndex + 1} ➔</span>
-                        </button>
-                      )}
-                    </div>
+                    {/* Resume Progress Action Button */}
+                    {isReviewingEarlierQuestion && (
+                      <button
+                        type="button"
+                        onClick={jumpToResumeQuestion}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-sora font-extrabold text-[10px] border border-[#063E46]/40 shadow-2xs transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
+                        title={`Resume progress at Q${resumeQuestionIndex + 1}`}
+                      >
+                        <RotateCcw className="w-3 h-3 text-[#109A9B]" />
+                        <span>Resume Q{resumeQuestionIndex + 1} ➔</span>
+                      </button>
+                    )}
 
-                    {/* Question Progress Counter Pill */}
-                    <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                      <span className="bg-[#FFF8E8] text-[#10242C] px-2 sm:px-2.5 py-0.5 rounded-full font-mono text-[11px] sm:text-xs border border-[#075D63]/20 font-bold shadow-2xs whitespace-nowrap">
-                        Q{currentQuestionIndex + 1} / {questions.length}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Bottom Row: Answered & Skipped Counters */}
-                  <div className="flex items-center justify-between sm:justify-start gap-1.5 pt-0.5 flex-wrap sm:flex-nowrap">
+                    {/* Answered Count Pill */}
                     <div className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/90 text-[10px] sm:text-xs font-sora font-extrabold shadow-2xs whitespace-nowrap shrink-0">
                       <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600 shrink-0" />
                       <span>{answeredCount} Answered</span>
                     </div>
 
+                    {/* Skipped Count / Review Pill */}
                     <button
                       type="button"
                       onClick={jumpToNextSkippedQuestion}
@@ -1293,6 +1360,13 @@ export default function Survey() {
                         </span>
                       )}
                     </button>
+                  </div>
+
+                  {/* Question Progress Counter Pill (Right End) */}
+                  <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                    <span className="bg-[#FFF8E8] text-[#10242C] px-2 sm:px-2.5 py-0.5 rounded-full font-mono text-[11px] sm:text-xs border border-[#075D63]/20 font-bold shadow-2xs whitespace-nowrap">
+                      Q{currentQuestionIndex + 1} / {questions.length}
+                    </span>
                   </div>
                 </div>
 
@@ -1335,17 +1409,30 @@ export default function Survey() {
                     return (
                       <button
                         key={idx}
+                        type="button"
+                        disabled={isCompletedSession}
                         onClick={() => handleOptionSelect(opt.value)}
-                        className={`w-full text-left ${optionBtnPadding} ${optionMinHeight} rounded-xl sm:rounded-2xl border-2 transition-all duration-200 flex items-center justify-between group cursor-pointer active:scale-[0.99] ${isSelected
+                        className={`w-full text-left ${optionBtnPadding} ${optionMinHeight} rounded-xl sm:rounded-2xl border-2 transition-all duration-200 flex items-center justify-between group ${
+                          isCompletedSession
+                            ? 'pointer-events-none opacity-90 cursor-not-allowed'
+                            : 'cursor-pointer active:scale-[0.99]'
+                        } ${isSelected
                           ? isMulti
                             ? 'border-purple-600 bg-purple-50/90 shadow-2xs font-bold'
                             : 'border-[#0F3D39] bg-[#EAF6F6] shadow-2xs font-bold'
                           : 'border-slate-200 hover:border-[#109A9B]/60 bg-white hover:bg-slate-50/80 font-medium'
                           }`}
                       >
-                        <span className={`${optionTextSize} leading-tight ${isSelected ? (isMulti ? 'text-purple-950 font-extrabold' : 'text-[#0F3D39] font-extrabold') : 'text-[#10242C]'}`}>
-                          {opt.label}
-                        </span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`${optionTextSize} leading-tight ${isSelected ? (isMulti ? 'text-purple-950 font-extrabold' : 'text-[#0F3D39] font-extrabold') : 'text-[#10242C]'}`}>
+                            {opt.label}
+                          </span>
+                          {isCompletedSession && isSelected && (
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                              ✓ Submitted Response
+                            </span>
+                          )}
+                        </div>
 
                         {isSelected ? (
                           isMulti ? (
@@ -1356,7 +1443,7 @@ export default function Survey() {
                               </svg>
                             </div>
                           ) : (
-                            <div className={`${optionIconSize} rounded-full bg-[#0F3D39] text-white flex items-center justify-center flex-shrink-0 ml-1 shadow-2xs`}>
+                            <div className={`${optionIconSize} rounded-full bg-[#0F3D39] text-[#FFF8E8] flex items-center justify-center flex-shrink-0 ml-1 shadow-2xs`}>
                               <svg className={`${optionCheckIconSize} text-white`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="9" stroke="white" strokeWidth="1.2" opacity="0.6" fill="none" />
                                 <polyline points="16 9 10.5 14.5 8 12"></polyline>
@@ -1395,11 +1482,10 @@ export default function Survey() {
                 ) : (
                   <button
                     onClick={handleFinishSurvey}
-                    className={`flex-1 font-sora font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-xl active:scale-95 flex items-center justify-center gap-2 cursor-pointer transition-all ${
-                      isAllAnswered
-                        ? 'bg-[#109A9B] hover:bg-[#075D63] text-white shadow-teal-900/20'
-                        : 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-amber-900/10'
-                    }`}
+                    className={`flex-1 font-sora font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-xl active:scale-95 flex items-center justify-center gap-2 cursor-pointer transition-all ${isAllAnswered
+                      ? 'bg-[#109A9B] hover:bg-[#075D63] text-white shadow-teal-900/20'
+                      : 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-amber-900/10'
+                      }`}
                   >
                     {isAllAnswered ? (
                       <span>Complete Survey 🏆</span>
@@ -1414,6 +1500,8 @@ export default function Survey() {
           </div>
 
         </div>
+        </>
+      )}
 
       </div>
 

@@ -29,6 +29,106 @@ export function formatIST(dateInput) {
   }
 }
 
+export function formatSurveyDuration(startedAt, completedAt, updatedAt, isComplete) {
+  if (!startedAt && !updatedAt && !completedAt) {
+    return 'N/A';
+  }
+
+  const startMs = startedAt ? new Date(startedAt).getTime() : new Date(updatedAt || Date.now()).getTime();
+
+  let endMs;
+  if (completedAt) {
+    endMs = new Date(completedAt).getTime();
+  } else if (isComplete && updatedAt) {
+    endMs = new Date(updatedAt).getTime();
+  } else {
+    endMs = Date.now();
+  }
+
+  if (isNaN(startMs) || isNaN(endMs)) {
+    return 'N/A';
+  }
+
+  const diffSeconds = Math.max(0, Math.round((endMs - startMs) / 1000));
+
+  const hours = Math.floor(diffSeconds / 3600);
+  const minutes = Math.floor((diffSeconds % 3600) / 60);
+  const seconds = diffSeconds % 60;
+
+  let formatted = '';
+  if (hours > 0) {
+    formatted = `${hours}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+  } else if (minutes > 0) {
+    formatted = `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+  } else {
+    formatted = `${seconds}s`;
+  }
+
+  if (!isComplete && !completedAt) {
+    return `${formatted} (In Progress)`;
+  }
+
+  return formatted;
+}
+
+export function calculateQualityMetrics(fullResponses = [], startedAt = null, completedAt = null, updatedAt = null, answersCount = 0, totalQs = 75) {
+  const answered = fullResponses.filter((r) => r.isAnswered && r.selectedOptionLabel && r.selectedOptionLabel !== 'Not Answered' && r.selectedOptionLabel !== 'N/A');
+
+  // 1. Straight-Line Pattern Detection (>= 8 consecutive identical responses)
+  let straightLineDetected = false;
+  let maxConsecutiveIdentical = 0;
+  let currentConsecutive = 1;
+  let lastVal = null;
+
+  answered.forEach((item) => {
+    const val = (item.selectedOptionLabel || item.storedValue || '').trim().toLowerCase();
+    if (val && val === lastVal) {
+      currentConsecutive++;
+      if (currentConsecutive > maxConsecutiveIdentical) {
+        maxConsecutiveIdentical = currentConsecutive;
+      }
+    } else {
+      currentConsecutive = 1;
+      lastVal = val;
+    }
+  });
+
+  if (maxConsecutiveIdentical >= 8) {
+    straightLineDetected = true;
+  }
+
+  // 2. Speed Anomaly Calculation (< 3 seconds per question or < 90s total for >= 25 Qs)
+  let speedAnomaly = false;
+  const startMs = startedAt ? new Date(startedAt).getTime() : null;
+  const endMs = completedAt ? new Date(completedAt).getTime() : (updatedAt ? new Date(updatedAt).getTime() : null);
+
+  if (startMs && endMs && !isNaN(startMs) && !isNaN(endMs) && endMs > startMs) {
+    const durationSec = (endMs - startMs) / 1000;
+    const effectiveCount = Math.max(1, answersCount);
+    const avgSecPerQ = durationSec / effectiveCount;
+    if (avgSecPerQ < 3 || (durationSec < 90 && effectiveCount >= 25)) {
+      speedAnomaly = true;
+    }
+  }
+
+  // 3. Completeness Check (< 30% answered)
+  const incompleteFlag = answersCount > 0 && answersCount < totalQs * 0.3;
+
+  // Composite Quality Rating
+  const isRiskFlagged = straightLineDetected || speedAnomaly || incompleteFlag;
+  const qualityRating = isRiskFlagged ? 'Review Required' : 'Verified';
+
+  return {
+    totalAnswered: answersCount,
+    completionPct: Math.round((Math.min(answersCount, totalQs) / totalQs) * 100),
+    straightLineDetected,
+    maxConsecutiveIdentical,
+    speedAnomaly,
+    incompleteFlag,
+    qualityRating,
+  };
+}
+
 export function resolveOptionLabel(qIdOrCode, userVal) {
   if (userVal === undefined || userVal === null || userVal === '') return 'N/A';
 
@@ -452,12 +552,32 @@ export const adminDataService = {
             });
           }
 
-          respondentsList = dbParticipants.map((p, idx) => {
+          // Clean up and filter system & orphaned dummy participants
+          const validDbParticipants = [];
+          for (const p of dbParticipants) {
+            if (p.name === 'ADMIN_BLUEPRINT_CONFIG') continue;
+            const pAnswers = participantAnswersMap.get(p.id) || {};
+            const answersCount = Math.max(p.total_answers_count || 0, Object.keys(pAnswers).length);
+
+            const isDummy = p.name === 'Gen Z Participant' || (p.email && p.email.startsWith('user_') && p.email.endsWith('@genzvoices.org'));
+            if (isDummy && answersCount === 0) {
+              // Delete 0-answer orphaned dummy participant from Supabase DB
+              supabase.from('participants').delete().eq('id', p.id).then();
+              continue;
+            }
+            validDbParticipants.push(p);
+          }
+
+          respondentsList = validDbParticipants.map((p, idx) => {
             const pAnswers = participantAnswersMap.get(p.id) || {};
             const answersCount = Math.max(p.total_answers_count || 0, Object.keys(pAnswers).length);
             const isComplete = p.status === 'completed' || answersCount >= totalQs * 0.9;
             const completionPct = isComplete ? 100 : Math.round((Math.min(answersCount, totalQs) / totalQs) * 100);
             const isQualityFlagged = answersCount > 0 && answersCount < totalQs * 0.3;
+
+            const startedAt = p.started_at || p.created_at;
+            const completedAt = p.completed_at || (isComplete ? p.updated_at : null);
+            const durationStr = formatSurveyDuration(startedAt, completedAt, p.updated_at, isComplete);
 
             return {
               id: p.id,
@@ -475,7 +595,9 @@ export const adminDataService = {
               completionPct,
               completionStatus: isComplete ? 'Completed' : 'In Progress',
               submittedAt: formatIST(p.updated_at || p.created_at || new Date().toISOString()),
-              durationMinutes: '11m 20s',
+              startedAtFormatted: startedAt ? formatIST(startedAt) : 'N/A',
+              completedAtFormatted: completedAt ? formatIST(completedAt) : 'In Progress',
+              durationMinutes: durationStr,
               overallScore: `${Math.min(100, Math.round((answersCount / totalQs) * 100))}%`,
               qualityStatus: isQualityFlagged ? 'Review Required' : 'Verified',
               evaluationStatus: p.evaluation_status || 'pending_evaluation',
@@ -508,6 +630,10 @@ export const adminDataService = {
         const isComplete = effectiveAnswersCount >= totalQs * 0.9;
         const isQualityFlagged = effectiveAnswersCount > 0 && effectiveAnswersCount < totalQs * 0.3;
 
+        const startedAt = s.startedAt || s.createdAt;
+        const completedAt = s.completedAt || (isComplete ? s.lastAnsweredAt : null);
+        const durationStr = formatSurveyDuration(startedAt, completedAt, s.lastAnsweredAt, isComplete);
+
         return {
           id: s.participantId || s.sessionId,
           sessionId: s.sessionId,
@@ -523,8 +649,10 @@ export const adminDataService = {
           answersCount: Math.min(effectiveAnswersCount, totalQs),
           completionPct: Math.round((Math.min(effectiveAnswersCount, totalQs) / totalQs) * 100),
           completionStatus: isComplete ? 'Completed' : 'In Progress',
-          submittedAt: s.lastAnsweredAt || new Date().toISOString(),
-          durationMinutes: '10m 00s',
+          submittedAt: s.lastAnsweredAt ? formatIST(s.lastAnsweredAt) : new Date().toISOString(),
+          startedAtFormatted: startedAt ? formatIST(startedAt) : 'N/A',
+          completedAtFormatted: completedAt ? formatIST(completedAt) : 'In Progress',
+          durationMinutes: durationStr,
           overallScore: `${Math.round((effectiveAnswersCount / totalQs) * 100)}%`,
           qualityStatus: isQualityFlagged ? 'Review Required' : 'Verified',
           evaluationStatus: s.evaluation_status || 'pending_evaluation',
@@ -700,17 +828,22 @@ export const adminDataService = {
       };
     });
 
+    const qualityMetrics = calculateQualityMetrics(
+      fullResponses,
+      respondent.startedAt || respondent.started_at,
+      respondent.completedAt || respondent.completed_at,
+      respondent.submittedAt || respondent.updated_at,
+      respondent.answersCount,
+      allQuestions.length
+    );
+
+    respondent.qualityStatus = qualityMetrics.qualityRating;
+
     return {
       respondent,
       fullResponses,
       dimensionRadarScores,
-      qualityMetrics: {
-        totalAnswered: respondent.answersCount,
-        completionPct: respondent.completionPct,
-        straightLineDetected: false,
-        speedAnomaly: respondent.answersCount < 20 && respondent.answersCount > 0,
-        qualityRating: respondent.qualityStatus,
-      },
+      qualityMetrics,
     };
   },
 
@@ -796,11 +929,45 @@ export const adminDataService = {
 
     if (isSupabaseConfigured) {
       try {
-        // 1. Delete associated survey_responses
-        await supabase
-          .from('survey_responses')
-          .delete()
-          .or(`participant_id.eq.${participantId},session_id.eq.${participantId}`);
+        // Safety Check: If target participant is a dummy "Gen Z Participant", check if responses should be preserved
+        const { data: targetP } = await supabase
+          .from('participants')
+          .select('id, name, email')
+          .eq('id', participantId)
+          .maybeSingle();
+
+        const isDummy = targetP && (targetP.name === 'Gen Z Participant' || (targetP.email && targetP.email.startsWith('user_') && targetP.email.endsWith('@genzvoices.org')));
+
+        if (isDummy) {
+          // Check if there is a real registered participant in the system
+          const { data: registeredP } = await supabase
+            .from('participants')
+            .select('id')
+            .neq('name', 'Gen Z Participant')
+            .neq('name', 'ADMIN_BLUEPRINT_CONFIG')
+            .not('email', 'ilike', 'user_%@genzvoices.org')
+            .limit(1);
+
+          if (registeredP && registeredP.length > 0) {
+            // Re-link responses to registered participant instead of deleting them!
+            await supabase
+              .from('survey_responses')
+              .update({ participant_id: registeredP[0].id })
+              .eq('participant_id', participantId);
+          } else {
+            // Delete associated survey_responses if no registered participant exists
+            await supabase
+              .from('survey_responses')
+              .delete()
+              .or(`participant_id.eq.${participantId},session_id.eq.${participantId}`);
+          }
+        } else {
+          // Deleting a real registered participant: Delete their responses
+          await supabase
+            .from('survey_responses')
+            .delete()
+            .or(`participant_id.eq.${participantId},session_id.eq.${participantId}`);
+        }
 
         // 2. Delete associated data_logs
         await supabase

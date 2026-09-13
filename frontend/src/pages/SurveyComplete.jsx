@@ -7,7 +7,7 @@ import { fetchParticipantStatus } from '../services/supabaseClient';
 import GridModal from '../components/common/GridModal';
 
 export default function SurveyComplete() {
-  const { participantName, participantEmail, participantId } = useSurveyStore();
+  const { participantName, participantEmail, participantId, completeSurvey } = useSurveyStore();
   const [participant, setParticipant] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,9 @@ export default function SurveyComplete() {
 
   const loadStatus = async () => {
     setIsRefreshing(true);
+    if (completeSurvey) {
+      await completeSurvey();
+    }
     const savedId = participantId || localStorage.getItem('genz_participant_id');
     const savedEmail = participantEmail || localStorage.getItem('genz_participant_email');
     const target = savedId || savedEmail;

@@ -37,27 +37,11 @@ export default function AdminRespondentDetail() {
   const [activeTab, setActiveTab] = useState('profile');
   const [searchAnswer, setSearchAnswer] = useState('');
 
-  // Evaluation & Award Control States
-  const [evalStatus, setEvalStatus] = useState('pending_evaluation');
-  const [certId, setCertId] = useState('');
-  const [luckyStatus, setLuckyStatus] = useState('pending');
-  const [luckyPrize, setLuckyPrize] = useState('');
-  const [adminNotes, setAdminNotes] = useState('');
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateMsg, setUpdateMsg] = useState('');
-
   useEffect(() => {
     async function loadDetail() {
       setLoading(true);
       const res = await adminDataService.getRespondentDetail(id || 'RESP-9001');
       setData(res);
-      if (res?.respondent) {
-        setEvalStatus(res.respondent.evaluationStatus || 'pending_evaluation');
-        setCertId(res.respondent.certificateId || '');
-        setLuckyStatus(res.respondent.luckyDrawStatus || 'pending');
-        setLuckyPrize(res.respondent.luckyDrawPrize || '');
-        setAdminNotes(res.respondent.adminNotes || '');
-      }
       setLoading(false);
     }
     loadDetail();
@@ -75,36 +59,6 @@ export default function AdminRespondentDetail() {
 
   const { respondent, fullResponses, dimensionRadarScores, qualityMetrics } = data;
 
-  const handleSaveEvaluation = async (targetEval, targetCert) => {
-    setIsUpdating(true);
-    setUpdateMsg('');
-
-    const finalEval = targetEval || evalStatus;
-    const finalCert = targetCert || (finalEval === 'approved' ? 'issued' : 'pending');
-
-    const payload = {
-      evaluation_status: finalEval,
-      certificate_status: finalCert,
-      lucky_draw_status: luckyStatus,
-      lucky_draw_prize: luckyPrize,
-      admin_notes: adminNotes,
-    };
-
-    const res = await adminDataService.updateRespondentEvaluation(respondent.id, payload);
-    setIsUpdating(false);
-
-    if (res?.error) {
-      setUpdateMsg(`⚠️ Error updating: ${res.error}`);
-    } else {
-      setEvalStatus(finalEval);
-      if (res.data?.certificate_id) {
-        setCertId(res.data.certificate_id);
-      }
-      setUpdateMsg('✅ Response evaluation, Certificate & Lucky Draw status updated successfully!');
-      setTimeout(() => setUpdateMsg(''), 4000);
-    }
-  };
-
   const radarData = dimensionRadarScores.map((d) => ({
     subject: d.dimensionTitle,
     score: d.scorePct,
@@ -119,37 +73,35 @@ export default function AdminRespondentDetail() {
   );
 
   return (
-    <AdminLayout title={`Profile: ${respondent.name} (${respondent.id})`}>
+    <AdminLayout title={`Profile: ${respondent.name}`}>
       {/* HEADER BAR WITH BACK BUTTON & PROFILE SUMMARY */}
       <div className="bg-white p-5 sm:p-6 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               to="/admin/respondents"
-              className="p-2.5 rounded-2xl bg-slate-100 hover:bg-[#EAF6F6] text-[#063E46] transition-colors cursor-pointer"
+              className="p-2.5 rounded-2xl bg-slate-100 hover:bg-[#EAF6F6] text-[#063E46] transition-colors cursor-pointer shrink-0"
               title="Back to Respondents List"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold text-[#075D63] bg-[#EAF6F6] px-2.5 py-0.5 rounded-full border border-[#109A9B]/20">
-                  {respondent.id}
-                </span>
-                {respondent.email && (
-                  <span className="text-xs text-slate-500 font-semibold">
-                    ({respondent.email})
-                  </span>
-                )}
-                <span className="text-xs text-slate-400 font-bold">•</span>
-                <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  {qualityMetrics.qualityRating}
-                </span>
-              </div>
-              <h2 className="font-heading font-extrabold text-xl text-[#10242C] mt-1">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-[#10242C]">
                 {respondent.name}
               </h2>
+
+              {respondent.email && (
+                <span className="text-xs sm:text-sm text-slate-500 font-semibold">
+                  ({respondent.email})
+                </span>
+              )}
+
+              <span className="text-xs text-slate-400 font-bold">•</span>
+
+              <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                {qualityMetrics.qualityRating}
+              </span>
             </div>
           </div>
 
@@ -158,114 +110,6 @@ export default function AdminRespondentDetail() {
               <span className="text-[11px] text-[#53656A] font-semibold block">Completion Progress</span>
               <span className="font-extrabold text-sm text-[#075D63]">{respondent.completionPct}% Completed</span>
             </div>
-          </div>
-        </div>
-
-        {/* ADMIN RESPONSE EVALUATION & AWARD PANEL */}
-        <div className="bg-[#FAF7F0] p-4 sm:p-5 rounded-2xl border-2 border-[#109A9B]/30 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-[#075D63]" />
-              <h3 className="font-heading font-extrabold text-base text-[#10242C]">
-                Admin Evaluation & Award Control Panel
-              </h3>
-            </div>
-            <div className="flex items-center gap-2">
-              {evalStatus === 'approved' && (
-                <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full border border-emerald-300 flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Approved & Issued ({certId || 'CERT-GZ2026'})
-                </span>
-              )}
-              {evalStatus === 'pending_evaluation' && (
-                <span className="px-3 py-1 bg-amber-100 text-amber-900 text-xs font-bold rounded-full border border-amber-300 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending Admin Review
-                </span>
-              )}
-              {evalStatus === 'rejected' && (
-                <span className="px-3 py-1 bg-rose-100 text-rose-800 text-xs font-bold rounded-full border border-rose-300 flex items-center gap-1">
-                  <X className="w-3.5 h-3.5" /> Rejected
-                </span>
-              )}
-            </div>
-          </div>
-
-          {updateMsg && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-bold text-emerald-900">
-              {updateMsg}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-medium">
-            {/* 1. Evaluation & Certificate Action */}
-            <div className="space-y-2 bg-white p-3.5 rounded-xl border border-slate-200">
-              <label className="block font-bold text-[#063E46] uppercase tracking-wider text-[11px]">
-                1. Response Evaluation & Certificate Issuance
-              </label>
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  disabled={isUpdating}
-                  onClick={() => handleSaveEvaluation('approved', 'issued')}
-                  className="flex-1 py-2 px-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>Approve & Issue Cert</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={isUpdating}
-                  onClick={() => handleSaveEvaluation('rejected', 'revoked')}
-                  className="py-2 px-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <X className="w-4 h-4" />
-                  <span>Reject</span>
-                </button>
-              </div>
-            </div>
-
-            {/* 2. Lucky Draw Status & Prize */}
-            <div className="space-y-2 bg-white p-3.5 rounded-xl border border-slate-200">
-              <label className="block font-bold text-[#063E46] uppercase tracking-wider text-[11px]">
-                2. Lucky Draw Status & Prize Award
-              </label>
-              <div className="flex items-center gap-2">
-                <select
-                  value={luckyStatus}
-                  onChange={(e) => setLuckyStatus(e.target.value)}
-                  className="px-2.5 py-1.5 rounded-xl border border-slate-300 font-semibold outline-none focus:border-[#109A9B]"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="eligible">Eligible</option>
-                  <option value="winner">Winner 🏆</option>
-                  <option value="not_selected">Not Selected</option>
-                </select>
-                <input
-                  type="text"
-                  value={luckyPrize}
-                  onChange={(e) => setLuckyPrize(e.target.value)}
-                  placeholder="Prize e.g. Smart Watch / $50 Gift Card"
-                  className="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 font-semibold outline-none focus:border-[#109A9B]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <input
-              type="text"
-              value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
-              placeholder="Admin evaluation notes / feedback comments..."
-              className="flex-1 px-3 py-2 bg-white rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-[#109A9B]"
-            />
-            <button
-              type="button"
-              disabled={isUpdating}
-              onClick={() => handleSaveEvaluation()}
-              className="px-4 py-2 bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer transition-all shrink-0"
-            >
-              {isUpdating ? 'Saving...' : 'Save All Updates'}
-            </button>
           </div>
         </div>
 
@@ -300,6 +144,37 @@ export default function AdminRespondentDetail() {
       {/* TAB CONTENT 1: DEMOGRAPHICS PROFILE */}
       {activeTab === 'profile' && (
         <div className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-6">
+          {/* SURVEY COMPLETION TIMING & DURATION CARD */}
+          <div className="bg-[#EAF6F6]/70 p-4 sm:p-5 rounded-2xl border border-[#109A9B]/20 space-y-3">
+            <h4 className="font-heading font-extrabold text-xs text-[#063E46] uppercase tracking-wider flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-[#109A9B]" />
+              <span>Survey Timing & Completion Duration (Logged In Only)</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                <span className="text-[10px] text-[#53656A] font-bold uppercase block">Time Taken (Duration)</span>
+                <span className="font-mono font-extrabold text-base text-[#075D63] mt-0.5 block">
+                  {respondent.durationMinutes || 'N/A'}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                <span className="text-[10px] text-[#53656A] font-bold uppercase block">User Logged In / Started At</span>
+                <span className="font-mono font-semibold text-xs text-[#10242C] mt-1 block">
+                  {respondent.startedAtFormatted || 'N/A'}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                <span className="text-[10px] text-[#53656A] font-bold uppercase block">Survey Completed / Last Active</span>
+                <span className="font-mono font-semibold text-xs text-[#10242C] mt-1 block">
+                  {respondent.completedAtFormatted || respondent.submittedAt || 'In Progress'}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <h3 className="font-heading font-extrabold text-base text-[#10242C]">
             Demographic & Contextual Metadata
           </h3>
@@ -411,27 +286,63 @@ export default function AdminRespondentDetail() {
 
       {/* TAB CONTENT 5: DATA QUALITY */}
       {activeTab === 'quality' && (
-        <div className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-4">
-          <h3 className="font-heading font-extrabold text-base text-[#10242C]">
-            Automated Quality Checks & Validation Metrics
-          </h3>
+        <div className="bg-white p-6 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-6">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-[#109A9B]" />
+            <h3 className="font-heading font-extrabold text-base text-[#10242C]">
+              Automated Quality Checks & Validation Metrics
+            </h3>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-semibold">
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
-              <span className="text-[#53656A] block">Quality Rating</span>
-              <span className="font-extrabold text-lg text-emerald-800">{qualityMetrics.qualityRating}</span>
+            <div className={`p-4 rounded-2xl border ${
+              qualityMetrics.qualityRating === 'Verified' 
+                ? 'bg-emerald-50/90 border-emerald-200 text-emerald-900' 
+                : 'bg-amber-50/90 border-amber-200 text-amber-900'
+            }`}>
+              <span className="text-[#53656A] block text-[11px] font-bold uppercase mb-1">Quality Rating</span>
+              <div className="flex items-center gap-2">
+                {qualityMetrics.qualityRating === 'Verified' ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                )}
+                <span className="font-extrabold text-lg">{qualityMetrics.qualityRating || 'Verified'}</span>
+              </div>
             </div>
+
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-[#53656A] block">Straight-Line Flag</span>
-              <span className="font-bold text-slate-800">
-                {qualityMetrics.straightLineDetected ? '⚠️ Detected' : '✅ Clear'}
-              </span>
+              <span className="text-[#53656A] block text-[11px] font-bold uppercase mb-1">Straight-Line Flag</span>
+              <div className="flex items-center gap-2 mt-1">
+                {qualityMetrics.straightLineDetected ? (
+                  <>
+                    <AlertTriangle className="w-4.5 h-4.5 text-amber-600 shrink-0" />
+                    <span className="font-bold text-amber-800">Detected ({qualityMetrics.maxConsecutiveIdentical || 8} consecutive)</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
+                    <span className="font-bold text-emerald-800">Clear</span>
+                  </>
+                )}
+              </div>
             </div>
+
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
-              <span className="text-[#53656A] block">Completion Time Anomaly</span>
-              <span className="font-bold text-slate-800">
-                {qualityMetrics.speedAnomaly ? '⚠️ Rapid Speed' : '✅ Normal Pace'}
-              </span>
+              <span className="text-[#53656A] block text-[11px] font-bold uppercase mb-1">Completion Time Anomaly</span>
+              <div className="flex items-center gap-2 mt-1">
+                {qualityMetrics.speedAnomaly ? (
+                  <>
+                    <AlertTriangle className="w-4.5 h-4.5 text-amber-600 shrink-0" />
+                    <span className="font-bold text-amber-800">Rapid Speed</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
+                    <span className="font-bold text-emerald-800">Normal Pace</span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

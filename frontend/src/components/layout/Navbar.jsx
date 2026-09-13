@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, BarChart2, ShieldCheck, Menu, X, ArrowRight, LogOut } from 'lucide-react';
+import { Home, Info, BarChart2, ShieldCheck, Menu, X, ArrowRight, LogOut } from 'lucide-react';
 import { useSurveyStore } from '../../stores/surveyStore';
 
 export default function Navbar() {
@@ -10,15 +10,13 @@ export default function Navbar() {
   const logoutParticipant = useSurveyStore((state) => state.logoutParticipant);
 
   const navLinks = [
-    { name: 'Home', path: '/', icon: Home },
-    { name: 'Insights', path: '/analytics', icon: BarChart2 },
-    { name: 'Verify', path: '/verify-certificate', icon: ShieldCheck },
+    { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
+    { name: 'Insights', path: '/analytics' },
+    { name: 'Verify', path: '/verify-certificate' },
   ];
 
   const isActive = (path) => {
-    if (path === '/') {
-      return location.pathname === '/' || location.pathname === '/about';
-    }
     return location.pathname === path;
   };
 
@@ -28,8 +26,8 @@ export default function Navbar() {
   };
 
   return (
-    <header className="fixed top-2 sm:top-4 left-0 right-0 z-50 max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 transition-all duration-300">
-      <div className="bg-[#FFF8E8] border border-[#109A9B]/35 rounded-full shadow-[0_12px_40px_rgba(11,31,42,0.15)] px-3 sm:px-8 h-[60px] sm:h-[80px] flex items-center justify-between gap-1.5 sm:gap-2 relative z-50">
+    <header className="fixed top-2 sm:top-4 left-0 right-0 z-50 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300">
+      <div className="bg-[#FFF8E8] border border-[#109A9B]/35 rounded-full shadow-[0_12px_40px_rgba(11,31,42,0.15)] px-4 sm:px-8 h-[60px] sm:h-[76px] flex items-center justify-between gap-2 relative z-50">
 
         {/* Brand Logo with Responsive Scaling */}
         <Link to="/" className="flex items-center group shrink-0">
@@ -43,7 +41,6 @@ export default function Navbar() {
         {/* Center Desktop Navigation Links */}
         <nav className="hidden md:flex items-center justify-center gap-2 lg:gap-4 font-inter text-sm font-semibold text-[#0B1F2A]">
           {navLinks.map((link) => {
-            const IconComponent = link.icon;
             const active = isActive(link.path);
 
             return (
@@ -56,9 +53,6 @@ export default function Navbar() {
                     : 'text-[#53656A] hover:text-[#0B1F2A] hover:bg-[#109A9B]/10'
                 }`}
               >
-                {IconComponent && (
-                  <IconComponent className={`w-4 h-4 ${active ? 'text-[#109A9B]' : 'text-[#53656A]'}`} />
-                )}
                 <span className="tracking-tight">{link.name}</span>
                 {active && (
                   <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-[3px] bg-[#109A9B] rounded-full" />
@@ -115,7 +109,6 @@ export default function Navbar() {
 
           <div className="relative z-50 md:hidden mt-2 bg-[#FFF8E8] border border-[#109A9B]/35 rounded-3xl p-4 sm:p-5 shadow-[0_20px_60px_rgba(11,31,42,0.3)] flex flex-col gap-2.5 animate-in fade-in slide-in-from-top-4 duration-200">
             {navLinks.map((link) => {
-              const IconComponent = link.icon;
               const active = isActive(link.path);
 
               return (
@@ -129,7 +122,6 @@ export default function Navbar() {
                       : 'text-[#53656A] hover:bg-[#109A9B]/10 hover:text-[#0B1F2A]'
                   }`}
                 >
-                  {IconComponent && <IconComponent className="w-5 h-5 text-[#109A9B] shrink-0" />}
                   <span>{link.name}</span>
                 </Link>
               );

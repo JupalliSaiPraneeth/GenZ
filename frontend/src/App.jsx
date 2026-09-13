@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'r
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import Home from './pages/Home';
+import About from './pages/About';
 import Survey from './pages/Survey';
 import SurveyComplete from './pages/SurveyComplete';
 import VerifyCertificate from './pages/VerifyCertificate';
@@ -36,7 +37,7 @@ function AppLayout() {
         <Routes>
           {/* Public Student Routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/categories" element={<Home />} />
           <Route path="/survey" element={<Survey />} />
           <Route path="/survey-complete" element={<SurveyComplete />} />

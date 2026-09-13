@@ -237,7 +237,7 @@ export default function AdminExport() {
     try {
       if (exportType === 'respondents') {
         const list = await adminDataService.getRespondentsList();
-        const headers = ['ID', 'Name', 'Email', 'Age Group', 'Gender', 'Status', 'Field', 'Completion', 'Quality'];
+        const headers = ['ID', 'Name', 'Email', 'Age Group', 'Gender', 'Status', 'Field', 'Completion', 'Time Taken', 'Quality'];
         const rows = list.map((r) => [
           r.id?.slice(0, 8),
           r.name,
@@ -247,6 +247,7 @@ export default function AdminExport() {
           r.currentStatus,
           r.fieldOfStudy,
           `${r.completionPct}%`,
+          r.durationMinutes || 'N/A',
           r.qualityStatus,
         ]);
 
@@ -256,7 +257,7 @@ export default function AdminExport() {
           generatePDF(
             'Respondent Master List (Demographics & Metadata)',
             `Total Respondents: ${list.length}`,
-            ['ID', 'Name', 'Email', 'Age', 'Gender', 'Status', 'Field', 'Progress', 'Quality'],
+            ['ID', 'Name', 'Email', 'Age', 'Gender', 'Status', 'Field', 'Progress', 'Time Taken', 'Quality'],
             rows,
             `genz_respondents_dataset_${Date.now()}.pdf`
           );

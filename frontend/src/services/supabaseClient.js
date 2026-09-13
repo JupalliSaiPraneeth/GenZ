@@ -52,7 +52,7 @@ export function fromUuidQuestionId(uuidStr) {
  * Register or Resume Participant in Supabase Database.
  * If email exists, returns existing participant to allow resuming session.
  */
-export async function registerParticipant(participantName = '', email = '', deviceTimestamp = new Date().toISOString()) {
+export async function registerParticipant(participantName = '', email = '', deviceTimestamp = new Date().toISOString(), sessionId = null) {
   try {
     const nameStr = participantName ? participantName.trim() : '';
     const emailStr = email ? email.trim().toLowerCase() : '';
@@ -65,10 +65,12 @@ export async function registerParticipant(participantName = '', email = '', devi
       return { error: 'A valid email address is required to register!' };
     }
 
+    const validSessionId = sessionId ? ensureValidUUID(sessionId) : null;
+
     // 1. Check if email already exists in `participants` table
     const { data: existing } = await supabase
       .from('participants')
-      .select('id, name, email, status, total_answers_count')
+      .select('id, name, email, status, total_answers_count, device_timestamp, created_at, updated_at')
       .eq('email', emailStr)
       .maybeSingle();
 
@@ -77,9 +79,35 @@ export async function registerParticipant(participantName = '', email = '', devi
       const inputNameNormalized = nameStr.trim().toLowerCase();
 
       if (existingNameNormalized === inputNameNormalized) {
-        // Same Name & Same Email -> Allow Login & Resume Session
+        const loginTime = new Date().toISOString();
+        const startedAt = existing.device_timestamp || existing.created_at || loginTime;
+
+        // Ensure update succeeds cleanly
+        await supabase
+          .from('participants')
+          .update({
+            updated_at: loginTime,
+          })
+          .eq('id', existing.id);
+
+        // If responses were recorded under a temporary session ID before user logged in with existing email:
+        if (validSessionId && validSessionId !== existing.id) {
+          // Re-link responses to the registered user's ID
+          await supabase
+            .from('survey_responses')
+            .update({ participant_id: existing.id })
+            .or(`participant_id.eq.${validSessionId},session_id.eq.${validSessionId}`);
+
+          // Clean up temporary dummy participant row if it was auto-created
+          await supabase
+            .from('participants')
+            .delete()
+            .eq('id', validSessionId)
+            .or(`name.eq.Gen Z Participant,email.ilike.user_%@genzvoices.org`);
+        }
+
         return {
-          participant: existing,
+          participant: { ...existing, started_at: startedAt },
           isResumed: true,
           error: null,
         };
@@ -93,24 +121,58 @@ export async function registerParticipant(participantName = '', email = '', devi
       }
     }
 
-    // 2. Insert new participant row if email is not found
-    const newId = generateValidUUID();
+    // 2. Email is not in database yet.
+    // Check if a temporary session participant row exists for this sessionId
+    let existingSessionP = null;
+    if (validSessionId) {
+      const { data: tempP } = await supabase
+        .from('participants')
+        .select('id, name, email, created_at')
+        .eq('id', validSessionId)
+        .maybeSingle();
+      existingSessionP = tempP;
+    }
+
+    const nowIso = new Date().toISOString();
+
+    if (existingSessionP) {
+      // UPDATE the temporary session participant row in-place with user's real name & email
+      const { data: updated, error: updateErr } = await supabase
+        .from('participants')
+        .update({
+          name: nameStr,
+          email: emailStr,
+          device_timestamp: deviceTimestamp,
+          updated_at: nowIso,
+        })
+        .eq('id', validSessionId)
+        .select('id, name, email, status, total_answers_count, created_at')
+        .single();
+
+      if (!updateErr && updated) {
+        await logUserAction(updated.id, 'REGISTER_PARTICIPANT', deviceTimestamp, { name: nameStr, email: emailStr, started_at: updated.created_at || nowIso });
+        return { participant: { ...updated, started_at: updated.created_at || nowIso }, isResumed: false, error: null };
+      }
+    }
+
+    // 3. If no temporary session row exists, insert new participant with validSessionId or new UUID
+    const targetId = validSessionId || generateValidUUID();
     const payload = {
-      id: newId,
+      id: targetId,
       name: nameStr,
       email: emailStr,
       status: 'in_progress',
       total_answers_count: 0,
       device_timestamp: deviceTimestamp,
       user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'browser',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: nowIso,
+      updated_at: nowIso,
     };
 
     const { data: created, error: insertErr } = await supabase
       .from('participants')
       .insert([payload])
-      .select('id, name, email, status, total_answers_count')
+      .select('id, name, email, status, total_answers_count, created_at')
       .single();
 
     if (insertErr) {
@@ -138,7 +200,15 @@ export async function registerParticipant(participantName = '', email = '', devi
       return { participant: payload, isResumed: false, error: null };
     }
 
-    // 3. Log user creation in `data_logs`
+    // Re-link any responses answered under validSessionId to targetId
+    if (validSessionId && validSessionId !== created.id) {
+      await supabase
+        .from('survey_responses')
+        .update({ participant_id: created.id })
+        .or(`participant_id.eq.${validSessionId},session_id.eq.${validSessionId}`);
+    }
+
+    // Log user creation in `data_logs`
     await logUserAction(created.id, 'REGISTER_PARTICIPANT', deviceTimestamp, { name: nameStr, email: emailStr });
 
     return { participant: created, isResumed: false, error: null };
@@ -239,16 +309,14 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
       updated_at: new Date().toISOString(),
     };
 
-    // 2. Check if response row already exists in `survey_responses` to avoid 409 Conflict
-    const { data: existingResp } = await supabase
+    // 2. Upsert response row into `survey_responses` to avoid 409 Conflict
+    const { error: upsertErr } = await supabase
       .from('survey_responses')
-      .select('id')
-      .eq('participant_id', validParticipantId)
-      .eq('question_id', qIdKey)
-      .maybeSingle();
+      .upsert([payload], { onConflict: 'participant_id,question_id' });
 
-    if (existingResp?.id) {
-      const { error: updateErr } = await supabase
+    if (upsertErr) {
+      // Fallback update if upsert constraint is not explicitly configured
+      await supabase
         .from('survey_responses')
         .update({
           session_id: validSessionId,
@@ -257,30 +325,8 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
           device_timestamp: deviceTimestamp,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', existingResp.id);
-
-      if (updateErr) {
-        console.warn('Supabase update response notice:', updateErr.message);
-      }
-    } else {
-      const { error: insertErr } = await supabase
-        .from('survey_responses')
-        .insert([payload]);
-
-      if (insertErr) {
-        // Fallback update if insert hits duplicate or race condition
-        await supabase
-          .from('survey_responses')
-          .update({
-            session_id: validSessionId,
-            question_code: qCodeKey,
-            response_value: typeof responseValue === 'object' ? responseValue : { value: responseValue },
-            device_timestamp: deviceTimestamp,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('participant_id', validParticipantId)
-          .eq('question_id', qIdKey);
-      }
+        .eq('participant_id', validParticipantId)
+        .eq('question_id', qIdKey);
     }
 
     // 3. Count total answers and update `participants` table
@@ -323,16 +369,51 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
 export async function completeParticipantSurvey(participantId, deviceTimestamp = new Date().toISOString()) {
   if (!participantId) return;
   try {
-    await supabase
+    const completedAt = new Date().toISOString();
+
+    // Fetch existing participant record to compute exact duration
+    const { data: p } = await supabase
       .from('participants')
-      .update({
-        status: 'completed',
-        updated_at: new Date().toISOString(),
-        device_timestamp: deviceTimestamp,
-      })
+      .select('created_at, device_timestamp')
+      .eq('id', participantId)
+      .maybeSingle();
+
+    const startTimestamp = p?.device_timestamp || p?.created_at || deviceTimestamp;
+    const startMs = new Date(startTimestamp).getTime();
+    const completedMs = new Date(completedAt).getTime();
+    const durationSeconds = !isNaN(startMs) && !isNaN(completedMs) ? Math.max(0, Math.round((completedMs - startMs) / 1000)) : null;
+
+    const payload = {
+      status: 'completed',
+      completed_at: completedAt,
+      duration_seconds: durationSeconds,
+      updated_at: completedAt,
+      device_timestamp: deviceTimestamp,
+    };
+
+    // Update in database with fallback if custom columns are pending
+    const { error: updateErr } = await supabase
+      .from('participants')
+      .update(payload)
       .eq('id', participantId);
 
-    await logUserAction(participantId, 'COMPLETE_SURVEY', deviceTimestamp, { status: 'completed' });
+    if (updateErr) {
+      // Fallback update if completed_at / duration_seconds column schema is restricted
+      await supabase
+        .from('participants')
+        .update({
+          status: 'completed',
+          updated_at: completedAt,
+          device_timestamp: deviceTimestamp,
+        })
+        .eq('id', participantId);
+    }
+
+    await logUserAction(participantId, 'COMPLETE_SURVEY', deviceTimestamp, {
+      status: 'completed',
+      completed_at: completedAt,
+      duration_seconds: durationSeconds,
+    });
   } catch (e) {
     console.warn('completeParticipantSurvey exception:', e);
   }

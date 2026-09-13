@@ -75,11 +75,11 @@ export default function Home() {
   const participantName = useSurveyStore((state) => state.participantName);
   const participantEmail = useSurveyStore((state) => state.participantEmail);
   const getAnsweredCount = useSurveyStore((state) => state.getAnsweredCount);
-  const isSurveyCompleted = useSurveyStore((state) => state.isSurveyCompleted);
+  const isCompletedSession = useSurveyStore((state) => state.isCompletedSession);
 
   const isLoggedIn = Boolean(participantName || participantEmail);
   const answeredCount = getAnsweredCount ? getAnsweredCount() : 0;
-  const isCompleted = isSurveyCompleted ? isSurveyCompleted() : false;
+  const isCompleted = isCompletedSession || localStorage.getItem('genz_participant_completed') === 'true';
   const isStarted = answeredCount > 0 || isLoggedIn;
 
   useEffect(() => {
@@ -191,13 +191,16 @@ export default function Home() {
               {/* Dynamic Primary CTA Button */}
               <div className="hero-fade flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-3 sm:mb-4 font-inter">
                 {isCompleted ? (
-                  <Link
-                    to="/survey-complete"
-                    className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-emerald-800 hover:from-emerald-700 hover:to-emerald-900 text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[48px] sm:h-[60px] px-6 sm:px-9 rounded-[14px] sm:rounded-[18px] shadow-lg shadow-emerald-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 sm:gap-3 transform hover:-translate-y-0.5 group cursor-pointer"
+                  <button
+                    type="button"
+                    disabled
+                    onClick={(e) => e.preventDefault()}
+                    className="w-full sm:w-auto bg-[#063E46]/90 border border-emerald-400/40 text-emerald-200 font-sora font-extrabold text-sm sm:text-base h-[48px] sm:h-[60px] px-6 sm:px-9 rounded-[14px] sm:rounded-[18px] shadow-md flex items-center justify-center gap-2.5 sm:gap-3 cursor-not-allowed opacity-90 select-none"
+                    title="You have already completed the survey"
                   >
-                    <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0" />
-                    <span>Survey Submitted</span>
-                  </Link>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                    <span>Completed Survey!</span>
+                  </button>
                 ) : isStarted ? (
                   <Link
                     to="/survey"
