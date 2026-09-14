@@ -804,7 +804,8 @@ export async function signInWithGoogle(redirectToUrl) {
     return { error: 'Supabase is not configured' };
   }
   try {
-    const redirect = redirectToUrl || `${window.location.origin}/survey`;
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const redirect = redirectToUrl || `${origin}/survey`;
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
