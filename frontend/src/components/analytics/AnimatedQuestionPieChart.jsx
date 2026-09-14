@@ -16,6 +16,7 @@ import { adminAuthService } from '../../services/adminAuthService';
 export default function AnimatedQuestionPieChart({
   questionObj,
   analysisData,
+  userSelectedAnswer,
   onSelectPrev,
   onSelectNext,
   totalQuestionsCount = 75,
@@ -26,6 +27,39 @@ export default function AnimatedQuestionPieChart({
   const pieCardRef = useRef(null);
   const centerBadgeRef = useRef(null);
   const legendRef = useRef(null);
+
+  const checkIsUserChoice = (opt, optIdx, userAns) => {
+    if (userAns === undefined || userAns === null || userAns === '') return false;
+
+    if (Array.isArray(userAns)) {
+      return userAns.some((item) => checkIsUserChoice(opt, optIdx, item));
+    }
+
+    let rawVal = typeof userAns === 'object' ? (userAns.value ?? userAns.label ?? '') : String(userAns);
+    rawVal = String(rawVal).trim();
+    if (!rawVal) return false;
+
+    const rawValLower = rawVal.toLowerCase();
+    const rawValClean = rawValLower.replace(/[^a-z0-9]/g, '');
+
+    const optNameLower = String(opt.name || opt.label || '').trim().toLowerCase();
+    const optNameClean = optNameLower.replace(/[^a-z0-9]/g, '');
+
+    const optValLower = String(opt.valueKey || opt.value || '').trim().toLowerCase();
+    const optValClean = optValLower.replace(/[^a-z0-9]/g, '');
+
+    // Direct match on valueKey or label
+    if (rawValLower === optValLower || rawValLower === optNameLower) return true;
+
+    // Cleaned alpha-numeric match
+    if (rawValClean && (rawValClean === optValClean || rawValClean === optNameClean)) return true;
+
+    // Index-based numeric fallback
+    const num = parseInt(rawVal, 10);
+    if (!isNaN(num) && num === optIdx) return true;
+
+    return false;
+  };
 
   let location;
   try {
@@ -226,41 +260,60 @@ export default function AnimatedQuestionPieChart({
               <span className="text-[10px] sm:text-[11px] text-[#53656A] font-normal">Ranked by Preference</span>
             </h4>
 
-            {distributionData.map((opt, idx) => (
-              <div
-                key={idx}
-                className="option-pill-item bg-[#FAF7F0] p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-xs hover:border-[#109A9B]/40 transition-all flex flex-col justify-between"
-              >
-                {/* Option Header Row */}
-                <div className="flex items-center justify-between gap-2 text-xs mb-1.5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs"
+            {distributionData.map((opt, idx) => {
+              const isUserChoice = checkIsUserChoice(opt, idx, userSelectedAnswer);
+
+              return (
+                <div
+                  key={idx}
+                  className={`option-pill-item p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl transition-all flex flex-col justify-between ${
+                    isUserChoice
+                      ? 'bg-[#EAF6F6] border-2 border-[#109A9B] shadow-md ring-2 ring-[#109A9B]/20 relative'
+                      : 'bg-[#FAF7F0] border border-slate-200/80 shadow-xs hover:border-[#109A9B]/40'
+                  }`}
+                >
+                  {/* Option Header Row */}
+                  <div className="flex items-center justify-between gap-2 text-xs mb-1.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-3.5 h-3.5 rounded-full shrink-0 shadow-xs"
+                        style={{ backgroundColor: opt.fill }}
+                      />
+                      <span className="font-bold text-[#10242C] truncate text-xs sm:text-sm">{opt.name}</span>
+
+                      {isUserChoice && (
+                        <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-extrabold text-[#075D63] bg-white px-2 py-0.5 rounded-full border border-[#109A9B]/40 shadow-xs shrink-0">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#109A9B]" />
+                          <span>Your Choice</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                      {showVoteCounts && (
+                        <span className="text-[10px] sm:text-[11px] text-[#53656A] font-medium">{opt.count} votes</span>
+                      )}
+                      <span className={`font-heading font-extrabold text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 rounded-full border shadow-2xs ${
+                        isUserChoice
+                          ? 'text-[#063E46] bg-[#109A9B]/15 border-[#109A9B]/40'
+                          : 'text-[#075D63] bg-white border-slate-200'
+                      }`}>
+                        {opt.pct}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Animated Progress Bar */}
+                  <div className="w-full h-2 sm:h-2.5 rounded-full bg-slate-200/80 overflow-hidden">
+                    <div
+                      className="option-progress-bar h-full rounded-full transition-all duration-300"
                       style={{ backgroundColor: opt.fill }}
+                      data-target-width={`${opt.pct}%`}
                     />
-                    <span className="font-bold text-[#10242C] truncate text-xs sm:text-sm">{opt.name}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    {showVoteCounts && (
-                      <span className="text-[10px] sm:text-[11px] text-[#53656A] font-medium">{opt.count} votes</span>
-                    )}
-                    <span className="font-heading font-extrabold text-xs sm:text-sm text-[#075D63] bg-white px-2 sm:px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
-                      {opt.pct}%
-                    </span>
                   </div>
                 </div>
-
-                {/* Animated Progress Bar */}
-                <div className="w-full h-2 sm:h-2.5 rounded-full bg-slate-200/80 overflow-hidden">
-                  <div
-                    className="option-progress-bar h-full rounded-full transition-all duration-300"
-                    style={{ backgroundColor: opt.fill }}
-                    data-target-width={`${opt.pct}%`}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>

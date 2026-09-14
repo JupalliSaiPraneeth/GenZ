@@ -9,6 +9,18 @@ import { supabase, isSupabaseConfigured, evaluateParticipant } from './supabaseC
 import { OFFICIAL_75_QUESTIONS, getStoredQuestions } from '../data/surveyQuestions';
 import { ASPECT_DEFINITIONS, LIFE_DIMENSIONS, calculateAnalyticsDataset, normalizeScore, getQuestionScore } from './analyticsEngine';
 
+export function generateDeterministicCertId(seed) {
+  if (!seed) return 'CERT-GZ2026-10001';
+  const str = String(seed);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  const code = 10000 + (Math.abs(hash) % 90000);
+  return `CERT-GZ2026-${code}`;
+}
+
 export function formatIST(dateInput) {
   if (!dateInput) return 'N/A';
   try {
@@ -29,27 +41,34 @@ export function formatIST(dateInput) {
   }
 }
 
-export function formatSurveyDuration(startedAt, completedAt, updatedAt, isComplete) {
-  if (!startedAt && !updatedAt && !completedAt) {
+export function formatSurveyDuration(startedAt, completedAt, updatedAt, isComplete, activeSeconds = null) {
+  if (!startedAt && !updatedAt && !completedAt && !activeSeconds) {
     return 'N/A';
   }
 
-  const startMs = startedAt ? new Date(startedAt).getTime() : new Date(updatedAt || Date.now()).getTime();
+  let diffSeconds = 0;
 
-  let endMs;
-  if (completedAt) {
-    endMs = new Date(completedAt).getTime();
-  } else if (isComplete && updatedAt) {
-    endMs = new Date(updatedAt).getTime();
+  if (typeof activeSeconds === 'number' && activeSeconds > 0) {
+    diffSeconds = Math.round(activeSeconds);
   } else {
-    endMs = Date.now();
-  }
+    const startMs = startedAt ? new Date(startedAt).getTime() : (updatedAt ? new Date(updatedAt).getTime() : Date.now());
 
-  if (isNaN(startMs) || isNaN(endMs)) {
-    return 'N/A';
-  }
+    let endMs;
+    if (completedAt) {
+      endMs = new Date(completedAt).getTime();
+    } else if (updatedAt) {
+      // For in-progress / logged-out sessions, compute active duration up to their last interaction (updatedAt)
+      endMs = new Date(updatedAt).getTime();
+    } else {
+      endMs = startMs;
+    }
 
-  const diffSeconds = Math.max(0, Math.round((endMs - startMs) / 1000));
+    if (isNaN(startMs) || isNaN(endMs)) {
+      return 'N/A';
+    }
+
+    diffSeconds = Math.max(0, Math.round((endMs - startMs) / 1000));
+  }
 
   const hours = Math.floor(diffSeconds / 3600);
   const minutes = Math.floor((diffSeconds % 3600) / 60);
@@ -552,19 +571,10 @@ export const adminDataService = {
             });
           }
 
-          // Clean up and filter system & orphaned dummy participants
+          // Filter out system config and format registered vs guest participants
           const validDbParticipants = [];
           for (const p of dbParticipants) {
             if (p.name === 'ADMIN_BLUEPRINT_CONFIG') continue;
-            const pAnswers = participantAnswersMap.get(p.id) || {};
-            const answersCount = Math.max(p.total_answers_count || 0, Object.keys(pAnswers).length);
-
-            const isDummy = p.name === 'Gen Z Participant' || (p.email && p.email.startsWith('user_') && p.email.endsWith('@genzvoices.org'));
-            if (isDummy && answersCount === 0) {
-              // Delete 0-answer orphaned dummy participant from Supabase DB
-              supabase.from('participants').delete().eq('id', p.id).then();
-              continue;
-            }
             validDbParticipants.push(p);
           }
 
@@ -575,15 +585,30 @@ export const adminDataService = {
             const completionPct = isComplete ? 100 : Math.round((Math.min(answersCount, totalQs) / totalQs) * 100);
             const isQualityFlagged = answersCount > 0 && answersCount < totalQs * 0.3;
 
+            const isDummyNameOrEmail =
+              !p.name ||
+              p.name === 'Gen Z Participant' ||
+              p.name === 'Anonymous Session' ||
+              (p.email && p.email.toLowerCase().startsWith('user_') && p.email.toLowerCase().endsWith('@genzvoices.org'));
+
+            const displayName = isDummyNameOrEmail
+              ? `Anonymous Respondent #${idx + 1}`
+              : p.name;
+
+            const displayEmail = isDummyNameOrEmail || !p.email
+              ? 'Guest Session (Unregistered)'
+              : p.email;
+
             const startedAt = p.started_at || p.created_at;
             const completedAt = p.completed_at || (isComplete ? p.updated_at : null);
-            const durationStr = formatSurveyDuration(startedAt, completedAt, p.updated_at, isComplete);
+            const activeSec = p.active_seconds || p.active_time_seconds || null;
+            const durationStr = formatSurveyDuration(startedAt, completedAt, p.updated_at, isComplete, activeSec);
 
             return {
               id: p.id,
               sessionId: p.id,
-              name: p.name || `Gen Z Participant #${idx + 1}`,
-              email: p.email || 'N/A',
+              name: displayName,
+              email: displayEmail,
               ageGroup: resolveOptionLabel('q1', pAnswers['q1']),
               gender: resolveOptionLabel('q2', pAnswers['q2']),
               currentStatus: resolveOptionLabel('q3', pAnswers['q3']),
@@ -599,10 +624,9 @@ export const adminDataService = {
               completedAtFormatted: completedAt ? formatIST(completedAt) : 'In Progress',
               durationMinutes: durationStr,
               overallScore: `${Math.min(100, Math.round((answersCount / totalQs) * 100))}%`,
-              qualityStatus: isQualityFlagged ? 'Review Required' : 'Verified',
               evaluationStatus: p.evaluation_status || 'pending_evaluation',
-              certificateStatus: p.certificate_status || 'pending',
-              certificateId: p.certificate_id || null,
+              certificateStatus: p.certificate_status || (isComplete ? 'issued' : 'pending'),
+              certificateId: p.certificate_id || (isComplete ? generateDeterministicCertId(p.id || displayEmail) : null),
               luckyDrawStatus: p.lucky_draw_status || 'pending',
               luckyDrawPrize: p.lucky_draw_prize || null,
               adminNotes: p.admin_notes || '',
@@ -632,7 +656,8 @@ export const adminDataService = {
 
         const startedAt = s.startedAt || s.createdAt;
         const completedAt = s.completedAt || (isComplete ? s.lastAnsweredAt : null);
-        const durationStr = formatSurveyDuration(startedAt, completedAt, s.lastAnsweredAt, isComplete);
+        const activeSec = s.active_seconds || s.activeSeconds || null;
+        const durationStr = formatSurveyDuration(startedAt, completedAt, s.lastAnsweredAt, isComplete, activeSec);
 
         return {
           id: s.participantId || s.sessionId,
@@ -656,8 +681,8 @@ export const adminDataService = {
           overallScore: `${Math.round((effectiveAnswersCount / totalQs) * 100)}%`,
           qualityStatus: isQualityFlagged ? 'Review Required' : 'Verified',
           evaluationStatus: s.evaluation_status || 'pending_evaluation',
-          certificateStatus: s.certificate_status || 'pending',
-          certificateId: s.certificate_id || null,
+          certificateStatus: s.certificate_status || (isComplete ? 'issued' : 'pending'),
+          certificateId: s.certificate_id || (isComplete ? generateDeterministicCertId(s.participantId || s.sessionId || s.participantEmail || idx) : null),
           luckyDrawStatus: s.lucky_draw_status || 'pending',
           luckyDrawPrize: s.lucky_draw_prize || null,
           adminNotes: s.admin_notes || '',
@@ -683,6 +708,124 @@ export const adminDataService = {
     }
 
     return respondentsList;
+  },
+
+  /**
+   * Verify certificate by ID or code across all respondents
+   */
+  async verifyCertificateCode(certCode) {
+    if (!certCode) return null;
+    const clean = String(certCode).trim().toUpperCase();
+
+    // 1. Get all respondents list (includes deterministic IDs and database stored IDs)
+    const list = await this.getRespondentsList();
+
+    // Find participant whose certificateId or ID or email matches clean code
+    const matched = list.find((r) => {
+      const rCertId = String(r.certificateId || '').trim().toUpperCase();
+      const rId = String(r.id || '').trim().toUpperCase();
+      const rEmail = String(r.email || '').trim().toUpperCase();
+
+      return (rCertId && rCertId === clean) || (rId && rId === clean) || (rEmail && rEmail === clean);
+    });
+
+    if (matched) {
+      return matched;
+    }
+
+    // 2. Fallback direct query to Supabase participants by certificate_id
+    if (isSupabaseConfigured) {
+      try {
+        const { data: p } = await supabase
+          .from('participants')
+          .select('*')
+          .eq('certificate_id', clean)
+          .maybeSingle();
+
+        if (p) {
+          const startedAt = p.started_at || p.created_at;
+          const completedAt = p.completed_at || p.updated_at;
+          return {
+            id: p.id,
+            name: p.name || 'Gen Z Participant',
+            email: p.email || 'Registered Participant',
+            certificateId: p.certificate_id || clean,
+            certificateStatus: p.certificate_status || 'issued',
+            submittedAt: formatIST(completedAt || startedAt || new Date().toISOString()),
+            completedAtFormatted: completedAt ? formatIST(completedAt) : 'Completed',
+          };
+        }
+      } catch (err) {
+        console.warn('verifyCertificateCode direct lookup notice:', err);
+      }
+    }
+
+    return null;
+  },
+
+  /**
+   * Delete a respondent and their survey responses from Supabase DB
+   */
+  async deleteRespondent(participantId) {
+    if (!participantId) return { success: false, error: 'Participant ID is required.' };
+    try {
+      if (isSupabaseConfigured) {
+        // Delete survey responses for participant first
+        await supabase
+          .from('survey_responses')
+          .delete()
+          .or(`participant_id.eq.${participantId},session_id.eq.${participantId}`);
+
+        // Delete participant record
+        const { error } = await supabase
+          .from('participants')
+          .delete()
+          .eq('id', participantId);
+
+        if (error) {
+          console.warn('Supabase delete participant error:', error.message);
+          return { success: false, error: error.message };
+        }
+      }
+      return { success: true };
+    } catch (err) {
+      console.error('deleteRespondent exception:', err);
+      return { success: false, error: err.message || 'Failed to delete participant' };
+    }
+  },
+
+  /**
+   * Purge only abandoned temporary session headers with 0 responses (never deletes actual survey responses)
+   */
+  async purgeDummyParticipants() {
+    if (!isSupabaseConfigured) return { count: 0 };
+    try {
+      const { data: dummies } = await supabase
+        .from('participants')
+        .select('id')
+        .or('name.eq.Gen Z Participant,name.eq.Anonymous Session,email.ilike.user_%@genzvoices.org');
+
+      if (dummies && dummies.length > 0) {
+        let purgedCount = 0;
+        for (const dummy of dummies) {
+          // Check if this participant has any recorded survey responses before purging
+          const { count } = await supabase
+            .from('survey_responses')
+            .select('id', { count: 'exact', head: true })
+            .or(`participant_id.eq.${dummy.id},session_id.eq.${dummy.id}`);
+
+          if (!count || count === 0) {
+            // Safe to remove ONLY 0-response abandoned headers
+            await supabase.from('participants').delete().eq('id', dummy.id);
+            purgedCount++;
+          }
+        }
+        return { count: purgedCount };
+      }
+    } catch (e) {
+      console.warn('purgeDummyParticipants exception:', e);
+    }
+    return { count: 0 };
   },
 
   /**

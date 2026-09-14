@@ -77,10 +77,10 @@ export default function Home() {
   const getAnsweredCount = useSurveyStore((state) => state.getAnsweredCount);
   const isCompletedSession = useSurveyStore((state) => state.isCompletedSession);
 
-  const isLoggedIn = Boolean(participantName || participantEmail);
+  const isLoggedIn = Boolean(participantName && participantEmail);
   const answeredCount = getAnsweredCount ? getAnsweredCount() : 0;
-  const isCompleted = isCompletedSession || localStorage.getItem('genz_participant_completed') === 'true';
-  const isStarted = answeredCount > 0 || isLoggedIn;
+  const isCompleted = isLoggedIn && (isCompletedSession || localStorage.getItem('genz_participant_completed') === 'true');
+  const isStarted = isLoggedIn && answeredCount > 0;
 
   useEffect(() => {
     const ctx = gsap.context(() => {

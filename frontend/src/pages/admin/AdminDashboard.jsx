@@ -165,15 +165,16 @@ function SegmentedPillBarCard({ rawRecords }) {
       else other++;
     });
 
-    const total = q2Responses.length || 100;
-    const femalePct = q2Responses.length > 0 ? Math.round((female / total) * 100) : 52;
-    const malePct = q2Responses.length > 0 ? Math.round((male / total) * 100) : 44;
-    const otherPct = Math.max(0, 100 - femalePct - malePct);
+    const hasData = q2Responses.length > 0;
+    const total = hasData ? q2Responses.length : 100;
+    const femalePct = hasData ? Math.round((female / total) * 100) : 52;
+    const malePct = hasData ? Math.round((male / total) * 100) : 44;
+    const otherPct = hasData ? Math.max(0, 100 - femalePct - malePct) : 4;
 
     const isFemaleDominant = femalePct >= malePct;
     const dominantGender = isFemaleDominant ? 'Female' : 'Male';
     const dominantPct = isFemaleDominant ? femalePct : malePct;
-    const dominantCount = isFemaleDominant ? (female || (q2Responses.length > 0 ? female : 52)) : (male || (q2Responses.length > 0 ? male : 44));
+    const dominantCount = isFemaleDominant ? (hasData ? female : 52) : (hasData ? male : 44);
     const dominantImg = isFemaleDominant ? '/female.png' : '/male.png';
 
     return {
@@ -186,9 +187,9 @@ function SegmentedPillBarCard({ rawRecords }) {
       dominantCount,
       dominantImg,
       items: [
-        { label: 'Female', pct: femalePct, count: female || 52, color: '#109A9B' },
-        { label: 'Male', pct: malePct, count: male || 44, color: '#075D63' },
-        { label: 'Non-Binary / Other', pct: otherPct, count: other || 4, color: '#F59E0B' },
+        { label: 'Female', pct: femalePct, count: hasData ? female : 52, color: '#109A9B' },
+        { label: 'Male', pct: malePct, count: hasData ? male : 44, color: '#075D63' },
+        { label: 'Non-Binary / Other', pct: otherPct, count: hasData ? other : 4, color: '#F59E0B' },
       ],
     };
   }, [rawRecords]);
@@ -276,11 +277,33 @@ function WaffleChartCard({ rawRecords }) {
       (r) => String(r.questionId).toLowerCase() === 'q22' || String(r.questionId) === '22' || String(r.questionCode || '').toLowerCase() === 'q22'
     );
 
+    let c3_5 = 0, c5_plus = 0, c1_3 = 0, cless1 = 0;
+    q22Responses.forEach((r) => {
+      const val = String(r.value || '').toLowerCase();
+      if (val.includes('more_than_6') || val.includes('4_6') || val.includes('5')) {
+        c5_plus++;
+      } else if (val.includes('2_4') || val.includes('3_5') || val.includes('3')) {
+        c3_5++;
+      } else if (val.includes('1_2') || val.includes('1_3') || val.includes('2')) {
+        c1_3++;
+      } else {
+        cless1++;
+      }
+    });
+
+    const hasData = q22Responses.length > 0;
+    const total = hasData ? q22Responses.length : 100;
+
+    const p3_5 = hasData ? Math.round((c3_5 / total) * 100) : 42;
+    const p5_plus = hasData ? Math.round((c5_plus / total) * 100) : 28;
+    const p1_3 = hasData ? Math.round((c1_3 / total) * 100) : 22;
+    const pless1 = hasData ? Math.max(0, 100 - p3_5 - p5_plus - p1_3) : 8;
+
     const categories = [
-      { label: '3–5 hours / day', pct: 42, color: '#109A9B' },
-      { label: '5+ hours / day', pct: 28, color: '#075D63' },
-      { label: '1–3 hours / day', pct: 22, color: '#3B82F6' },
-      { label: '< 1 hour / day', pct: 8, color: '#F59E0B' },
+      { label: '3–5 hours / day', pct: p3_5, count: hasData ? c3_5 : 42, color: '#109A9B' },
+      { label: '5+ hours / day', pct: p5_plus, count: hasData ? c5_plus : 28, color: '#075D63' },
+      { label: '1–3 hours / day', pct: p1_3, count: hasData ? c1_3 : 22, color: '#3B82F6' },
+      { label: '< 1 hour / day', pct: pless1, count: hasData ? cless1 : 8, color: '#F59E0B' },
     ];
 
     const grid = [];
@@ -288,7 +311,7 @@ function WaffleChartCard({ rawRecords }) {
     let countInCat = 0;
 
     for (let i = 0; i < 100; i++) {
-      if (countInCat >= categories[currentCatIdx].pct && currentCatIdx < categories.length - 1) {
+      while (currentCatIdx < categories.length - 1 && countInCat >= categories[currentCatIdx].pct) {
         currentCatIdx++;
         countInCat = 0;
       }
@@ -300,7 +323,7 @@ function WaffleChartCard({ rawRecords }) {
       countInCat++;
     }
 
-    return { categories, grid };
+    return { categories, grid, total, hasData };
   }, [rawRecords]);
 
   return (
@@ -334,7 +357,12 @@ function WaffleChartCard({ rawRecords }) {
                 <span className="w-2.5 h-2.5 rounded-xs shrink-0" style={{ backgroundColor: cat.color }} />
                 <span className="font-bold text-[#10242C] text-[11px] truncate">{cat.label}</span>
               </div>
-              <span className="font-mono font-extrabold text-[#075D63] ml-1">{cat.pct}%</span>
+              <div className="text-right font-mono">
+                <span className="font-extrabold text-[#075D63] ml-1">{cat.pct}%</span>
+                {waffleData.hasData && (
+                  <span className="text-[9px] text-slate-500 font-semibold block">({cat.count} resp.)</span>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -361,19 +389,21 @@ function LollipopChartCard({ rawRecords }) {
       else a27_30++;
     });
 
-    const total = q1Responses.length || 100;
-    const p18 = q1Responses.length > 0 ? Math.round((a18_20 / total) * 100) : 38;
-    const p21 = q1Responses.length > 0 ? Math.round((a21_23 / total) * 100) : 31;
-    const p24 = q1Responses.length > 0 ? Math.round((a24_26 / total) * 100) : 22;
-    const p27 = Math.max(0, 100 - p18 - p21 - p24);
+    const hasData = q1Responses.length > 0;
+    const total = hasData ? q1Responses.length : 100;
+    const p18 = hasData ? Math.round((a18_20 / total) * 100) : 38;
+    const p21 = hasData ? Math.round((a21_23 / total) * 100) : 31;
+    const p24 = hasData ? Math.round((a24_26 / total) * 100) : 22;
+    const p27 = hasData ? Math.max(0, 100 - p18 - p21 - p24) : 9;
 
     return {
       total,
+      hasData,
       items: [
-        { label: '18–20 yrs', pct: p18, count: a18_20 || 38, color: '#075D63' },
-        { label: '21–23 yrs', pct: p21, count: a21_23 || 31, color: '#109A9B' },
-        { label: '24–26 yrs', pct: p24, count: a24_26 || 22, color: '#3B82F6' },
-        { label: '27–30 yrs', pct: p27, count: a27_30 || 9, color: '#8B5CF6' },
+        { label: '18–20 yrs', pct: p18, count: hasData ? a18_20 : 38, color: '#075D63' },
+        { label: '21–23 yrs', pct: p21, count: hasData ? a21_23 : 31, color: '#109A9B' },
+        { label: '24–26 yrs', pct: p24, count: hasData ? a24_26 : 22, color: '#3B82F6' },
+        { label: '27–30 yrs', pct: p27, count: hasData ? a27_30 : 9, color: '#8B5CF6' },
       ],
     };
   }, [rawRecords]);
@@ -472,12 +502,30 @@ function StoryCardVisualization({ rawRecords }) {
 
     sleepRecords.forEach((r) => {
       const val = String(r.value ?? '').toLowerCase();
-      if (val.includes('6_8') || val.includes('ideal') || val.includes('6-8') || val.includes('7')) {
+      if (
+        val.includes('6_7') ||
+        val.includes('7_8') ||
+        val.includes('more_than_8') ||
+        val.includes('6_8') ||
+        val.includes('6-8') ||
+        val.includes('7') ||
+        val.includes('8') ||
+        val.includes('ideal')
+      ) {
         idealCount++;
-      } else if (val.includes('4_6') || val.includes('deprived') || val.includes('4-6') || val.includes('5')) {
+      } else if (
+        val.includes('4_5') ||
+        val.includes('5_6') ||
+        val.includes('4_6') ||
+        val.includes('4-6') ||
+        val.includes('5') ||
+        val.includes('deprived')
+      ) {
         deprivedCount++;
-      } else {
+      } else if (val.includes('less_than_4') || val.includes('under_4') || val.includes('<4') || val.includes('severe') || val.includes('4')) {
         severeCount++;
+      } else {
+        idealCount++;
       }
     });
 
@@ -879,24 +927,32 @@ function SpectrumBarCard({ rawRecords }) {
       const val = String(r.value ?? '').trim().toLowerCase();
       let score = 3;
 
-      if (val.includes('strongly_agree') || val.includes('very_positive') || val === '5') {
-        counts[0]++; score = 5;
-      } else if (val.includes('agree') || val.includes('positive') || val === '4') {
-        counts[1]++; score = 4;
-      } else if (val.includes('neutral') || val === '3') {
-        counts[2]++; score = 3;
+      if (val.includes('very_often') || val.includes('strongly_agree') || val.includes('very_positive') || val.includes('high') || val === '5') {
+        counts[0]++;
+        score = 5;
+      } else if (val.includes('often') || val.includes('agree') || val.includes('positive') || val.includes('moderate') || val === '4') {
+        counts[1]++;
+        score = 4;
+      } else if (val.includes('sometimes') || val.includes('neutral') || val === '3') {
+        counts[2]++;
+        score = 3;
       } else {
-        counts[3]++; score = 2;
+        counts[3]++;
+        score = val.includes('rarely') ? 2 : 1;
       }
       scoreSum += score;
     });
+
+    const fallbackCounts = [42, 28, 15, 12];
+    const fallbackTotal = 97;
 
     const avgScore = totalCount > 0 ? scoreSum / totalCount : 3.84;
 
     let cumPct = 0;
     const slices = options.map((opt, idx) => {
-      const c = counts[idx];
-      const pct = totalCount > 0 ? Math.round((c / totalCount) * 100) : (idx === 0 ? 42 : idx === 1 ? 28 : idx === 2 ? 15 : 15);
+      const c = totalCount > 0 ? counts[idx] : fallbackCounts[idx];
+      const effectiveTotal = totalCount > 0 ? totalCount : fallbackTotal;
+      const pct = Math.round((c / effectiveTotal) * 100);
       const startAngle = cumPct * 3.6;
       cumPct += pct;
       const endAngle = cumPct * 3.6;
@@ -909,7 +965,7 @@ function SpectrumBarCard({ rawRecords }) {
       return {
         id: opt.value,
         label: opt.label,
-        count: c || (idx === 0 ? 42 : idx === 1 ? 28 : idx === 2 ? 15 : 15),
+        count: c,
         pct,
         startAngle,
         endAngle,
@@ -1188,25 +1244,26 @@ function RankingProgressCard({ rawRecords }) {
     let chatGpt = 0, copilots = 0, designAi = 0, research = 0;
     q50Responses.forEach((r) => {
       const str = String(r.value || '').toLowerCase();
-      if (str.includes('chatgpt') || str.includes('conversational') || str.includes('strongly_agree') || str.includes('5')) chatGpt++;
-      else if (str.includes('code') || str.includes('copilot') || str.includes('agree') || str.includes('4')) copilots++;
-      else if (str.includes('design') || str.includes('image') || str.includes('neutral') || str.includes('3')) designAi++;
+      if (str.includes('very_often') || str.includes('chatgpt') || str.includes('conversational') || str.includes('strongly_agree') || str.includes('5')) chatGpt++;
+      else if (str.includes('often') || str.includes('code') || str.includes('copilot') || str.includes('agree') || str.includes('4')) copilots++;
+      else if (str.includes('sometimes') || str.includes('design') || str.includes('image') || str.includes('neutral') || str.includes('3')) designAi++;
       else research++;
     });
 
-    const total = q50Responses.length || 100;
-    const pChat = q50Responses.length > 0 ? Math.round((chatGpt / total) * 100) : 42;
-    const pCopilots = q50Responses.length > 0 ? Math.round((copilots / total) * 100) : 28;
-    const pDesign = q50Responses.length > 0 ? Math.round((designAi / total) * 100) : 18;
-    const pResearch = Math.max(0, 100 - pChat - pCopilots - pDesign);
+    const hasData = q50Responses.length > 0;
+    const total = hasData ? q50Responses.length : 100;
+    const pChat = hasData ? Math.round((chatGpt / total) * 100) : 42;
+    const pCopilots = hasData ? Math.round((copilots / total) * 100) : 28;
+    const pDesign = hasData ? Math.round((designAi / total) * 100) : 18;
+    const pResearch = hasData ? Math.max(0, 100 - pChat - pCopilots - pDesign) : 12;
 
     const topRankedPct = Math.max(pChat, pCopilots, pDesign, pResearch);
 
     const rings = [
-      { id: 'chat', rank: '01', label: 'ChatGPT', fullLabel: 'ChatGPT & Conversational AI', pct: pChat, count: chatGpt || 42, color: '#3B82F6', glow: 'rgba(59, 130, 246, 0.7)', radius: 120 },
-      { id: 'copilot', rank: '02', label: 'Copilots', fullLabel: 'Coding & Developer Copilots', pct: pCopilots, count: copilots || 28, color: '#10B981', glow: 'rgba(16, 185, 129, 0.7)', radius: 96 },
-      { id: 'design', rank: '03', label: 'Design AI', fullLabel: 'Design & Visual AI Tools', pct: pDesign, count: designAi || 18, color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.7)', radius: 72 },
-      { id: 'research', rank: '04', label: 'Research', fullLabel: 'Research & Search Assistants', pct: pResearch, count: research || 12, color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.7)', radius: 48 },
+      { id: 'chat', rank: '01', label: 'ChatGPT', fullLabel: 'ChatGPT & Conversational AI', pct: pChat, count: hasData ? chatGpt : 42, color: '#3B82F6', glow: 'rgba(59, 130, 246, 0.7)', radius: 120 },
+      { id: 'copilot', rank: '02', label: 'Copilots', fullLabel: 'Coding & Developer Copilots', pct: pCopilots, count: hasData ? copilots : 28, color: '#10B981', glow: 'rgba(16, 185, 129, 0.7)', radius: 96 },
+      { id: 'design', rank: '03', label: 'Design AI', fullLabel: 'Design & Visual AI Tools', pct: pDesign, count: hasData ? designAi : 18, color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.7)', radius: 72 },
+      { id: 'research', rank: '04', label: 'Research', fullLabel: 'Research & Search Assistants', pct: pResearch, count: hasData ? research : 12, color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.7)', radius: 48 },
     ];
 
     return { total, topRankedPct, rings };

@@ -13,16 +13,17 @@ export default function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
     { name: 'Insights', path: '/analytics' },
-    { name: 'Verify', path: '/verify-certificate' },
   ];
 
   const isActive = (path) => {
     return location.pathname === path;
   };
 
-  const handleLogout = () => {
-    logoutParticipant();
-    window.location.href = '/survey';
+  const handleLogout = async () => {
+    if (logoutParticipant) {
+      await logoutParticipant();
+    }
+    window.location.href = '/';
   };
 
   return (

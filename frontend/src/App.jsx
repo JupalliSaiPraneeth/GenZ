@@ -6,7 +6,6 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Survey from './pages/Survey';
 import SurveyComplete from './pages/SurveyComplete';
-import VerifyCertificate from './pages/VerifyCertificate';
 import Analytics from './pages/Analytics';
 
 // Admin Auth & Protected Route
@@ -22,6 +21,7 @@ import AdminComparative from './pages/admin/AdminComparative';
 import AdminDatabase from './pages/admin/AdminDatabase';
 import AdminExport from './pages/admin/AdminExport';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
+import AdminVerifyCertificate from './pages/admin/AdminVerifyCertificate';
 
 import { useSurveyStore } from './stores/surveyStore';
 import { syncService } from './services/syncService';
@@ -41,7 +41,6 @@ function AppLayout() {
           <Route path="/categories" element={<Home />} />
           <Route path="/survey" element={<Survey />} />
           <Route path="/survey-complete" element={<SurveyComplete />} />
-          <Route path="/verify-certificate" element={<VerifyCertificate />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/privacy" element={<Survey />} />
 
@@ -137,6 +136,14 @@ function AppLayout() {
             element={
               <AdminProtectedRoute>
                 <AdminAuditLogs />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/verify-certificate"
+            element={
+              <AdminProtectedRoute>
+                <AdminVerifyCertificate />
               </AdminProtectedRoute>
             }
           />

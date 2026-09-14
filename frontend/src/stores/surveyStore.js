@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import { saveAnswerLocally, markAnswerSynced } from '../services/db';
-import { 
-  SURVEY_SECTIONS, 
-  OFFICIAL_75_QUESTIONS, 
-  getStoredQuestions, 
+import {
+  SURVEY_SECTIONS,
+  OFFICIAL_75_QUESTIONS,
+  getStoredQuestions,
   saveStoredQuestions,
   resequenceQuestions,
   getDynamicSections
 } from '../data/surveyQuestions';
-import { 
+import {
   registerParticipant,
   fetchResponsesForParticipant,
   syncResponseToSupabase,
@@ -18,7 +18,9 @@ import {
   deleteQuestionFromSupabase,
   fetchQuestionsFromSupabase,
   toUuidQuestionId,
-  generateValidUUID
+  generateValidUUID,
+  isSupabaseConfigured,
+  supabase
 } from '../services/supabaseClient';
 
 const initialQuestions = getStoredQuestions();
@@ -29,6 +31,7 @@ export const useSurveyStore = create((set, get) => ({
   participantName: localStorage.getItem('genz_participant_name') || '',
   participantEmail: localStorage.getItem('genz_participant_email') || '',
   participantId: localStorage.getItem('genz_participant_id') || null,
+  activeSeconds: Number(localStorage.getItem('genz_active_seconds')) || 0,
   isResumedSession: false,
   isCompletedSession: localStorage.getItem('genz_participant_completed') === 'true',
   sections: initialSections,
@@ -99,7 +102,7 @@ export const useSurveyStore = create((set, get) => ({
     });
 
     const created = savedResequenced.find((q) => q.id === newId || q.text === newQuestion.text) || newQuestion;
-    
+
     // Sync newly created question directly to Supabase DB
     const syncRes = await syncQuestionToSupabase(created, 'CREATE');
 
@@ -135,7 +138,7 @@ export const useSurveyStore = create((set, get) => ({
     // Delete question and sync remaining blueprint sequence to Supabase DB
     await deleteQuestionFromSupabase(questionId);
   },
-  
+
   currentSectionIndex: 0,
   currentQuestionIndex: 0,
   answersById: {},
@@ -145,12 +148,12 @@ export const useSurveyStore = create((set, get) => ({
 
   initSession: async () => {
     let existingSession = localStorage.getItem('genz_active_session');
-    
+
     if (!existingSession || !existingSession.includes('-') || existingSession.length !== 36) {
       existingSession = generateValidUUID();
       localStorage.setItem('genz_active_session', existingSession);
     }
-    
+
     const savedName = localStorage.getItem('genz_participant_name') || '';
     const savedEmail = localStorage.getItem('genz_participant_email') || '';
     const savedParticipantId = localStorage.getItem('genz_participant_id') || null;
@@ -199,13 +202,32 @@ export const useSurveyStore = create((set, get) => ({
     }
   },
 
-  logoutParticipant: () => {
+  logoutParticipant: async () => {
     localStorage.removeItem('genz_active_session');
     localStorage.removeItem('genz_participant_name');
     localStorage.removeItem('genz_participant_email');
     localStorage.removeItem('genz_participant_id');
     localStorage.removeItem('genz_participant_completed');
-    
+    localStorage.removeItem('genz_active_seconds');
+
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('genz_') && key !== 'genz_custom_questions') {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (e) {
+      console.warn('Storage purge notice:', e);
+    }
+
+    if (isSupabaseConfigured && supabase?.auth?.signOut) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.warn('Supabase signout notice:', err);
+      }
+    }
+
     const newSession = generateValidUUID();
     localStorage.setItem('genz_active_session', newSession);
 
@@ -215,11 +237,23 @@ export const useSurveyStore = create((set, get) => ({
       participantEmail: '',
       participantId: null,
       answersById: {},
+      activeSeconds: 0,
       currentQuestionIndex: 0,
       currentSectionIndex: 0,
       isResumedSession: false,
       isCompletedSession: false,
       syncStatus: 'synced'
+    });
+  },
+
+  incrementActiveTime: () => {
+    set((state) => {
+      const nextSec = state.activeSeconds + 1;
+      localStorage.setItem('genz_active_seconds', String(nextSec));
+      if (state.participantId) {
+        localStorage.setItem(`genz_active_seconds_${state.participantId}`, String(nextSec));
+      }
+      return { activeSeconds: nextSec };
     });
   },
 
@@ -320,7 +354,7 @@ export const useSurveyStore = create((set, get) => ({
     }
     const updatedAnswers = { ...answersById, [questionId]: value };
     const deviceTimestamp = new Date().toISOString();
-    
+
     set({
       answersById: updatedAnswers,
       syncStatus: 'saving_db',
@@ -338,7 +372,7 @@ export const useSurveyStore = create((set, get) => ({
         await markAnswerSynced(`${sessionId}_${questionId}`);
       }
 
-      set({ 
+      set({
         syncStatus: 'synced',
         lastSyncedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       });
@@ -354,7 +388,7 @@ export const useSurveyStore = create((set, get) => ({
       const nextIndex = currentQuestionIndex + 1;
       const nextQuestion = questions[nextIndex];
       const sectionIdx = sections.findIndex(s => s.id === nextQuestion.sectionId);
-      
+
       set({
         currentQuestionIndex: nextIndex,
         currentSectionIndex: sectionIdx !== -1 ? sectionIdx : get().currentSectionIndex,
@@ -380,7 +414,7 @@ export const useSurveyStore = create((set, get) => ({
     const { questions, sections } = get();
     const targetSection = sections[sectionIndex];
     if (!targetSection) return;
-    
+
     set({
       currentSectionIndex: sectionIndex,
       currentQuestionIndex: targetSection.startQuestionIndex,

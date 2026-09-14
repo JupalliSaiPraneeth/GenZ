@@ -16,6 +16,7 @@ import {
   Search,
   ChevronRight,
   Shield,
+  ShieldCheck,
   Activity,
   Bell,
 } from 'lucide-react';
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { path: '/admin/database', label: 'Database Monitoring', icon: Database },
   { path: '/admin/export', label: 'Export Data', icon: Download },
   { path: '/admin/audit-logs', label: 'Audit Logs', icon: History },
+  { path: '/admin/verify-certificate', label: 'Verify Certificate', icon: ShieldCheck },
 ];
 
 export default function AdminLayout({ children, title = 'Admin Portal' }) {

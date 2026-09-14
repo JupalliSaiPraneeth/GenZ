@@ -75,50 +75,36 @@ export async function registerParticipant(participantName = '', email = '', devi
       .maybeSingle();
 
     if (existing) {
-      const existingNameNormalized = (existing.name || '').trim().toLowerCase();
-      const inputNameNormalized = nameStr.trim().toLowerCase();
+      const loginTime = new Date().toISOString();
+      const startedAt = existing.device_timestamp || existing.created_at || loginTime;
 
-      if (existingNameNormalized === inputNameNormalized) {
-        const loginTime = new Date().toISOString();
-        const startedAt = existing.device_timestamp || existing.created_at || loginTime;
+      // Update name and updated_at for existing participant
+      const { data: updatedP } = await supabase
+        .from('participants')
+        .update({
+          name: nameStr.trim(),
+          updated_at: loginTime,
+        })
+        .eq('id', existing.id)
+        .select('*')
+        .maybeSingle();
 
-        // Ensure update succeeds cleanly
+      const updatedRecord = updatedP || { ...existing, name: nameStr.trim() };
+
+      // If responses were recorded under a temporary session ID before user logged in with existing email:
+      if (validSessionId && validSessionId !== existing.id) {
+        // Re-link responses to the registered user's ID
         await supabase
-          .from('participants')
-          .update({
-            updated_at: loginTime,
-          })
-          .eq('id', existing.id);
-
-        // If responses were recorded under a temporary session ID before user logged in with existing email:
-        if (validSessionId && validSessionId !== existing.id) {
-          // Re-link responses to the registered user's ID
-          await supabase
-            .from('survey_responses')
-            .update({ participant_id: existing.id })
-            .or(`participant_id.eq.${validSessionId},session_id.eq.${validSessionId}`);
-
-          // Clean up temporary dummy participant row if it was auto-created
-          await supabase
-            .from('participants')
-            .delete()
-            .eq('id', validSessionId)
-            .or(`name.eq.Gen Z Participant,email.ilike.user_%@genzvoices.org`);
-        }
-
-        return {
-          participant: { ...existing, started_at: startedAt },
-          isResumed: true,
-          error: null,
-        };
-      } else {
-        // Different Name for Email in DB -> Reject Login
-        return {
-          participant: null,
-          isResumed: false,
-          error: `This email address (${emailStr}) is already registered under a different name in our database. Please enter the correct matching name to log in, or use a different email address.`,
-        };
+          .from('survey_responses')
+          .update({ participant_id: existing.id })
+          .or(`participant_id.eq.${validSessionId},session_id.eq.${validSessionId}`);
       }
+
+      return {
+        participant: { ...updatedRecord, started_at: startedAt },
+        isResumed: true,
+        error: null,
+      };
     }
 
     // 2. Email is not in database yet.
@@ -309,13 +295,15 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
       updated_at: new Date().toISOString(),
     };
 
-    // 2. Upsert response row into `survey_responses` to avoid 409 Conflict
-    const { error: upsertErr } = await supabase
+    // 2. Safe Insert or Update in `survey_responses` to avoid 409 Conflict
+    const { data: existingResp } = await supabase
       .from('survey_responses')
-      .upsert([payload], { onConflict: 'participant_id,question_id' });
+      .select('id')
+      .eq('participant_id', validParticipantId)
+      .eq('question_id', qIdKey)
+      .maybeSingle();
 
-    if (upsertErr) {
-      // Fallback update if upsert constraint is not explicitly configured
+    if (existingResp) {
       await supabase
         .from('survey_responses')
         .update({
@@ -325,8 +313,25 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
           device_timestamp: deviceTimestamp,
           updated_at: new Date().toISOString(),
         })
-        .eq('participant_id', validParticipantId)
-        .eq('question_id', qIdKey);
+        .eq('id', existingResp.id);
+    } else {
+      const { error: insertErr } = await supabase
+        .from('survey_responses')
+        .insert([payload]);
+
+      if (insertErr && (insertErr.code === '23505' || insertErr.status === 409 || insertErr.message?.includes('duplicate'))) {
+        await supabase
+          .from('survey_responses')
+          .update({
+            session_id: validSessionId,
+            question_code: qCodeKey,
+            response_value: typeof responseValue === 'object' ? responseValue : { value: responseValue },
+            device_timestamp: deviceTimestamp,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('participant_id', validParticipantId)
+          .eq('question_id', qIdKey);
+      }
     }
 
     // 3. Count total answers and update `participants` table
@@ -343,14 +348,21 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
     const requiredCount = totalQuestionsCount || 75;
     const isCompleted = answeredCount >= requiredCount;
 
+    const localActiveSec = Number(localStorage.getItem(`genz_active_seconds_${validParticipantId}`) || localStorage.getItem('genz_active_seconds')) || null;
+
+    const updatePayload = {
+      total_answers_count: answeredCount,
+      status: isCompleted ? 'completed' : 'in_progress',
+      updated_at: new Date().toISOString(),
+      device_timestamp: deviceTimestamp,
+    };
+    if (localActiveSec && localActiveSec > 0) {
+      updatePayload.active_seconds = localActiveSec;
+    }
+
     await supabase
       .from('participants')
-      .update({
-        total_answers_count: answeredCount,
-        status: isCompleted ? 'completed' : 'in_progress',
-        updated_at: new Date().toISOString(),
-        device_timestamp: deviceTimestamp,
-      })
+      .update(updatePayload)
       .eq('id', validParticipantId);
 
     // 4. Log action in `data_logs`
@@ -367,55 +379,25 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
  * Mark Survey Status as Completed
  */
 export async function completeParticipantSurvey(participantId, deviceTimestamp = new Date().toISOString()) {
-  if (!participantId) return;
+  if (!participantId || !isValidUUID(participantId)) return;
   try {
     const completedAt = new Date().toISOString();
-
-    // Fetch existing participant record to compute exact duration
-    const { data: p } = await supabase
-      .from('participants')
-      .select('created_at, device_timestamp')
-      .eq('id', participantId)
-      .maybeSingle();
-
-    const startTimestamp = p?.device_timestamp || p?.created_at || deviceTimestamp;
-    const startMs = new Date(startTimestamp).getTime();
-    const completedMs = new Date(completedAt).getTime();
-    const durationSeconds = !isNaN(startMs) && !isNaN(completedMs) ? Math.max(0, Math.round((completedMs - startMs) / 1000)) : null;
-
-    const payload = {
-      status: 'completed',
-      completed_at: completedAt,
-      duration_seconds: durationSeconds,
-      updated_at: completedAt,
-      device_timestamp: deviceTimestamp,
-    };
-
-    // Update in database with fallback if custom columns are pending
-    const { error: updateErr } = await supabase
-      .from('participants')
-      .update(payload)
-      .eq('id', participantId);
-
-    if (updateErr) {
-      // Fallback update if completed_at / duration_seconds column schema is restricted
-      await supabase
-        .from('participants')
-        .update({
-          status: 'completed',
-          updated_at: completedAt,
-          device_timestamp: deviceTimestamp,
-        })
-        .eq('id', participantId);
-    }
 
     await logUserAction(participantId, 'COMPLETE_SURVEY', deviceTimestamp, {
       status: 'completed',
       completed_at: completedAt,
-      duration_seconds: durationSeconds,
     });
+
+    await supabase
+      .from('participants')
+      .update({
+        status: 'completed',
+        updated_at: completedAt,
+        device_timestamp: deviceTimestamp,
+      })
+      .eq('id', participantId);
   } catch (e) {
-    console.warn('completeParticipantSurvey exception:', e);
+    console.warn('completeParticipantSurvey notice:', e);
   }
 }
 
@@ -426,15 +408,23 @@ export async function fetchParticipantStatus(participantIdOrEmail) {
   if (!participantIdOrEmail) return null;
   try {
     const isEmail = String(participantIdOrEmail).includes('@');
-    const query = supabase.from('participants').select('*');
-    const { data, error } = isEmail
-      ? await query.eq('email', String(participantIdOrEmail).trim().toLowerCase()).maybeSingle()
-      : await query.eq('id', participantIdOrEmail).maybeSingle();
+    const isUuid = isValidUUID(participantIdOrEmail);
 
-    if (error || !data) return null;
-    return data;
+    const query = supabase.from('participants').select('*');
+    let res = null;
+
+    if (isEmail) {
+      res = await query.eq('email', String(participantIdOrEmail).trim().toLowerCase()).maybeSingle();
+    } else if (isUuid) {
+      res = await query.eq('id', participantIdOrEmail).maybeSingle();
+    } else {
+      res = await query.eq('certificate_id', String(participantIdOrEmail).trim()).maybeSingle();
+    }
+
+    if (res?.error || !res?.data) return null;
+    return res.data;
   } catch (err) {
-    console.warn('fetchParticipantStatus error:', err);
+    console.warn('fetchParticipantStatus notice:', err);
     return null;
   }
 }
@@ -651,7 +641,7 @@ async function logAdminAuditAction(action, details = {}) {
       details,
       created_at: new Date().toISOString(),
     }]);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 /**
@@ -663,7 +653,7 @@ export async function syncQuestionToSupabase(questionObj, action = 'UPSERT') {
   }
   try {
     const res = await upsertToSurveyQuestions(questionObj);
-    logAdminAuditAction(`ADMIN_${action}_QUESTION`, { questionId: questionObj.id, code: questionObj.code }).catch(() => {});
+    logAdminAuditAction(`ADMIN_${action}_QUESTION`, { questionId: questionObj.id, code: questionObj.code }).catch(() => { });
     return res;
   } catch (err) {
     return { success: false, error: err.message };
@@ -805,3 +795,46 @@ export const findOrCreateParticipantByEmail = registerParticipant;
 export const getOrCreateAnonymousParticipant = registerParticipant;
 export const ensureSurveySessionInSupabase = async () => true;
 export const fetchResponsesForSession = fetchResponsesForParticipant;
+
+/**
+ * Initiates Google OAuth authentication via Supabase Auth
+ */
+export async function signInWithGoogle(redirectToUrl) {
+  if (!isSupabaseConfigured) {
+    return { error: 'Supabase is not configured' };
+  }
+  try {
+    const redirect = redirectToUrl || `${window.location.origin}/survey`;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirect,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
+      },
+    });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (err) {
+    console.error('Error signing in with Google:', err);
+    return { data: null, error: err.message || 'Google Sign-In failed' };
+  }
+}
+
+/**
+ * Gets active Supabase Auth user session if logged in via OAuth
+ */
+export async function getGoogleAuthSession() {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.user) return null;
+    return session.user;
+  } catch (e) {
+    console.warn('Error fetching auth session:', e);
+    return null;
+  }
+}
+

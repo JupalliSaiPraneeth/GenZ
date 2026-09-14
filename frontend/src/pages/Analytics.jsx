@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Activity, ArrowLeft, ChevronRight, BarChart3 } from 'lucide-react';
+import { Search, Activity, ArrowLeft, ChevronRight, BarChart3, CheckCircle2 } from 'lucide-react';
 import { useSurveyStore } from '../stores/surveyStore';
 import { db } from '../services/db';
 import { supabase, isSupabaseConfigured } from '../services/supabaseClient';
@@ -150,6 +150,35 @@ export default function Analytics() {
   const selectedQuestionObj = useMemo(() => {
     return allQuestions.find((q) => q.id === selectedQuestionId) || allQuestions[0];
   }, [selectedQuestionId, allQuestions]);
+
+  // Extract logged-in user's answer for the selected question from answersById
+  const userSelectedAnswer = useMemo(() => {
+    if (!selectedQuestionObj || !answersById) return null;
+    const qIdKey = String(selectedQuestionObj.id).toLowerCase();
+    const qCodeKey = String(selectedQuestionObj.code || '').toLowerCase();
+
+    for (const [k, val] of Object.entries(answersById)) {
+      const lk = String(k).toLowerCase();
+      if (lk === qIdKey || (qCodeKey && lk === qCodeKey)) {
+        return val;
+      }
+    }
+    return null;
+  }, [selectedQuestionObj, answersById]);
+
+  // Check if a question has been answered by the logged in user
+  const getQuestionUserAnswer = (q) => {
+    if (!answersById) return null;
+    const qIdKey = String(q.id).toLowerCase();
+    const qCodeKey = String(q.code || '').toLowerCase();
+    for (const [k, val] of Object.entries(answersById)) {
+      const lk = String(k).toLowerCase();
+      if (lk === qIdKey || (qCodeKey && lk === qCodeKey)) {
+        return val;
+      }
+    }
+    return null;
+  };
 
   const selectedQuestionIndex = useMemo(() => {
     const idx = allQuestions.findIndex((q) => q.id === selectedQuestionId);
@@ -364,26 +393,37 @@ export default function Analytics() {
 
                 {/* Mobile Question Cards Stack */}
                 <div className="space-y-2.5 max-h-[580px] overflow-y-auto pr-1 touch-pan-y">
-                  {filteredQuestions.map((q) => (
-                    <div
-                      key={q.id}
-                      onClick={() => handleSelectQuestionMobile(q.id)}
-                      className="group bg-[#FAF7F0] hover:bg-[#EAF6F6] p-3.5 rounded-2xl border border-slate-200/80 hover:border-[#109A9B]/40 shadow-xs transition-all cursor-pointer flex flex-col gap-1.5 active:scale-[0.99]"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-mono text-[10px] font-extrabold text-[#075D63] bg-white px-2 py-0.5 rounded-md border border-slate-200">
-                          {q.code} • {q.topic}
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#109A9B] group-hover:translate-x-0.5 transition-transform">
-                          Analytics <ChevronRight className="w-3.5 h-3.5" />
-                        </span>
-                      </div>
+                  {filteredQuestions.map((q) => {
+                    const hasAns = getQuestionUserAnswer(q) !== null;
+                    return (
+                      <div
+                        key={q.id}
+                        onClick={() => handleSelectQuestionMobile(q.id)}
+                        className="group bg-[#FAF7F0] hover:bg-[#EAF6F6] p-3.5 rounded-2xl border border-slate-200/80 hover:border-[#109A9B]/40 shadow-xs transition-all cursor-pointer flex flex-col gap-1.5 active:scale-[0.99]"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] font-extrabold text-[#075D63] bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                              {q.code} • {q.topic}
+                            </span>
+                            {hasAns && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                <span>Answered</span>
+                              </span>
+                            )}
+                          </div>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#109A9B] group-hover:translate-x-0.5 transition-transform">
+                            Analytics <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
 
-                      <div className="font-semibold text-xs sm:text-sm text-[#10242C] leading-snug">
-                        {q.text}
+                        <div className="font-semibold text-xs sm:text-sm text-[#10242C] leading-snug">
+                          {q.text}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : (
@@ -409,6 +449,7 @@ export default function Analytics() {
                 <AnimatedQuestionPieChart
                   questionObj={selectedQuestionObj}
                   analysisData={singleQuestionAnalysis}
+                  userSelectedAnswer={userSelectedAnswer}
                   onSelectPrev={handleSelectPrevQuestion}
                   onSelectNext={handleSelectNextQuestion}
                   totalQuestionsCount={OFFICIAL_75_QUESTIONS.length}
@@ -454,6 +495,7 @@ export default function Analytics() {
               <div className="overflow-y-auto space-y-1.5 flex-1 pr-1 scrollbar-thin">
                 {filteredQuestions.map((q) => {
                   const isSelected = selectedQuestionId === q.id;
+                  const hasAns = getQuestionUserAnswer(q) !== null;
                   return (
                     <button
                       key={q.id}
@@ -467,9 +509,16 @@ export default function Analytics() {
                         <span className={`font-mono text-[10px] ${isSelected ? 'text-[#FDE7B5]' : 'text-[#075D63]'}`}>
                           {q.code} • {q.topic}
                         </span>
-                        {isSelected && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#FDE7B5] animate-pulse" />
-                        )}
+                        <div className="flex items-center gap-1">
+                          {hasAns && (
+                            <span className={`text-[10px] ${isSelected ? 'text-[#FDE7B5]' : 'text-emerald-600'}`} title="Answered by you">
+                              ✓
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#FDE7B5] animate-pulse" />
+                          )}
+                        </div>
                       </div>
                       <div className="truncate font-semibold text-xs leading-snug">{q.text}</div>
                     </button>
@@ -483,6 +532,7 @@ export default function Analytics() {
               <AnimatedQuestionPieChart
                 questionObj={selectedQuestionObj}
                 analysisData={singleQuestionAnalysis}
+                userSelectedAnswer={userSelectedAnswer}
                 onSelectPrev={handleSelectPrevQuestion}
                 onSelectNext={handleSelectNextQuestion}
                 totalQuestionsCount={OFFICIAL_75_QUESTIONS.length}

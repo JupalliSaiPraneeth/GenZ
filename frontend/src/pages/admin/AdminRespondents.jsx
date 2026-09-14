@@ -13,6 +13,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Trash2,
+  Copy,
+  Check,
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminDataService } from '../../services/adminDataService';
@@ -26,8 +28,18 @@ export default function AdminRespondents() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [copiedCertId, setCopiedCertId] = useState(null);
 
   const itemsPerPage = 10;
+
+  const handleCopyCertId = (certId) => {
+    if (!certId) return;
+    navigator.clipboard.writeText(certId);
+    setCopiedCertId(certId);
+    setTimeout(() => {
+      setCopiedCertId((prev) => (prev === certId ? null : prev));
+    }, 2000);
+  };
 
   useEffect(() => {
     async function loadRespondents() {
@@ -65,17 +77,19 @@ export default function AdminRespondents() {
   const currentItems = respondents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleExportCSV = () => {
-    const headers = ['ID', 'Name', 'Age Group', 'Gender', 'Status', 'Field', 'Completion', 'Duration', 'Quality Status'];
+    const headers = ['ID', 'Name', 'Email', 'Certificate ID', 'Age Group', 'Gender', 'Status', 'Field', 'Completion', 'Duration', 'Quality Status'];
     const rows = respondents.map((r) => [
       r.id,
-      r.name,
-      r.ageGroup,
-      r.gender,
-      r.currentStatus,
-      r.fieldOfStudy,
-      `${r.completionPct}% (${r.completionStatus})`,
-      r.durationMinutes,
-      r.qualityStatus,
+      `"${r.name || 'Anonymous'}"`,
+      `"${r.email || 'N/A'}"`,
+      `"${r.certificateId || (r.completionPct === 100 ? 'Issued' : 'Pending')}"`,
+      `"${r.ageGroup || 'N/A'}"`,
+      `"${r.gender || 'N/A'}"`,
+      `"${r.currentStatus || 'N/A'}"`,
+      `"${r.fieldOfStudy || 'N/A'}"`,
+      `"${r.completionPct}% (${r.completionStatus})"`,
+      `"${r.durationMinutes || 'N/A'}"`,
+      `"${r.qualityStatus || 'Verified'}"`,
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -89,6 +103,14 @@ export default function AdminRespondents() {
     document.body.removeChild(link);
   };
 
+  const handlePurgeDummies = async () => {
+    setLoading(true);
+    await adminDataService.purgeDummyParticipants();
+    const list = await adminDataService.getRespondentsList(searchQuery, filterStatus);
+    setRespondents(list);
+    setLoading(false);
+  };
+
   return (
     <AdminLayout title="Respondents Data Explorer">
       {/* SEARCH, FILTER & EXPORT HEADER TOOLBAR */}
@@ -97,20 +119,30 @@ export default function AdminRespondents() {
           <div>
             <h2 className="font-heading font-extrabold text-lg text-[#10242C] flex items-center gap-2">
               <Users className="w-5 h-5 text-[#109A9B]" />
-              Survey Respondents Registry ({respondents.length} Records)
+              Survey Respondents Registry ({respondents.length} Registered Users)
             </h2>
             <p className="text-xs text-[#53656A] font-medium">
-              Inspect participant profiles, completion percentages, and data quality indicators
+              Inspect registered participant profiles, completion percentages, and data quality indicators
             </p>
           </div>
 
-          <button
-            onClick={handleExportCSV}
-            className="px-4 py-2 bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold text-xs rounded-2xl shadow-sm transition-all cursor-pointer flex items-center gap-2 shrink-0"
-          >
-            <Download className="w-4 h-4 text-[#FDE7B5]" />
-            <span>Export CSV</span>
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handlePurgeDummies}
+              className="px-3 py-2 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 font-bold text-xs rounded-2xl border border-slate-200 hover:border-rose-200 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+              title="Clean up all temporary unregistered sessions"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+              <span>Purge Unregistered</span>
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="px-4 py-2 bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold text-xs rounded-2xl shadow-sm transition-all cursor-pointer flex items-center gap-2 shrink-0"
+            >
+              <Download className="w-4 h-4 text-[#FDE7B5]" />
+              <span>Export CSV</span>
+            </button>
+          </div>
         </div>
 
         {/* SEARCH & STATUS FILTER CONTROLS */}
@@ -151,7 +183,6 @@ export default function AdminRespondents() {
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Email</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Progress %</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Time Taken</th>
-                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Evaluation Status</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Certificate ID</th>
                 <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Lucky Draw</th>
                 <th className="py-3.5 px-4 sm:px-5 text-right sticky right-0 z-10 bg-[#EAF6F6] shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)] whitespace-nowrap">
@@ -162,7 +193,7 @@ export default function AdminRespondents() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400 font-bold">
+                  <td colSpan={7} className="p-8 text-center text-slate-400 font-bold">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 rounded-full border-2 border-[#109A9B] border-t-transparent animate-spin" />
                       <span>Querying live database records...</span>
@@ -171,7 +202,7 @@ export default function AdminRespondents() {
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-500 font-bold">
+                  <td colSpan={7} className="p-8 text-center text-slate-500 font-bold">
                     No respondents found matching the current search filters.
                   </td>
                 </tr>
@@ -202,24 +233,22 @@ export default function AdminRespondents() {
                       <div className="flex items-center gap-2.5">
                         <div className="flex-1 bg-slate-100 h-2 rounded-full min-w-[50px] max-w-[70px] overflow-hidden hidden sm:block">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${
-                              r.completionPct === 100
+                            className={`h-full rounded-full transition-all duration-500 ${r.completionPct === 100
                                 ? 'bg-emerald-500'
                                 : r.completionPct > 50
-                                ? 'bg-[#109A9B]'
-                                : 'bg-amber-500'
-                            }`}
+                                  ? 'bg-[#109A9B]'
+                                  : 'bg-amber-500'
+                              }`}
                             style={{ width: `${Math.min(100, Math.max(0, r.completionPct || 0))}%` }}
                           />
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span className="font-extrabold text-[#075D63] text-xs">{r.completionPct || 0}%</span>
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${
-                              r.completionStatus === 'Completed'
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${r.completionStatus === 'Completed'
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                 : 'bg-amber-50 text-amber-900 border-amber-200'
-                            }`}
+                              }`}
                           >
                             {r.completionStatus}
                           </span>
@@ -235,36 +264,29 @@ export default function AdminRespondents() {
                         <span>{r.durationMinutes || 'N/A'}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 sm:px-5">
-                      <div className="whitespace-nowrap">
-                        {r.evaluationStatus === 'approved' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-200 shadow-2xs">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            <span>Approved</span>
-                          </span>
-                        )}
-                        {r.evaluationStatus === 'pending_evaluation' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-900 text-[11px] font-bold rounded-full border border-amber-200 shadow-2xs">
-                            <Clock className="w-3 h-3 text-amber-600" />
-                            <span>Pending Review</span>
-                          </span>
-                        )}
-                        {r.evaluationStatus === 'rejected' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-800 text-[11px] font-bold rounded-full border border-rose-200 shadow-2xs">
-                            <AlertTriangle className="w-3 h-3 text-rose-600" />
-                            <span>Rejected</span>
-                          </span>
-                        )}
-                      </div>
-                    </td>
                     <td className="py-3.5 px-4 sm:px-5 font-mono font-semibold text-xs text-[#075D63]">
-                      <div className="whitespace-nowrap">
+                      <div className="whitespace-nowrap flex items-center gap-1.5">
                         {r.certificateId ? (
-                          <span className="px-2 py-0.5 bg-slate-100 text-[#075D63] rounded border border-slate-200">
-                            {r.certificateId}
-                          </span>
+                          <>
+                            <span className="px-2.5 py-1 bg-[#EAF6F6] text-[#063E46] font-extrabold rounded-lg border border-[#109A9B]/30 shadow-2xs font-mono text-[11px] inline-flex items-center gap-1">
+                              <ShieldCheck className="w-3.5 h-3.5 text-[#109A9B] shrink-0" />
+                              <span>{r.certificateId}</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyCertId(r.certificateId)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-[#063E46] hover:bg-[#EAF6F6] border border-transparent hover:border-[#109A9B]/20 transition-all cursor-pointer"
+                              title={copiedCertId === r.certificateId ? 'Copied to clipboard!' : 'Copy Certificate ID'}
+                            >
+                              {copiedCertId === r.certificateId ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600 animate-in zoom-in-50" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </>
                         ) : r.certificateStatus === 'issued' ? (
-                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded border border-emerald-200">
+                          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-lg border border-emerald-200 font-mono text-[11px]">
                             Issued
                           </span>
                         ) : (
