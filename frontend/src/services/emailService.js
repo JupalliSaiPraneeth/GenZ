@@ -7,7 +7,7 @@ import { generateCertificateDataUrl } from './certificateGenerator';
 export function buildCertificateEmailContent(recipientEmail, recipientName, dateStr) {
   const name = (recipientName || 'Gen Z Participant').trim();
   const date = dateStr || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+  const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : (import.meta.env.VITE_SITE_URL || 'https://gen-z-dun.vercel.app');
 
   const subject = `Official Gen Z Voices Certificate of Participation - ${name}`;
   const body =
