@@ -65,15 +65,17 @@ export default function Navbar() {
 
         {/* Right Action Controls: Admin Login, Logout (if logged in) & Mobile Menu */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 lg:gap-3 shrink-0 font-inter">
-          {/* Icon-Only Admin Login Button */}
-          <Link
-            to="/admin/login"
-            className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-full bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold border border-[#063E46] shadow-sm transition-all cursor-pointer flex items-center justify-center shrink-0 hover:scale-105 active:scale-95"
-            title="Admin Portal Login"
-            aria-label="Admin Portal Login"
-          >
-            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#FDE7B5] shrink-0" />
-          </Link>
+          {/* Icon-Only Admin Login Button (Hidden when participant is logged in) */}
+          {!participantName && (
+            <Link
+              to="/admin/login"
+              className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-full bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold border border-[#063E46] shadow-sm transition-all cursor-pointer flex items-center justify-center shrink-0 hover:scale-105 active:scale-95"
+              title="Admin Portal Login"
+              aria-label="Admin Portal Login"
+            >
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#FDE7B5] shrink-0" />
+            </Link>
+          )}
 
           {/* Icon-Only Logout Button */}
           {participantName && (
@@ -128,14 +130,16 @@ export default function Navbar() {
               );
             })}
 
-            <Link
-              to="/admin/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-4 py-3 rounded-2xl font-bold text-base bg-[#063E46] text-[#FFF8E8] flex items-center gap-3 transition-colors shadow-sm"
-            >
-              <ShieldCheck className="w-5 h-5 text-[#FDE7B5] shrink-0" />
-              <span>Admin Portal Login</span>
-            </Link>
+            {!participantName && (
+              <Link
+                to="/admin/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-4 py-3 rounded-2xl font-bold text-base bg-[#063E46] text-[#FFF8E8] flex items-center gap-3 transition-colors shadow-sm"
+              >
+                <ShieldCheck className="w-5 h-5 text-[#FDE7B5] shrink-0" />
+                <span>Admin Portal Login</span>
+              </Link>
+            )}
 
             {participantName && (
               <button

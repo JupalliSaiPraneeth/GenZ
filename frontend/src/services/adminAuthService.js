@@ -145,25 +145,17 @@ export const adminAuthService = {
   },
 
   /**
-   * Check if current session is authenticated
+   * Check if current session is authenticated with explicit Admin credentials
    */
   isAuthenticated() {
     const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
-    if (raw) {
-      try {
-        const session = JSON.parse(raw);
-        if (session && session.role === 'ADMIN' && Boolean(session.token)) {
-          return true;
-        }
-      } catch (e) {}
+    if (!raw) return false;
+    try {
+      const session = JSON.parse(raw);
+      return session && session.role === 'ADMIN' && Boolean(session.token);
+    } catch (e) {
+      return false;
     }
-
-    const sbKey = Object.keys(localStorage).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
-    if (sbKey && localStorage.getItem(sbKey)) {
-      return true;
-    }
-
-    return false;
   },
 
   /**
