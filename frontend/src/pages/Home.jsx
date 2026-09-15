@@ -147,7 +147,7 @@ export default function Home() {
                 </span>
 
                 <span className="font-sora font-extrabold text-[11px] sm:text-xs text-[#063E46] tracking-tight uppercase whitespace-nowrap">
-                  GenZ Voices <span className="text-[#109A9B] font-bold capitalize">supported by</span>
+                  GENZ VOICES <span className="text-[#109A9B] font-bold normal-case">Supported By</span>
                 </span>
 
                 <span className="h-3.5 sm:h-4 w-[1px] bg-[#063E46]/20 shrink-0" />
@@ -285,6 +285,16 @@ export default function Home() {
                     BRIGHTER FUTURE
                   </div>
                 </div>
+
+                {/* LOGGED IN USER WELCOME BADGE (Centered between CTA button & photo on Mobile, bottom arc on Desktop) */}
+                {isLoggedIn && (
+                  <div className="absolute -top-7 sm:top-auto sm:bottom-3 lg:bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-[#109A9B]/40 text-[#063E46] px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full shadow-[0_12px_35px_rgba(6,62,70,0.18)] z-40 flex items-center gap-2 transition-all hover:scale-105 cursor-default hover:border-[#109A9B] whitespace-nowrap">
+                    <span className="text-xs sm:text-sm animate-bounce">👋</span>
+                    <span className="font-sora font-bold text-[11px] sm:text-xs text-[#063E46] tracking-tight">
+                      Welcome back, <span className="text-[#109A9B] font-extrabold">{participantName}</span>!
+                    </span>
+                  </div>
+                )}
 
               </div>
 

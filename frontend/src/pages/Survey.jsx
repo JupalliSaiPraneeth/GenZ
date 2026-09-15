@@ -499,7 +499,7 @@ export default function Survey() {
                 </span>
 
                 <span className="font-sora font-extrabold text-[11px] sm:text-xs text-[#063E46] tracking-tight uppercase whitespace-nowrap">
-                  GenZ Voices <span className="text-[#109A9B] font-bold capitalize">supported by</span>
+                  GENZ VOICES <span className="text-[#109A9B] font-bold normal-case">Supported By</span>
                 </span>
 
                 <span className="h-3.5 sm:h-4 w-[1px] bg-[#063E46]/20 shrink-0" />

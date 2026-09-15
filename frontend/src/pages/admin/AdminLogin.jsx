@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, Eye, EyeOff, Lock, User, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Eye, EyeOff, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
 import { adminAuthService } from '../../services/adminAuthService';
 
 export default function AdminLogin() {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -13,6 +13,15 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/admin/dashboard';
+
+  useEffect(() => {
+    async function checkExistingAuth() {
+      if (adminAuthService.isAuthenticated()) {
+        navigate(from, { replace: true });
+      }
+    }
+    checkExistingAuth();
+  }, [navigate, from]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,7 +85,7 @@ export default function AdminLogin() {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter admin username"
+                placeholder="Enter admin_username"
                 className="w-full pl-10 pr-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-[#109A9B] focus:ring-4 focus:ring-[#109A9B]/15 outline-none font-bold text-sm text-[#10242C] transition-all"
               />
             </div>
@@ -93,7 +102,7 @@ export default function AdminLogin() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
+                placeholder="Enter admin_password"
                 className="w-full pl-10 pr-11 py-3 rounded-2xl border-2 border-slate-200 focus:border-[#109A9B] focus:ring-4 focus:ring-[#109A9B]/15 outline-none font-bold text-sm text-[#10242C] transition-all"
               />
               <button
@@ -104,12 +113,6 @@ export default function AdminLogin() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-          </div>
-
-          {/* CREDENTIAL HINT PILL */}
-          <div className="bg-[#EAF6F6] p-3 rounded-2xl border border-[#109A9B]/20 text-[11px] text-[#075D63] flex items-center justify-between font-semibold">
-            <span>Dev Credentials: <strong className="font-mono text-[#063E46]">admin / admin123</strong></span>
-            <CheckCircle2 className="w-4 h-4 text-[#109A9B] shrink-0" />
           </div>
 
           <button
@@ -129,7 +132,7 @@ export default function AdminLogin() {
         </form>
 
         <div className="text-center pt-2 border-t border-slate-100 text-[11px] text-[#53656A] font-medium">
-          Protected Administrative Portal • Single Admin Role
+          Protected Administrative Portal • Supabase `admin_users` Authenticated
         </div>
       </div>
     </div>
