@@ -94,9 +94,14 @@ export default function AdminQuestions() {
       selectionType: isMulti ? 'multiple' : 'single',
     };
 
-    await updateQuestion(updated);
-    setSavedSuccessMsg(`Updated ${updated.code} and synced to Supabase database!`);
-    setTimeout(() => setSavedSuccessMsg(''), 4000);
+    const syncRes = await updateQuestion(updated);
+    if (syncRes && syncRes.success === false) {
+      const errMsg = syncRes.error || 'Unknown Supabase write error';
+      showAlert('Supabase Database Warning', `Updated locally, but Supabase rejected database write.\n\nReason: ${errMsg}`, 'warning');
+    } else {
+      setSavedSuccessMsg(`Updated ${updated.code} options & details and successfully synced to Supabase database!`);
+      setTimeout(() => setSavedSuccessMsg(''), 4000);
+    }
     setEditingQuestion(null);
   };
 

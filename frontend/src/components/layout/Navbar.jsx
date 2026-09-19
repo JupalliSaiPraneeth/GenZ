@@ -12,7 +12,8 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
-    { name: 'Insights', path: '/analytics' },
+    { name: 'Lucky Draw', path: '/lucky-draw' },
+    ...(participantName ? [{ name: 'Insights', path: '/analytics' }] : []),
   ];
 
   const isActive = (path) => {

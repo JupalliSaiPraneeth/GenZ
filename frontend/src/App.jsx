@@ -7,6 +7,7 @@ import About from './pages/About';
 import Survey from './pages/Survey';
 import SurveyComplete from './pages/SurveyComplete';
 import Analytics from './pages/Analytics';
+import LuckyDraw from './pages/LuckyDraw';
 
 // Admin Auth & Protected Route
 import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
@@ -42,6 +43,7 @@ function AppLayout() {
           <Route path="/survey" element={<Survey />} />
           <Route path="/survey-complete" element={<SurveyComplete />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/lucky-draw" element={<LuckyDraw />} />
           <Route path="/privacy" element={<Survey />} />
 
           {/* Admin Authentication */}

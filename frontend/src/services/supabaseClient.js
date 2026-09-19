@@ -265,23 +265,24 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
     const qCodeKey = String(questionCodeOrId).toUpperCase();
 
     // 1. Ensure participant row exists in `participants` table to avoid foreign key violation (23503)
-    const { data: existingP } = await supabase
-      .from('participants')
-      .select('id')
-      .eq('id', validParticipantId)
-      .maybeSingle();
-
-    if (!existingP) {
-      await supabase.from('participants').insert([{
-        id: validParticipantId,
-        name: 'Gen Z Participant',
-        email: `user_${validParticipantId.slice(0, 8)}@genzvoices.org`,
-        status: 'in_progress',
-        total_answers_count: 0,
-        device_timestamp: deviceTimestamp,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }]);
+    try {
+      await supabase.from('participants').upsert(
+        [
+          {
+            id: validParticipantId,
+            name: 'Gen Z Participant',
+            email: `user_${validParticipantId.slice(0, 8)}@genzvoices.org`,
+            status: 'in_progress',
+            total_answers_count: 0,
+            device_timestamp: deviceTimestamp,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ],
+        { onConflict: 'id', ignoreDuplicates: true }
+      );
+    } catch (pErr) {
+      // Ignore background participant init notices
     }
 
     const payload = {
@@ -295,31 +296,19 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
       updated_at: new Date().toISOString(),
     };
 
-    // 2. Safe Insert or Update in `survey_responses` to avoid 409 Conflict
-    const { data: existingResp } = await supabase
+    // 2. Native Upsert in `survey_responses` to eliminate 409 Conflict
+    const { error: upsertErr } = await supabase
       .from('survey_responses')
-      .select('id')
-      .eq('participant_id', validParticipantId)
-      .eq('question_id', qIdKey)
-      .maybeSingle();
+      .upsert(payload, { onConflict: 'participant_id,question_id' });
 
-    if (existingResp) {
-      await supabase
+    if (upsertErr) {
+      // Fallback 1: Try onConflict on session_id,question_id
+      const { error: sessionUpsertErr } = await supabase
         .from('survey_responses')
-        .update({
-          session_id: validSessionId,
-          question_code: qCodeKey,
-          response_value: typeof responseValue === 'object' ? responseValue : { value: responseValue },
-          device_timestamp: deviceTimestamp,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existingResp.id);
-    } else {
-      const { error: insertErr } = await supabase
-        .from('survey_responses')
-        .insert([payload]);
+        .upsert(payload, { onConflict: 'session_id,question_id' });
 
-      if (insertErr && (insertErr.code === '23505' || insertErr.status === 409 || insertErr.message?.includes('duplicate'))) {
+      if (sessionUpsertErr) {
+        // Fallback 2: Manual update
         await supabase
           .from('survey_responses')
           .update({
@@ -558,6 +547,10 @@ async function upsertToSurveyQuestions(questionObj) {
       ? questionObj.display_order
       : (parseInt(qCode.replace(/\D/g, ''), 10) || 1);
 
+    const formattedOptions = Array.isArray(questionObj.options)
+      ? questionObj.options
+      : (typeof questionObj.options === 'string' ? JSON.parse(questionObj.options) : null);
+
     const fullPayload = {
       id: qId,
       question_code: qCode,
@@ -565,28 +558,41 @@ async function upsertToSurveyQuestions(questionObj) {
       topic: questionObj.topic || 'General',
       question_text: questionObj.text || questionObj.question_text || '',
       display_order: numOrder,
-      options: questionObj.options || null,
+      options: formattedOptions,
       selection_type: questionObj.selectionType || (questionObj.isMultiSelect ? 'multiple' : 'single'),
       is_multi_select: Boolean(questionObj.isMultiSelect || questionObj.selectionType === 'multiple'),
     };
 
-    const corePayload = {
-      id: qId,
+    // 1. Try explicit UPDATE first for existing questions to directly persist options & schema fields
+    const updatePayload = {
       question_code: qCode,
-      section_id: questionObj.sectionId || questionObj.section_id || 'sec-1',
-      topic: questionObj.topic || 'General',
-      question_text: questionObj.text || questionObj.question_text || '',
-      display_order: numOrder,
+      section_id: fullPayload.section_id,
+      topic: fullPayload.topic,
+      question_text: fullPayload.question_text,
+      display_order: fullPayload.display_order,
+      options: formattedOptions,
+      selection_type: fullPayload.selection_type,
+      is_multi_select: fullPayload.is_multi_select,
     };
 
-    // Try full payload first
+    const { error: updateErr, data: updatedData } = await supabase
+      .from('survey_questions')
+      .update(updatePayload)
+      .eq('id', qId)
+      .select();
+
+    if (!updateErr && updatedData && updatedData.length > 0) {
+      return { success: true };
+    }
+
+    // 2. Try full payload upsert
     const { error: fullErr } = await supabase
       .from('survey_questions')
       .upsert([fullPayload], { onConflict: 'id' });
 
     if (!fullErr) return { success: true };
 
-    console.warn(`Supabase full upsert notice for ${qId}:`, fullErr.message);
+    console.warn(`Supabase full upsert notice for ${qId}:`, fullErr?.message);
 
     // If display_order unique constraint clash occurs (23505), fetch current MAX display_order and retry with next unique order
     if (fullErr?.code === '23505' || fullErr?.message?.includes('display_order')) {
@@ -600,7 +606,6 @@ async function upsertToSurveyQuestions(questionObj) {
 
         const safeOrder = (maxRow?.display_order || 0) + 1;
         fullPayload.display_order = safeOrder;
-        corePayload.display_order = safeOrder;
 
         const { error: retryErr } = await supabase
           .from('survey_questions')
@@ -612,15 +617,18 @@ async function upsertToSurveyQuestions(questionObj) {
       }
     }
 
-    // Fallback to core payload if extra schema columns are missing
-    const { error: coreErr } = await supabase
+    // Fallback payload: Keep options, selection_type & is_multi_select, omit topic column in case topic column is missing
+    const payloadNoTopic = { ...fullPayload };
+    delete payloadNoTopic.topic;
+
+    const { error: noTopicErr } = await supabase
       .from('survey_questions')
-      .upsert([corePayload], { onConflict: 'id' });
+      .upsert([payloadNoTopic], { onConflict: 'id' });
 
-    if (!coreErr) return { success: true };
+    if (!noTopicErr) return { success: true };
 
-    console.error(`Supabase core upsert error for ${qId}:`, coreErr.message);
-    return { success: false, error: coreErr.message || fullErr.message };
+    console.error(`Supabase upsert error for ${qId}:`, noTopicErr.message || fullErr?.message);
+    return { success: false, error: noTopicErr.message || fullErr?.message };
   } catch (e) {
     console.error('upsertToSurveyQuestions exception:', e);
     return { success: false, error: e.message || 'Unexpected exception' };
@@ -715,6 +723,11 @@ export async function fetchQuestionsFromSupabase() {
         topic: item.topic || 'General',
         text: item.question_text || '',
         display_order: item.display_order,
+        options: Array.isArray(item.options)
+          ? item.options
+          : (typeof item.options === 'string' ? JSON.parse(item.options) : null),
+        selectionType: item.selection_type || (item.is_multi_select ? 'multiple' : 'single'),
+        isMultiSelect: Boolean(item.is_multi_select || item.selection_type === 'multiple'),
       }));
     }
   } catch (err) {

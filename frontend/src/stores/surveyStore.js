@@ -51,11 +51,12 @@ export const useSurveyStore = create((set, get) => ({
           { label: 'Option 1', value: 'option_1' },
           { label: 'Option 2', value: 'option_2' },
         ];
+        const hasDbOptions = Array.isArray(dbQ.options) && dbQ.options.length > 0;
         return {
           ...dbQ,
-          options: fallbackOpts,
-          selectionType: localMatch?.selectionType || officialMatch?.selectionType || 'single',
-          isMultiSelect: localMatch?.isMultiSelect || officialMatch?.isMultiSelect || false,
+          options: hasDbOptions ? dbQ.options : fallbackOpts,
+          selectionType: dbQ.selectionType || localMatch?.selectionType || officialMatch?.selectionType || 'single',
+          isMultiSelect: dbQ.isMultiSelect ?? localMatch?.isMultiSelect ?? officialMatch?.isMultiSelect ?? false,
         };
       });
 
@@ -120,8 +121,11 @@ export const useSurveyStore = create((set, get) => ({
       sections: updatedSections,
     });
 
-    // Sync updated question and full blueprint sequence to Supabase DB
-    await syncQuestionToSupabase(updatedQuestion, 'UPDATE');
+    const resequencedUpdated = savedResequenced.find((q) => q.id === updatedQuestion.id) || updatedQuestion;
+
+    // Direct sync updated question to Supabase DB (survey_questions table)
+    const syncRes = await syncQuestionToSupabase(resequencedUpdated, 'UPDATE');
+    return syncRes;
   },
 
   deleteQuestion: async (questionId) => {

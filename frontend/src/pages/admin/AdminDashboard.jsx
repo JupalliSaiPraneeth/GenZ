@@ -64,12 +64,12 @@ function GenZPulseCard({ analyticsData, activePulse, setActivePulse }) {
     const dimScoresMap = new Map(analyticsData?.dimensionScores?.map((d) => [d.id, d]) || []);
 
     const items = [
-      { id: 'dim-c', label: 'Digital & Tech', score: dimScoresMap.get('dim-c')?.pctScore || 78, icon: Laptop, color: '#3B82F6' },
-      { id: 'dim-d', label: 'Career & Ambition', score: dimScoresMap.get('dim-d')?.pctScore || 71, icon: Briefcase, color: '#8B5CF6' },
-      { id: 'dim-h', label: 'Values & Ethics', score: dimScoresMap.get('dim-h')?.pctScore || 64, icon: ShieldCheck, color: '#109A9B' },
-      { id: 'dim-b', label: 'Health & Wellbeing', score: dimScoresMap.get('dim-b')?.pctScore || 62, icon: Heart, color: '#075D63' },
-      { id: 'dim-c2', label: 'AI Adoption', score: Math.round(((dimScoresMap.get('dim-c')?.pctScore || 74) + 6) % 100), icon: Zap, color: '#059669' },
-      { id: 'dim-g', label: 'Future & Mobility', score: dimScoresMap.get('dim-g')?.pctScore || 58, icon: Compass, color: '#F59E0B' },
+      { id: 'dim-c', label: 'Digital & Tech', score: dimScoresMap.get('dim-c')?.pctScore ?? 0, icon: Laptop, color: '#3B82F6' },
+      { id: 'dim-d', label: 'Career & Ambition', score: dimScoresMap.get('dim-d')?.pctScore ?? 0, icon: Briefcase, color: '#8B5CF6' },
+      { id: 'dim-h', label: 'Values & Ethics', score: dimScoresMap.get('dim-h')?.pctScore ?? 0, icon: ShieldCheck, color: '#109A9B' },
+      { id: 'dim-b', label: 'Health & Wellbeing', score: dimScoresMap.get('dim-b')?.pctScore ?? 0, icon: Heart, color: '#075D63' },
+      { id: 'dim-c2', label: 'AI Adoption', score: dimScoresMap.get('dim-c')?.pctScore ? Math.round(((dimScoresMap.get('dim-c').pctScore) + 6) % 100) : 0, icon: Zap, color: '#059669' },
+      { id: 'dim-g', label: 'Future & Mobility', score: dimScoresMap.get('dim-g')?.pctScore ?? 0, icon: Compass, color: '#F59E0B' },
     ];
 
     const overallAvg = Math.round(items.reduce((sum, item) => sum + item.score, 0) / items.length);
@@ -166,15 +166,15 @@ function SegmentedPillBarCard({ rawRecords }) {
     });
 
     const hasData = q2Responses.length > 0;
-    const total = hasData ? q2Responses.length : 100;
-    const femalePct = hasData ? Math.round((female / total) * 100) : 52;
-    const malePct = hasData ? Math.round((male / total) * 100) : 44;
-    const otherPct = hasData ? Math.max(0, 100 - femalePct - malePct) : 4;
+    const total = hasData ? q2Responses.length : 0;
+    const femalePct = hasData && total > 0 ? Math.round((female / total) * 100) : 0;
+    const malePct = hasData && total > 0 ? Math.round((male / total) * 100) : 0;
+    const otherPct = hasData && total > 0 ? Math.max(0, 100 - femalePct - malePct) : 0;
 
     const isFemaleDominant = femalePct >= malePct;
-    const dominantGender = isFemaleDominant ? 'Female' : 'Male';
-    const dominantPct = isFemaleDominant ? femalePct : malePct;
-    const dominantCount = isFemaleDominant ? (hasData ? female : 52) : (hasData ? male : 44);
+    const dominantGender = hasData ? (isFemaleDominant ? 'Female' : 'Male') : 'No Data';
+    const dominantPct = hasData ? (isFemaleDominant ? femalePct : malePct) : 0;
+    const dominantCount = hasData ? (isFemaleDominant ? female : male) : 0;
     const dominantImg = isFemaleDominant ? '/female.png' : '/male.png';
 
     return {
@@ -187,9 +187,9 @@ function SegmentedPillBarCard({ rawRecords }) {
       dominantCount,
       dominantImg,
       items: [
-        { label: 'Female', pct: femalePct, count: hasData ? female : 52, color: '#109A9B' },
-        { label: 'Male', pct: malePct, count: hasData ? male : 44, color: '#075D63' },
-        { label: 'Non-Binary / Other', pct: otherPct, count: hasData ? other : 4, color: '#F59E0B' },
+        { label: 'Female', pct: femalePct, count: female, color: '#109A9B' },
+        { label: 'Male', pct: malePct, count: male, color: '#075D63' },
+        { label: 'Non-Binary / Other', pct: otherPct, count: other, color: '#F59E0B' },
       ],
     };
   }, [rawRecords]);
@@ -292,18 +292,18 @@ function WaffleChartCard({ rawRecords }) {
     });
 
     const hasData = q22Responses.length > 0;
-    const total = hasData ? q22Responses.length : 100;
+    const total = hasData ? q22Responses.length : 0;
 
-    const p3_5 = hasData ? Math.round((c3_5 / total) * 100) : 42;
-    const p5_plus = hasData ? Math.round((c5_plus / total) * 100) : 28;
-    const p1_3 = hasData ? Math.round((c1_3 / total) * 100) : 22;
-    const pless1 = hasData ? Math.max(0, 100 - p3_5 - p5_plus - p1_3) : 8;
+    const p3_5 = hasData && total > 0 ? Math.round((c3_5 / total) * 100) : 0;
+    const p5_plus = hasData && total > 0 ? Math.round((c5_plus / total) * 100) : 0;
+    const p1_3 = hasData && total > 0 ? Math.round((c1_3 / total) * 100) : 0;
+    const pless1 = hasData && total > 0 ? Math.max(0, 100 - p3_5 - p5_plus - p1_3) : 0;
 
     const categories = [
-      { label: '3–5 hours / day', pct: p3_5, count: hasData ? c3_5 : 42, color: '#109A9B' },
-      { label: '5+ hours / day', pct: p5_plus, count: hasData ? c5_plus : 28, color: '#075D63' },
-      { label: '1–3 hours / day', pct: p1_3, count: hasData ? c1_3 : 22, color: '#3B82F6' },
-      { label: '< 1 hour / day', pct: pless1, count: hasData ? cless1 : 8, color: '#F59E0B' },
+      { label: '3–5 hours / day', pct: p3_5, count: c3_5, color: '#109A9B' },
+      { label: '5+ hours / day', pct: p5_plus, count: c5_plus, color: '#075D63' },
+      { label: '1–3 hours / day', pct: p1_3, count: c1_3, color: '#3B82F6' },
+      { label: '< 1 hour / day', pct: pless1, count: cless1, color: '#F59E0B' },
     ];
 
     const grid = [];
@@ -390,20 +390,20 @@ function LollipopChartCard({ rawRecords }) {
     });
 
     const hasData = q1Responses.length > 0;
-    const total = hasData ? q1Responses.length : 100;
-    const p18 = hasData ? Math.round((a18_20 / total) * 100) : 38;
-    const p21 = hasData ? Math.round((a21_23 / total) * 100) : 31;
-    const p24 = hasData ? Math.round((a24_26 / total) * 100) : 22;
-    const p27 = hasData ? Math.max(0, 100 - p18 - p21 - p24) : 9;
+    const total = hasData ? q1Responses.length : 0;
+    const p18 = hasData && total > 0 ? Math.round((a18_20 / total) * 100) : 0;
+    const p21 = hasData && total > 0 ? Math.round((a21_23 / total) * 100) : 0;
+    const p24 = hasData && total > 0 ? Math.round((a24_26 / total) * 100) : 0;
+    const p27 = hasData && total > 0 ? Math.max(0, 100 - p18 - p21 - p24) : 0;
 
     return {
       total,
       hasData,
       items: [
-        { label: '18–20 yrs', pct: p18, count: hasData ? a18_20 : 38, color: '#075D63' },
-        { label: '21–23 yrs', pct: p21, count: hasData ? a21_23 : 31, color: '#109A9B' },
-        { label: '24–26 yrs', pct: p24, count: hasData ? a24_26 : 22, color: '#3B82F6' },
-        { label: '27–30 yrs', pct: p27, count: hasData ? a27_30 : 9, color: '#8B5CF6' },
+        { label: '18–20 yrs', pct: p18, count: a18_20, color: '#075D63' },
+        { label: '21–23 yrs', pct: p21, count: a21_23, color: '#109A9B' },
+        { label: '24–26 yrs', pct: p24, count: a24_26, color: '#3B82F6' },
+        { label: '27–30 yrs', pct: p27, count: a27_30, color: '#8B5CF6' },
       ],
     };
   }, [rawRecords]);
@@ -534,8 +534,8 @@ function StoryCardVisualization({ rawRecords }) {
       {
         label: '6–8 Hours (Ideal Sleep)',
         shortLabel: '6–8 Hours',
-        count: hasData ? idealCount : 62,
-        pct: hasData && totalCount > 0 ? Math.round((idealCount / totalCount) * 100) : 62,
+        count: idealCount,
+        pct: hasData && totalCount > 0 ? Math.round((idealCount / totalCount) * 100) : 0,
         color: '#109A9B',
         gradientFrom: '#075D63',
         gradientTo: '#2DD4BF',
@@ -545,8 +545,8 @@ function StoryCardVisualization({ rawRecords }) {
       {
         label: '4–6 Hours (Sleep Deprived)',
         shortLabel: '4–6 Hours',
-        count: hasData ? deprivedCount : 24,
-        pct: hasData && totalCount > 0 ? Math.round((deprivedCount / totalCount) * 100) : 24,
+        count: deprivedCount,
+        pct: hasData && totalCount > 0 ? Math.round((deprivedCount / totalCount) * 100) : 0,
         color: '#F59E0B',
         gradientFrom: '#D97706',
         gradientTo: '#FBBF24',
@@ -556,8 +556,8 @@ function StoryCardVisualization({ rawRecords }) {
       {
         label: '<4 Hours (Severe Deprivation)',
         shortLabel: '<4 Hours',
-        count: hasData ? severeCount : 14,
-        pct: hasData && totalCount > 0 ? Math.max(1, 100 - (Math.round((idealCount / totalCount) * 100) + Math.round((deprivedCount / totalCount) * 100))) : 14,
+        count: severeCount,
+        pct: hasData && totalCount > 0 ? Math.max(0, 100 - (Math.round((idealCount / totalCount) * 100) + Math.round((deprivedCount / totalCount) * 100))) : 0,
         color: '#F87171',
         gradientFrom: '#E11D48',
         gradientTo: '#FB7185',
@@ -943,16 +943,12 @@ function SpectrumBarCard({ rawRecords }) {
       scoreSum += score;
     });
 
-    const fallbackCounts = [42, 28, 15, 12];
-    const fallbackTotal = 97;
-
-    const avgScore = totalCount > 0 ? scoreSum / totalCount : 3.84;
+    const avgScore = totalCount > 0 ? scoreSum / totalCount : 0;
 
     let cumPct = 0;
     const slices = options.map((opt, idx) => {
-      const c = totalCount > 0 ? counts[idx] : fallbackCounts[idx];
-      const effectiveTotal = totalCount > 0 ? totalCount : fallbackTotal;
-      const pct = Math.round((c / effectiveTotal) * 100);
+      const c = counts[idx];
+      const pct = totalCount > 0 ? Math.round((c / totalCount) * 100) : 0;
       const startAngle = cumPct * 3.6;
       cumPct += pct;
       const endAngle = cumPct * 3.6;
@@ -1251,19 +1247,19 @@ function RankingProgressCard({ rawRecords }) {
     });
 
     const hasData = q50Responses.length > 0;
-    const total = hasData ? q50Responses.length : 100;
-    const pChat = hasData ? Math.round((chatGpt / total) * 100) : 42;
-    const pCopilots = hasData ? Math.round((copilots / total) * 100) : 28;
-    const pDesign = hasData ? Math.round((designAi / total) * 100) : 18;
-    const pResearch = hasData ? Math.max(0, 100 - pChat - pCopilots - pDesign) : 12;
+    const total = hasData ? q50Responses.length : 0;
+    const pChat = hasData && total > 0 ? Math.round((chatGpt / total) * 100) : 0;
+    const pCopilots = hasData && total > 0 ? Math.round((copilots / total) * 100) : 0;
+    const pDesign = hasData && total > 0 ? Math.round((designAi / total) * 100) : 0;
+    const pResearch = hasData && total > 0 ? Math.max(0, 100 - pChat - pCopilots - pDesign) : 0;
 
     const topRankedPct = Math.max(pChat, pCopilots, pDesign, pResearch);
 
     const rings = [
-      { id: 'chat', rank: '01', label: 'ChatGPT', fullLabel: 'ChatGPT & Conversational AI', pct: pChat, count: hasData ? chatGpt : 42, color: '#3B82F6', glow: 'rgba(59, 130, 246, 0.7)', radius: 120 },
-      { id: 'copilot', rank: '02', label: 'Copilots', fullLabel: 'Coding & Developer Copilots', pct: pCopilots, count: hasData ? copilots : 28, color: '#10B981', glow: 'rgba(16, 185, 129, 0.7)', radius: 96 },
-      { id: 'design', rank: '03', label: 'Design AI', fullLabel: 'Design & Visual AI Tools', pct: pDesign, count: hasData ? designAi : 18, color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.7)', radius: 72 },
-      { id: 'research', rank: '04', label: 'Research', fullLabel: 'Research & Search Assistants', pct: pResearch, count: hasData ? research : 12, color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.7)', radius: 48 },
+      { id: 'chat', rank: '01', label: 'ChatGPT', fullLabel: 'ChatGPT & Conversational AI', pct: pChat, count: chatGpt, color: '#3B82F6', glow: 'rgba(59, 130, 246, 0.7)', radius: 120 },
+      { id: 'copilot', rank: '02', label: 'Copilots', fullLabel: 'Coding & Developer Copilots', pct: pCopilots, count: copilots, color: '#10B981', glow: 'rgba(16, 185, 129, 0.7)', radius: 96 },
+      { id: 'design', rank: '03', label: 'Design AI', fullLabel: 'Design & Visual AI Tools', pct: pDesign, count: designAi, color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.7)', radius: 72 },
+      { id: 'research', rank: '04', label: 'Research', fullLabel: 'Research & Search Assistants', pct: pResearch, count: research, color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.7)', radius: 48 },
     ];
 
     return { total, topRankedPct, rings };
@@ -1551,8 +1547,8 @@ function SubmissionCompletionGsapPieCard({ kpis }) {
   const completedCount = kpis?.completedSurveys || 0;
   const incompleteCount = kpis?.incompleteSurveys || 0;
   const totalRatioCount = completedCount + incompleteCount;
-  const completedPct = totalRatioCount > 0 ? Math.round((completedCount / totalRatioCount) * 100) : 67;
-  const incompletePct = totalRatioCount > 0 ? 100 - completedPct : 33;
+  const completedPct = totalRatioCount > 0 ? Math.round((completedCount / totalRatioCount) * 100) : 0;
+  const incompletePct = totalRatioCount > 0 ? 100 - completedPct : 0;
 
   const slices = useMemo(() => {
     const rawSlices = [
@@ -1562,7 +1558,7 @@ function SubmissionCompletionGsapPieCard({ kpis }) {
 
     let cumPct = 0;
     return rawSlices.map((opt) => {
-      const pct = totalRatioCount > 0 ? Math.round((opt.count / totalRatioCount) * 100) : (opt.id === 'completed' ? 67 : 33);
+      const pct = totalRatioCount > 0 ? Math.round((opt.count / totalRatioCount) * 100) : 0;
       const startAngle = cumPct * 3.6;
       cumPct += pct;
       const endAngle = cumPct * 3.6;
@@ -1850,13 +1846,13 @@ export default function AdminDashboard() {
   }, [dateFilter]);
 
   const growthData = kpis?.growthData || [
-    { day: 'Mon', respondents: 1, completed: 1 },
-    { day: 'Tue', respondents: 2, completed: 2 },
-    { day: 'Wed', respondents: 3, completed: 3 },
-    { day: 'Thu', respondents: 4, completed: 4 },
-    { day: 'Fri', respondents: 5, completed: 5 },
-    { day: 'Sat', respondents: 6, completed: 6 },
-    { day: 'Sun', respondents: kpis?.totalRespondents || 7, completed: kpis?.completedSurveys || 7 },
+    { day: 'Mon', respondents: 0, completed: 0 },
+    { day: 'Tue', respondents: 0, completed: 0 },
+    { day: 'Wed', respondents: 0, completed: 0 },
+    { day: 'Thu', respondents: 0, completed: 0 },
+    { day: 'Fri', respondents: 0, completed: 0 },
+    { day: 'Sat', respondents: 0, completed: 0 },
+    { day: 'Sun', respondents: 0, completed: 0 },
   ];
 
   const completedCount = kpis?.completedSurveys || 0;
@@ -1871,21 +1867,21 @@ export default function AdminDashboard() {
   ];
 
   const dimensionAveragesData = analyticsData?.major15DimensionScores || [
-    { dimension: 'Mental Wellbeing', score: 75, fill: '#075D63' },
-    { dimension: 'Learning Drive', score: 75, fill: '#109A9B' },
-    { dimension: 'Career Readiness', score: 75, fill: '#3B82F6' },
-    { dimension: 'Financial Maturity', score: 75, fill: '#059669' },
-    { dimension: 'Digital Lifestyle', score: 75, fill: '#8B5CF6' },
-    { dimension: 'Health & Fitness', score: 75, fill: '#EC4899' },
-    { dimension: 'Family Orientation', score: 75, fill: '#F59E0B' },
-    { dimension: 'Peer Relations', score: 75, fill: '#6366F1' },
-    { dimension: 'Independence Drive', score: 75, fill: '#D97706' },
-    { dimension: 'Entrepreneurship', score: 75, fill: '#10B981' },
-    { dimension: 'Global Mobility', score: 75, fill: '#64748B' },
-    { dimension: 'Social Duty', score: 75, fill: '#075D63' },
-    { dimension: 'Future Adaptability', score: 75, fill: '#109A9B' },
-    { dimension: 'Risk Tolerance', score: 75, fill: '#D97706' },
-    { dimension: 'Lifestyle Values', score: 75, fill: '#3B82F6' },
+    { dimension: 'Mental Wellbeing', score: 0, fill: '#075D63' },
+    { dimension: 'Learning Drive', score: 0, fill: '#109A9B' },
+    { dimension: 'Career Readiness', score: 0, fill: '#3B82F6' },
+    { dimension: 'Financial Maturity', score: 0, fill: '#059669' },
+    { dimension: 'Digital Lifestyle', score: 0, fill: '#8B5CF6' },
+    { dimension: 'Health & Fitness', score: 0, fill: '#EC4899' },
+    { dimension: 'Family Orientation', score: 0, fill: '#F59E0B' },
+    { dimension: 'Peer Relations', score: 0, fill: '#6366F1' },
+    { dimension: 'Independence Drive', score: 0, fill: '#D97706' },
+    { dimension: 'Entrepreneurship', score: 0, fill: '#10B981' },
+    { dimension: 'Global Mobility', score: 0, fill: '#64748B' },
+    { dimension: 'Social Duty', score: 0, fill: '#075D63' },
+    { dimension: 'Future Adaptability', score: 0, fill: '#109A9B' },
+    { dimension: 'Risk Tolerance', score: 0, fill: '#D97706' },
+    { dimension: 'Lifestyle Values', score: 0, fill: '#3B82F6' },
   ];
 
   return (

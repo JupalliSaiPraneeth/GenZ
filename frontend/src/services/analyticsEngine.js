@@ -339,11 +339,11 @@ export function calculateAnalyticsDataset(responseRecords = []) {
     else ageCounts['21_23']++;
   });
   const ageDistribution = [
-    { label: '18–20', count: q1Values.length > 0 ? ageCounts['18_20'] : 35 },
-    { label: '21–23', count: q1Values.length > 0 ? ageCounts['21_23'] : 48 },
-    { label: '24–26', count: q1Values.length > 0 ? ageCounts['24_26'] : 12 },
-    { label: '27–29', count: q1Values.length > 0 ? ageCounts['27_29'] : 4 },
-    { label: '30+', count: q1Values.length > 0 ? ageCounts['30_plus'] : 1 },
+    { label: '18–20', count: q1Values.length > 0 ? ageCounts['18_20'] : 0 },
+    { label: '21–23', count: q1Values.length > 0 ? ageCounts['21_23'] : 0 },
+    { label: '24–26', count: q1Values.length > 0 ? ageCounts['24_26'] : 0 },
+    { label: '27–29', count: q1Values.length > 0 ? ageCounts['27_29'] : 0 },
+    { label: '30+', count: q1Values.length > 0 ? ageCounts['30_plus'] : 0 },
   ];
 
   const q2Values = rawValuesMap.get('q2') || [];
@@ -355,9 +355,9 @@ export function calculateAnalyticsDataset(responseRecords = []) {
     else genderCounts.non_binary++;
   });
   const genderDistribution = [
-    { name: 'Female', value: q2Values.length > 0 ? genderCounts.female : 52, fill: '#109A9B' },
-    { name: 'Male', value: q2Values.length > 0 ? genderCounts.male : 42, fill: '#075D63' },
-    { name: 'Non-Binary/Other', value: q2Values.length > 0 ? genderCounts.non_binary : 6, fill: '#FDE7B5' },
+    { name: 'Female', value: q2Values.length > 0 ? genderCounts.female : 0, fill: '#109A9B' },
+    { name: 'Male', value: q2Values.length > 0 ? genderCounts.male : 0, fill: '#075D63' },
+    { name: 'Non-Binary/Other', value: q2Values.length > 0 ? genderCounts.non_binary : 0, fill: '#FDE7B5' },
   ];
 
   // 5. Calculate Action Gap Analysis
@@ -415,66 +415,66 @@ export function calculateAnalyticsDataset(responseRecords = []) {
       id: 'corr-1',
       title: 'Sleep Quality vs Mental Wellbeing',
       factorA: 'Sleep & Recovery',
-      scoreA: aspectMap.get('aspect-3')?.pctScore || 70,
+      scoreA: aspectMap.get('aspect-3')?.pctScore || 0,
       factorB: 'Mental Wellbeing & Resilience',
-      scoreB: aspectMap.get('aspect-2')?.pctScore || 72,
+      scoreB: aspectMap.get('aspect-2')?.pctScore || 0,
       insight: 'Higher sleep quality correlates with a +24% increase in daily stress resilience and optimism.',
     },
     {
       id: 'corr-2',
       title: 'Social Media Use vs Study Behaviour',
       factorA: 'Social Media Engagement',
-      scoreA: aspectMap.get('aspect-4')?.pctScore || 65,
+      scoreA: aspectMap.get('aspect-4')?.pctScore || 0,
       factorB: 'Study Behaviour & Discipline',
-      scoreB: aspectMap.get('aspect-2')?.pctScore || 60,
+      scoreB: aspectMap.get('aspect-2')?.pctScore || 0,
       insight: 'High notification distraction exhibits strong inverse correlation with focus duration.',
     },
     {
       id: 'corr-3',
       title: 'Financial Literacy vs Financial Independence',
       factorA: 'Financial Management',
-      scoreA: aspectMap.get('aspect-8')?.pctScore || 75,
+      scoreA: aspectMap.get('aspect-8')?.pctScore || 0,
       factorB: 'Career Aspirations',
-      scoreB: aspectMap.get('aspect-7')?.pctScore || 82,
+      scoreB: aspectMap.get('aspect-7')?.pctScore || 0,
       insight: 'Higher financial literacy directly elevates confidence in building multiple income streams.',
     },
     {
       id: 'corr-4',
       title: 'Generative AI Usage vs Technology Adaptability',
       factorA: 'AI Daily Adoption',
-      scoreA: aspectMap.get('aspect-10')?.pctScore || 80,
+      scoreA: aspectMap.get('aspect-10')?.pctScore || 0,
       factorB: 'Engineering Experience',
-      scoreB: aspectMap.get('aspect-14')?.pctScore || 84,
+      scoreB: aspectMap.get('aspect-14')?.pctScore || 0,
       insight: 'Frequent AI users report +30% higher confidence in future job readiness and adaptability.',
     },
     {
       id: 'corr-5',
       title: 'Risk Tolerance vs Entrepreneurial Drive',
       factorA: 'Career Aspirations',
-      scoreA: aspectMap.get('aspect-7')?.pctScore || 68,
+      scoreA: aspectMap.get('aspect-7')?.pctScore || 0,
       factorB: 'Financial Management',
-      scoreB: aspectMap.get('aspect-8')?.pctScore || 74,
+      scoreB: aspectMap.get('aspect-8')?.pctScore || 0,
       insight: 'Comfort with ambiguity is the single highest predictor of interest in launching startups.',
     },
     {
       id: 'corr-6',
       title: 'Family Support vs Resilience',
       factorA: 'Family Relationships',
-      scoreA: aspectMap.get('aspect-6')?.pctScore || 78,
+      scoreA: aspectMap.get('aspect-6')?.pctScore || 0,
       factorB: 'Values & Ethics',
-      scoreB: aspectMap.get('aspect-11')?.pctScore || 72,
+      scoreB: aspectMap.get('aspect-11')?.pctScore || 0,
       insight: 'Strong family support acts as a key psychological buffer against academic & career anxiety.',
     },
   ];
 
   // 7. Calculate User Personas Distribution
-  const growthScore = ((aspectMap.get('aspect-7')?.pctScore || 75) + (aspectMap.get('aspect-12')?.pctScore || 75) + (aspectMap.get('aspect-10')?.pctScore || 75)) / 3;
-  const securityScore = ((aspectMap.get('aspect-2')?.pctScore || 75) + (aspectMap.get('aspect-8')?.pctScore || 75) + (aspectMap.get('aspect-11')?.pctScore || 75)) / 3;
-  const financialScore = ((aspectMap.get('aspect-8')?.pctScore || 75) + (aspectMap.get('aspect-7')?.pctScore || 75)) / 2;
-  const globalScore = ((aspectMap.get('aspect-9')?.pctScore || 75) + (aspectMap.get('aspect-10')?.pctScore || 75)) / 2;
-  const familyScore = ((aspectMap.get('aspect-6')?.pctScore || 75) + (aspectMap.get('aspect-3')?.pctScore || 75)) / 2;
-  const digitalScore = ((aspectMap.get('aspect-4')?.pctScore || 75) + (aspectMap.get('aspect-10')?.pctScore || 75)) / 2;
-  const consciousScore = ((aspectMap.get('aspect-11')?.pctScore || 75) + (aspectMap.get('aspect-13')?.pctScore || 75)) / 2;
+  const growthScore = ((aspectMap.get('aspect-7')?.pctScore || 0) + (aspectMap.get('aspect-12')?.pctScore || 0) + (aspectMap.get('aspect-10')?.pctScore || 0)) / 3;
+  const securityScore = ((aspectMap.get('aspect-2')?.pctScore || 0) + (aspectMap.get('aspect-8')?.pctScore || 0) + (aspectMap.get('aspect-11')?.pctScore || 0)) / 3;
+  const financialScore = ((aspectMap.get('aspect-8')?.pctScore || 0) + (aspectMap.get('aspect-7')?.pctScore || 0)) / 2;
+  const globalScore = ((aspectMap.get('aspect-9')?.pctScore || 0) + (aspectMap.get('aspect-10')?.pctScore || 0)) / 2;
+  const familyScore = ((aspectMap.get('aspect-6')?.pctScore || 0) + (aspectMap.get('aspect-3')?.pctScore || 0)) / 2;
+  const digitalScore = ((aspectMap.get('aspect-4')?.pctScore || 0) + (aspectMap.get('aspect-10')?.pctScore || 0)) / 2;
+  const consciousScore = ((aspectMap.get('aspect-11')?.pctScore || 0) + (aspectMap.get('aspect-13')?.pctScore || 0)) / 2;
 
   const totalPersonaPoints = growthScore + securityScore + financialScore + globalScore + familyScore + digitalScore + consciousScore || 1;
 

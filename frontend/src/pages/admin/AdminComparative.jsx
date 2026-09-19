@@ -235,11 +235,11 @@ export default function AdminComparative() {
       const prevR = Math.abs(parseFloat(prev?.r || 0));
       const currR = Math.abs(parseFloat(curr?.r || 0));
       return currR > prevR ? curr : prev;
-    }, pairs[0] || { pair: 'Q12 (Sleep) ↔ Q14 (Mental)', r: '+0.68' });
+    }, pairs[0] || { pair: 'No Correlation Data', r: '0.00' });
 
     const maxGap = gaps.reduce((prev, curr) => {
       return (curr?.gapPct || 0) > (prev?.gapPct || 0) ? curr : prev;
-    }, gaps[0] || { title: 'Digital Privacy Gap', gapPct: 41 });
+    }, gaps[0] || { title: 'No Gap Data', gapPct: 0 });
 
     const totalRecords = rawRecords.length || 0;
     const totalSessions = rawSessions.length || 0;

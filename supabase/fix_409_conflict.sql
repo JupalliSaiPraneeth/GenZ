@@ -1,5 +1,5 @@
 -- =================================================================
--- FIX ALL 409 CONFLICT & 401 UNAUTHORIZED ERRORS IN SUPABASE
+-- FIX ALL 409 CONFLICT & 400 BAD REQUEST ERRORS IN SUPABASE
 -- File: supabase/fix_409_conflict.sql
 -- Run this script inside Supabase Dashboard ➔ SQL Editor
 -- =================================================================
@@ -9,16 +9,22 @@
 ALTER TABLE public.survey_responses 
   DROP CONSTRAINT IF EXISTS survey_responses_question_id_fkey;
 
--- 2. Drop any old unique constraint and recreate clean UNIQUE (session_id, question_id)
+-- 2. Drop any old unique constraint and recreate clean UNIQUE constraints for native upsert
 ALTER TABLE public.survey_responses 
   DROP CONSTRAINT IF EXISTS survey_responses_session_id_question_id_key;
 
 ALTER TABLE public.survey_responses 
+  DROP CONSTRAINT IF EXISTS survey_responses_participant_id_question_id_key;
+
+ALTER TABLE public.survey_responses 
   DROP CONSTRAINT IF EXISTS survey_responses_session_id_question_id_idx;
 
--- Add strict UNIQUE constraint matching PostgREST onConflict target
+-- Add strict UNIQUE constraints matching PostgREST onConflict targets
 ALTER TABLE public.survey_responses 
   ADD CONSTRAINT survey_responses_session_id_question_id_key UNIQUE (session_id, question_id);
+
+ALTER TABLE public.survey_responses 
+  ADD CONSTRAINT survey_responses_participant_id_question_id_key UNIQUE (participant_id, question_id);
 
 -- 3. Add email column to anonymous_participants & make anonymous_participant_id nullable on survey_sessions
 ALTER TABLE public.anonymous_participants 
@@ -54,10 +60,18 @@ AFTER INSERT OR UPDATE OR DELETE ON public.survey_responses
 FOR EACH ROW EXECUTE FUNCTION public.update_survey_session_question_count();
 
 -- 5. Enable RLS & Grant full permissions for anonymous users (anon role)
+ALTER TABLE public.participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.anonymous_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.survey_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.survey_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.survey_questions ENABLE ROW LEVEL SECURITY;
+
+-- Participants Table RLS
+DROP POLICY IF EXISTS "Public participants all" ON public.participants;
+CREATE POLICY "Public participants all" 
+  ON public.participants FOR ALL 
+  USING (true) 
+  WITH CHECK (true);
 
 -- Anonymous Participants RLS
 DROP POLICY IF EXISTS "Public anonymous_participants all" ON public.anonymous_participants;
@@ -80,11 +94,13 @@ CREATE POLICY "Public survey_responses all"
   USING (true) 
   WITH CHECK (true);
 
--- Survey Questions RLS
+-- Survey Questions RLS (Full Read & Write Access for Blueprint updates)
 DROP POLICY IF EXISTS "Public survey_questions read" ON public.survey_questions;
-CREATE POLICY "Public survey_questions read" 
-  ON public.survey_questions FOR SELECT 
-  USING (true);
+DROP POLICY IF EXISTS "Public survey_questions all" ON public.survey_questions;
+CREATE POLICY "Public survey_questions all" 
+  ON public.survey_questions FOR ALL 
+  USING (true) 
+  WITH CHECK (true);
 
 -- Verify policies and constraints
 SELECT 
@@ -92,3 +108,4 @@ SELECT
     contype AS constraint_type 
 FROM pg_constraint 
 WHERE conrelid = 'public.survey_responses'::regclass;
+

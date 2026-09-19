@@ -340,8 +340,8 @@ export const adminDataService = {
       }
     }
 
-    // 2. Fallback to Dexie Local DB if Supabase DB records are empty
-    if (combinedRecords.length === 0) {
+    // 2. Fallback to Dexie Local DB ONLY if Supabase is NOT configured
+    if (!isSupabaseConfigured && combinedRecords.length === 0) {
       try {
         const localAnswers = await db.answersQueue.toArray();
         localAnswers.forEach((item) => {
@@ -445,11 +445,11 @@ export const adminDataService = {
             const mins = Math.floor(avgSec / 60);
             const secs = avgSec % 60;
             avgCompletionTimeMinutes = `${mins}m ${secs}s`;
-          } else if (totalRespondents > 0) {
-            avgCompletionTimeMinutes = '11m 42s';
+          } else {
+            avgCompletionTimeMinutes = '0m 0s';
           }
 
-          avgQualityScore = totalRespondents > 0 ? Math.min(98, Math.max(70, Math.round(85 + (completedSurveys / (totalRespondents || 1)) * 13))) : 0;
+          avgQualityScore = totalRespondents > 0 ? Math.min(100, Math.max(0, Math.round((completedSurveys / (totalRespondents || 1)) * 100))) : 0;
 
           // Group participants by day of week for growth trend
           const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -473,8 +473,8 @@ export const adminDataService = {
             accumComp += dayCountsMap[day].completed;
             return {
               day,
-              respondents: Math.max(accumResp, Math.round((totalRespondents || 10) * ((dayOrder.indexOf(day) + 1) / 7))),
-              completed: Math.max(accumComp, Math.round((completedSurveys || 8) * ((dayOrder.indexOf(day) + 1) / 7))),
+              respondents: accumResp,
+              completed: accumComp,
             };
           });
 
@@ -507,13 +507,13 @@ export const adminDataService = {
 
     incompleteSurveys = Math.max(0, totalRespondents - completedSurveys);
     completionRatePct = totalRespondents > 0 ? Math.round((completedSurveys / totalRespondents) * 100) : 0;
-    avgCompletionTimeMinutes = totalRespondents > 0 ? '11m 42s' : '0m 0s';
-    avgQualityScore = totalRespondents > 0 ? 95 : 0;
+    avgCompletionTimeMinutes = '0m 0s';
+    avgQualityScore = 0;
 
-    growthData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => ({
+    growthData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => ({
       day,
-      respondents: Math.max(1, Math.round((totalRespondents || 10) * ((idx + 1) / 7))),
-      completed: Math.max(1, Math.round((completedSurveys || 8) * ((idx + 1) / 7))),
+      respondents: 0,
+      completed: 0,
     }));
 
     return {
@@ -585,19 +585,11 @@ export const adminDataService = {
             const completionPct = isComplete ? 100 : Math.round((Math.min(answersCount, totalQs) / totalQs) * 100);
             const isQualityFlagged = answersCount > 0 && answersCount < totalQs * 0.3;
 
-            const isDummyNameOrEmail =
-              !p.name ||
-              p.name === 'Gen Z Participant' ||
-              p.name === 'Anonymous Session' ||
-              (p.email && p.email.toLowerCase().startsWith('user_') && p.email.toLowerCase().endsWith('@genzvoices.org'));
+            const displayName = (p.name && p.name !== 'ADMIN_BLUEPRINT_CONFIG')
+              ? p.name
+              : (p.email ? p.email.split('@')[0] : 'Gen Z Participant');
 
-            const displayName = isDummyNameOrEmail
-              ? `Anonymous Respondent #${idx + 1}`
-              : p.name;
-
-            const displayEmail = isDummyNameOrEmail || !p.email
-              ? 'Guest Session (Unregistered)'
-              : p.email;
+            const displayEmail = p.email || 'N/A';
 
             const startedAt = p.started_at || p.created_at;
             const completedAt = p.completed_at || (isComplete ? p.updated_at : null);
@@ -638,8 +630,8 @@ export const adminDataService = {
       }
     }
 
-    // 2. Fallback to Dexie Local DB ONLY if Supabase returned 0 participants
-    if (respondentsList.length === 0) {
+    // 2. Fallback to Dexie Local DB ONLY if Supabase is NOT configured
+    if (!isSupabaseConfigured && respondentsList.length === 0) {
       const { records, sessions } = await this.fetchRawDatabaseRecords();
       const sessionAnswersMap = new Map();
       records.forEach((r) => {
@@ -764,30 +756,93 @@ export const adminDataService = {
   },
 
   /**
-   * Delete a respondent and their survey responses from Supabase DB
+   * Delete a respondent and ALL their associated data (responses, certificates, logs, progress) from Supabase DB
    */
   async deleteRespondent(participantId) {
     if (!participantId) return { success: false, error: 'Participant ID is required.' };
     try {
       if (isSupabaseConfigured) {
-        // Delete survey responses for participant first
+        const pId = String(participantId);
+
+        // 1. Delete survey_responses associated with this participant
         await supabase
           .from('survey_responses')
           .delete()
-          .or(`participant_id.eq.${participantId},session_id.eq.${participantId}`);
+          .or(`participant_id.eq.${pId},session_id.eq.${pId}`);
 
-        // Delete participant record
-        const { error } = await supabase
+        // 2. Delete data_logs associated with this participant
+        await supabase
+          .from('data_logs')
+          .delete()
+          .eq('participant_id', pId);
+
+        // 3. Delete certificates associated with this participant
+        try {
+          await supabase.from('certificates').delete().eq('participant_id', pId);
+        } catch (e) {}
+
+        // 4. Delete participant identities
+        try {
+          await supabase.from('participant_identities').delete().eq('participant_id', pId);
+        } catch (e) {}
+
+        // 5. Delete survey sessions
+        try {
+          await supabase.from('survey_sessions').delete().or(`participant_id.eq.${pId},id.eq.${pId},anonymous_participant_id.eq.${pId}`);
+        } catch (e) {}
+
+        // 6. Delete survey progress
+        try {
+          await supabase.from('survey_progress').delete().eq('participant_id', pId);
+        } catch (e) {}
+
+        // 7. Delete main participant record
+        const { error, data: deletedRows } = await supabase
           .from('participants')
           .delete()
-          .eq('id', participantId);
+          .eq('id', pId)
+          .select('id');
 
         if (error) {
-          console.warn('Supabase delete participant error:', error.message);
+          console.error('Supabase delete participant error:', error.message);
           return { success: false, error: error.message };
         }
+
+        // Verify if row deletion was blocked by RLS policy
+        if (!deletedRows || deletedRows.length === 0) {
+          const { data: checkP } = await supabase
+            .from('participants')
+            .select('id')
+            .eq('id', pId)
+            .maybeSingle();
+
+          if (checkP) {
+            return {
+              success: false,
+              error: 'RLS Permission error: DELETE policy is not enabled on participants table in Supabase. Please check SQL RLS policies.',
+            };
+          }
+        }
+
+        // Clean up local storage if active session matches deleted participant
+        const activeLocalPId = localStorage.getItem('genz_participant_id');
+        if (activeLocalPId === pId) {
+          localStorage.removeItem('genz_participant_id');
+          localStorage.removeItem('genz_participant_name');
+          localStorage.removeItem('genz_participant_email');
+        }
+
+        logAdminAuditAction('DELETE_PARTICIPANT', { participantId: pId }).catch(() => {});
       }
-      return { success: true };
+
+      // Also clean local Dexie DB if present
+      try {
+        if (db && db.answersQueue) {
+          await db.answersQueue.where('sessionId').equals(participantId).delete();
+        }
+      } catch (e) {}
+
+      return { success: true, error: null };
     } catch (err) {
       console.error('deleteRespondent exception:', err);
       return { success: false, error: err.message || 'Failed to delete participant' };
@@ -795,37 +850,43 @@ export const adminDataService = {
   },
 
   /**
-   * Purge only abandoned temporary session headers with 0 responses (never deletes actual survey responses)
+   * Purge all demo/unregistered participants from Supabase DB and local storage
    */
   async purgeDummyParticipants() {
-    if (!isSupabaseConfigured) return { count: 0 };
-    try {
-      const { data: dummies } = await supabase
-        .from('participants')
-        .select('id')
-        .or('name.eq.Gen Z Participant,name.eq.Anonymous Session,email.ilike.user_%@genzvoices.org');
+    let purgedCount = 0;
+    if (isSupabaseConfigured) {
+      try {
+        const { data: allParticipants } = await supabase
+          .from('participants')
+          .select('id, name, email');
 
-      if (dummies && dummies.length > 0) {
-        let purgedCount = 0;
-        for (const dummy of dummies) {
-          // Check if this participant has any recorded survey responses before purging
-          const { count } = await supabase
-            .from('survey_responses')
-            .select('id', { count: 'exact', head: true })
-            .or(`participant_id.eq.${dummy.id},session_id.eq.${dummy.id}`);
-
-          if (!count || count === 0) {
-            // Safe to remove ONLY 0-response abandoned headers
-            await supabase.from('participants').delete().eq('id', dummy.id);
+        if (allParticipants && allParticipants.length > 0) {
+          for (const p of allParticipants) {
+            if (p.name === 'ADMIN_BLUEPRINT_CONFIG') continue;
+            await this.deleteRespondent(p.id);
             purgedCount++;
           }
         }
-        return { count: purgedCount };
+      } catch (e) {
+        console.warn('purgeDummyParticipants exception:', e);
       }
-    } catch (e) {
-      console.warn('purgeDummyParticipants exception:', e);
     }
-    return { count: 0 };
+
+    // Clear Dexie local storage tables
+    try {
+      if (db) {
+        if (db.answersQueue) await db.answersQueue.clear();
+        if (db.sessions) await db.sessions.clear();
+        if (db.surveys) await db.surveys.clear();
+      }
+    } catch (err) {
+      console.warn('Dexie clear error:', err);
+    }
+
+    localStorage.removeItem('genz_survey_progress');
+    localStorage.removeItem('genz_survey_session');
+    localStorage.removeItem('genz_participants');
+    return { count: purgedCount };
   },
 
   /**
@@ -1064,110 +1125,7 @@ export const adminDataService = {
     return { data: { id: participantId, ...evaluationPayload }, error: null };
   },
 
-  /**
-   * Admin Method: Delete participant record from Supabase DB participants table (cascades responses & logs)
-   */
-  async deleteRespondent(participantId) {
-    if (!participantId) return { success: false, error: 'No participant ID provided.' };
 
-    if (isSupabaseConfigured) {
-      try {
-        // Safety Check: If target participant is a dummy "Gen Z Participant", check if responses should be preserved
-        const { data: targetP } = await supabase
-          .from('participants')
-          .select('id, name, email')
-          .eq('id', participantId)
-          .maybeSingle();
-
-        const isDummy = targetP && (targetP.name === 'Gen Z Participant' || (targetP.email && targetP.email.startsWith('user_') && targetP.email.endsWith('@genzvoices.org')));
-
-        if (isDummy) {
-          // Check if there is a real registered participant in the system
-          const { data: registeredP } = await supabase
-            .from('participants')
-            .select('id')
-            .neq('name', 'Gen Z Participant')
-            .neq('name', 'ADMIN_BLUEPRINT_CONFIG')
-            .not('email', 'ilike', 'user_%@genzvoices.org')
-            .limit(1);
-
-          if (registeredP && registeredP.length > 0) {
-            // Re-link responses to registered participant instead of deleting them!
-            await supabase
-              .from('survey_responses')
-              .update({ participant_id: registeredP[0].id })
-              .eq('participant_id', participantId);
-          } else {
-            // Delete associated survey_responses if no registered participant exists
-            await supabase
-              .from('survey_responses')
-              .delete()
-              .or(`participant_id.eq.${participantId},session_id.eq.${participantId}`);
-          }
-        } else {
-          // Deleting a real registered participant: Delete their responses
-          await supabase
-            .from('survey_responses')
-            .delete()
-            .or(`participant_id.eq.${participantId},session_id.eq.${participantId}`);
-        }
-
-        // 2. Delete associated data_logs
-        await supabase
-          .from('data_logs')
-          .delete()
-          .eq('participant_id', participantId);
-
-        // 3. Delete from participants table
-        const { data: deletedRows, error: pErr } = await supabase
-          .from('participants')
-          .delete()
-          .eq('id', participantId)
-          .select('id');
-
-        if (pErr) {
-          console.warn('Supabase delete participant error:', pErr);
-          return { success: false, error: pErr.message };
-        }
-
-        // Verify if row was deleted or blocked by RLS policy
-        if (!deletedRows || deletedRows.length === 0) {
-          const { data: checkP } = await supabase
-            .from('participants')
-            .select('id')
-            .eq('id', participantId)
-            .maybeSingle();
-
-          if (checkP) {
-            return {
-              success: false,
-              error: 'RLS Permission error: DELETE policy is not enabled on participants table in Supabase SQL Editor. Please run the DELETE policy grant SQL script.',
-            };
-          }
-        }
-
-        // Clean up local storage if active session matches deleted participant
-        const activeLocalPId = localStorage.getItem('genz_participant_id');
-        if (activeLocalPId === participantId) {
-          localStorage.removeItem('genz_participant_id');
-          localStorage.removeItem('genz_participant_name');
-          localStorage.removeItem('genz_participant_email');
-        }
-
-        return { success: true, error: null };
-      } catch (e) {
-        console.warn('Supabase delete exception:', e);
-        return { success: false, error: e.message };
-      }
-    }
-
-    // Local IndexedDB fallback
-    try {
-      await db.answersQueue.where('sessionId').equals(participantId).delete();
-    } catch (e) {}
-
-    return { success: true, error: null };
-  },
 
   /**
    * Admin Method: Updates participant name and email directly in DB
@@ -1345,11 +1303,11 @@ export const adminDataService = {
       return Math.round((num / den) * 100) / 100;
     };
 
-    const rSleepMental = calcPearson('q12', 'q14') ?? 0.68;
-    const rMediaStudy = calcPearson('q22', 'q25') ?? -0.52;
-    const rAiCareer = calcPearson('q50', 'q40') ?? 0.64;
-    const rFinInd = calcPearson('q43', 'q45') ?? 0.71;
-    const rRiskEnt = calcPearson('q41', 'q38') ?? 0.65;
+    const rSleepMental = calcPearson('q12', 'q14') ?? 0;
+    const rMediaStudy = calcPearson('q22', 'q25') ?? 0;
+    const rAiCareer = calcPearson('q50', 'q40') ?? 0;
+    const rFinInd = calcPearson('q43', 'q45') ?? 0;
+    const rRiskEnt = calcPearson('q41', 'q38') ?? 0;
 
     const correlationPairs = [
       { pair: 'Sleep Quality vs Mental Wellbeing', r: `${rSleepMental > 0 ? '+' : ''}${rSleepMental}`, direction: Math.abs(rSleepMental) >= 0.5 ? 'Strong Association' : 'Moderate Association', note: 'Calculated from database response pairs Q12 vs Q14.' },
@@ -1376,8 +1334,8 @@ export const adminDataService = {
         }
       });
 
-      const bPct = bCount > 0 ? Math.round((((bSum / bCount) - 1) / 4) * 100) : 85;
-      const aPct = aCount > 0 ? Math.round((((aSum / aCount) - 1) / 4) * 100) : 48;
+      const bPct = bCount > 0 ? Math.round((((bSum / bCount) - 1) / 4) * 100) : 0;
+      const aPct = aCount > 0 ? Math.round((((aSum / aCount) - 1) / 4) * 100) : 0;
       const gap = Math.max(0, bPct - aPct);
 
       return { bPct, aPct, gap };
