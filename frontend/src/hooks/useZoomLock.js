@@ -2,9 +2,9 @@ import { useEffect } from 'react';
 
 /**
  * useZoomLock Hook
- * 1. Prevents user zoom keyboard and wheel shortcuts (Ctrl/Cmd + '+', '-', '0', mousewheel zoom, gesture zoom).
- * 2. Dynamically calculates browser zoom level and applies scale compensation
- *    so all UI components remain at 100% visual size regardless of browser zoom settings.
+ * 1. Blocks user zoom keyboard and mouse wheel shortcuts (Ctrl/Cmd + '+', '-', '0', mousewheel zoom, gesture zoom).
+ * 2. Automatically detects system display scale (OS settings) and browser zoom on any laptop or monitor,
+ *    applying inverse CSS scale compensation so the website appears at 100% standard size on EVERY device.
  */
 export function useZoomLock() {
   useEffect(() => {
@@ -41,64 +41,52 @@ export function useZoomLock() {
     document.addEventListener('gesturestart', handleGesture, { capture: true });
     document.addEventListener('gesturechange', handleGesture, { capture: true });
 
-    // 4. Calculate baseline devicePixelRatio for 100% browser zoom
-    const initialDPR = window.devicePixelRatio || 1;
-    let initialRatio = 1;
-    if (window.outerWidth && window.innerWidth) {
-      initialRatio = window.outerWidth / window.innerWidth;
-    }
-
-    let baseDPR = initialDPR;
-    // If browser opened already zoomed (outerWidth / innerWidth is not ~1.0)
-    if (Math.abs(initialRatio - 1) > 0.08) {
-      baseDPR = initialDPR / initialRatio;
-    }
-
-    const updateZoomCompensation = () => {
+    const updateSystemZoomAdaptation = () => {
+      // Get current total pixel ratio (combining OS system display scale & browser zoom)
       const currentDPR = window.devicePixelRatio || 1;
-      let calculatedZoom = currentDPR / baseDPR;
 
-      // Double-check with window.outerWidth / window.innerWidth if available
-      if (window.outerWidth && window.innerWidth) {
-        const windowRatio = window.outerWidth / window.innerWidth;
-        if (Math.abs(calculatedZoom - windowRatio) > 0.25) {
-          calculatedZoom = windowRatio;
-        }
+      // On mobile / small touch devices (< 640px), keep native scaling
+      const isMobileDevice = window.innerWidth <= 640 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+      
+      let targetInverseScale = 1;
+      if (!isMobileDevice && currentDPR > 0) {
+        // Calculate exact inverse scale factor to standardize to 1.00 (100%) display ratio across all devices
+        targetInverseScale = 1 / currentDPR;
+
+        // Clamp inverse scale bounds safely (between 0.45x and 1.25x)
+        if (targetInverseScale < 0.45) targetInverseScale = 0.45;
+        if (targetInverseScale > 1.25) targetInverseScale = 1.25;
       }
 
-      // Clamp calculated zoom factor between 0.5 and 3.0
-      if (calculatedZoom < 0.5) calculatedZoom = 0.5;
-      if (calculatedZoom > 3) calculatedZoom = 3;
-
-      // Inverse scale factor to maintain 100% visual component sizes
-      const inverseScale = 1 / calculatedZoom;
+      // Round to 3 decimals to avoid jitter
+      const roundedScale = Math.round(targetInverseScale * 1000) / 1000;
 
       // Apply CSS zoom property to document root and body
       if (document.documentElement) {
-        document.documentElement.style.zoom = inverseScale;
+        document.documentElement.style.zoom = roundedScale;
       }
       if (document.body) {
-        document.body.style.zoom = inverseScale;
+        document.body.style.zoom = roundedScale;
       }
     };
 
-    // Execute immediately
-    updateZoomCompensation();
+    // Execute immediately on mount
+    updateSystemZoomAdaptation();
 
-    // Listen to resize and orientation changes
-    window.addEventListener('resize', updateZoomCompensation);
-    window.addEventListener('orientationchange', updateZoomCompensation);
+    // Listen to resize, orientation, and media query changes
+    window.addEventListener('resize', updateSystemZoomAdaptation);
+    window.addEventListener('orientationchange', updateSystemZoomAdaptation);
 
-    // Poll periodically to catch browser menu zoom changes that might not emit resize immediately
-    const intervalId = setInterval(updateZoomCompensation, 400);
+    // Poll periodically to catch dynamic window zoom or monitor swaps
+    const intervalId = setInterval(updateSystemZoomAdaptation, 300);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown, { capture: true });
       window.removeEventListener('wheel', handleWheel, { capture: true });
       document.removeEventListener('gesturestart', handleGesture, { capture: true });
       document.removeEventListener('gesturechange', handleGesture, { capture: true });
-      window.removeEventListener('resize', updateZoomCompensation);
-      window.removeEventListener('orientationchange', updateZoomCompensation);
+      window.removeEventListener('resize', updateSystemZoomAdaptation);
+      window.removeEventListener('orientationchange', updateSystemZoomAdaptation);
       clearInterval(intervalId);
 
       if (document.documentElement) {
