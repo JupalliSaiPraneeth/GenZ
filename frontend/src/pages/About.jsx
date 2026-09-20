@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   GraduationCap,
   Code2,
-  Sparkles,
   BookOpen,
   ArrowRight,
   CheckCircle2,
@@ -59,11 +58,6 @@ export default function About() {
 
         {/* 1. HERO SECTION */}
         <div className="text-center space-y-3 sm:space-y-4 max-w-4xl mx-auto pt-2 sm:pt-4">
-          <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/40 text-white text-[11px] sm:text-xs lg:text-sm font-sora font-extrabold shadow-sm animate-fade-in">
-            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FFF8E8]" />
-            <span>Gen Z Voices Research Initiative</span>
-          </div>
-
           <h1 className="font-sora font-extrabold text-2.5xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight drop-shadow-sm">
             About Gen Z Voices
           </h1>

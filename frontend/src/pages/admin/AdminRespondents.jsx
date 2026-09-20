@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Search,
   Filter,
   Users,
-  Eye,
   Download,
   CheckCircle2,
   AlertTriangle,
@@ -20,6 +19,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { adminDataService } from '../../services/adminDataService';
 
 export default function AdminRespondents() {
+  const navigate = useNavigate();
   const [respondents, setRespondents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -192,7 +192,11 @@ export default function AdminRespondents() {
                 </tr>
               ) : (
                 currentItems.map((r) => (
-                  <tr key={r.id} className="group hover:bg-[#F4FBFB]/80 transition-colors">
+                  <tr
+                    key={r.id}
+                    onClick={() => navigate(`/admin/respondents/${r.id}`)}
+                    className="group hover:bg-[#F4FBFB]/80 cursor-pointer transition-colors"
+                  >
                     <td className="py-3.5 px-4 sm:px-5">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#063E46] to-[#109A9B] text-[#FFF8E8] flex items-center justify-center font-black text-xs shadow-sm shrink-0 uppercase">
@@ -258,7 +262,10 @@ export default function AdminRespondents() {
                             </span>
                             <button
                               type="button"
-                              onClick={() => handleCopyCertId(r.certificateId)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyCertId(r.certificateId);
+                              }}
                               className="p-1.5 rounded-lg text-slate-400 hover:text-[#063E46] hover:bg-[#EAF6F6] border border-transparent hover:border-[#109A9B]/20 transition-all cursor-pointer"
                               title={copiedCertId === r.certificateId ? 'Copied to clipboard!' : 'Copy Certificate ID'}
                             >
@@ -293,16 +300,12 @@ export default function AdminRespondents() {
                     </td>
                     <td className="py-3 px-3 text-right sticky right-0 z-10 bg-white group-hover:bg-[#F4FBFB] transition-colors shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
                       <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-                        <Link
-                          to={`/admin/respondents/${r.id}`}
-                          className="w-8 h-8 rounded-xl bg-[#063E46] hover:bg-[#075D63] text-white flex items-center justify-center shadow-2xs hover:scale-105 transition-all cursor-pointer"
-                          title="Evaluate Profile"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
                         <button
                           type="button"
-                          onClick={() => handleDeleteParticipant(r)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteParticipant(r);
+                          }}
                           className="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center shadow-2xs hover:scale-105 transition-all cursor-pointer"
                           title="Delete Participant from Database"
                         >

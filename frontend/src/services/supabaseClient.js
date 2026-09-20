@@ -607,7 +607,7 @@ async function upsertToSurveyQuestions(questionObj) {
 /**
  * Log to `data_logs` table in Supabase
  */
-async function logAdminAuditAction(action, details = {}) {
+export async function logAdminAuditAction(action, details = {}) {
   if (!isSupabaseConfigured) return;
   try {
     await supabase.from('data_logs').insert([{
@@ -819,6 +819,59 @@ export async function getGoogleAuthSession() {
   } catch (e) {
     console.warn('Error fetching auth session:', e);
     return null;
+  }
+}
+
+/**
+ * Persists generated certificate metadata to Supabase DB (`certificates` table and `participants` table)
+ */
+export async function saveCertificateToSupabase({ participantId, certCode, certName, certDate }) {
+  if (!isSupabaseConfigured || !certCode) return false;
+  try {
+    const validId = isValidUUID(participantId) ? participantId : generateValidUUID();
+
+    // 1. Check if certificate already exists in `certificates` table
+    const { data: existingCert } = await supabase
+      .from('certificates')
+      .select('id, verification_code')
+      .or(`verification_code.eq.${certCode},certificate_number.eq.${certCode}`)
+      .maybeSingle();
+
+    if (!existingCert) {
+      // Insert new certificate row into `certificates` table
+      await supabase.from('certificates').insert([{
+        session_id: validId,
+        certificate_number: certCode,
+        verification_code: certCode,
+        issued_at: new Date().toISOString(),
+        certificate_url: null,
+      }]);
+    }
+
+    // 2. Also update `participants` table record with `certificate_id`
+    if (participantId) {
+      await supabase
+        .from('participants')
+        .update({
+          certificate_id: certCode,
+          certificate_status: 'issued',
+          updated_at: new Date().toISOString(),
+        })
+        .or(`id.eq.${participantId},email.eq.${participantId}`);
+    }
+
+    // 3. Log audit event
+    await logAdminAuditAction('GENERATE_CERTIFICATE', {
+      participantId: validId,
+      certCode,
+      certName,
+      certDate,
+    });
+
+    return true;
+  } catch (err) {
+    console.warn('saveCertificateToSupabase notice:', err);
+    return false;
   }
 }
 

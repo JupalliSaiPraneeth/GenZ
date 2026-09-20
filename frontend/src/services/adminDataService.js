@@ -5,7 +5,7 @@
 // =================================================================
 
 import { db } from './db';
-import { supabase, isSupabaseConfigured, evaluateParticipant } from './supabaseClient';
+import { supabase, isSupabaseConfigured, evaluateParticipant, logAdminAuditAction } from './supabaseClient';
 import { OFFICIAL_75_QUESTIONS, getStoredQuestions } from '../data/surveyQuestions';
 import { ASPECT_DEFINITIONS, LIFE_DIMENSIONS, calculateAnalyticsDataset, normalizeScore, getQuestionScore } from './analyticsEngine';
 
@@ -1494,6 +1494,77 @@ export const adminDataService = {
         { id: 'S-9021', duration: '18m 12s', speedFlag: 'Normal', straightLine: 'Passed', attentionCheck: '100% Passed', status: 'Verified', riskLevel: 'Low' },
       ],
     };
+  },
+
+  /**
+   * Verify an official certificate code against Supabase DB `certificates` table and `participants` table
+   */
+  async verifyCertificateCode(cleanCode) {
+    if (!cleanCode) return null;
+    const targetCode = String(cleanCode).trim().toUpperCase();
+
+    if (isSupabaseConfigured) {
+      try {
+        // 1. Search in `certificates` table
+        const { data: certRow } = await supabase
+          .from('certificates')
+          .select('*, session_id')
+          .or(`verification_code.eq.${targetCode},certificate_number.eq.${targetCode}`)
+          .maybeSingle();
+
+        if (certRow) {
+          // Fetch associated participant details
+          const { data: pData } = await supabase
+            .from('participants')
+            .select('*')
+            .eq('id', certRow.session_id)
+            .maybeSingle();
+
+          return {
+            certificateId: certRow.verification_code || targetCode,
+            name: pData?.name || 'Gen Z Participant',
+            email: pData?.email || '',
+            completedAtFormatted: certRow.issued_at ? new Date(certRow.issued_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null,
+          };
+        }
+
+        // 2. Fallback search in `participants` table
+        const { data: pData } = await supabase
+          .from('participants')
+          .select('*')
+          .or(`certificate_id.eq.${targetCode},id.eq.${targetCode}`)
+          .maybeSingle();
+
+        if (pData) {
+          return {
+            certificateId: pData.certificate_id || targetCode,
+            name: pData.name || 'Gen Z Participant',
+            email: pData.email || '',
+            completedAtFormatted: pData.updated_at ? new Date(pData.updated_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null,
+          };
+        }
+      } catch (err) {
+        console.warn('verifyCertificateCode DB error:', err);
+      }
+    }
+
+    // 3. Fallback deterministic verification match
+    const { sessions } = await this.fetchRawDatabaseRecords();
+    const match = sessions.find((s) => {
+      const code = s.certificateId || generateDeterministicCertId(s.participantId || s.name || s.id);
+      return code.toUpperCase() === targetCode;
+    });
+
+    if (match) {
+      return {
+        certificateId: targetCode,
+        name: match.name || 'Gen Z Participant',
+        email: match.email || '',
+        completedAtFormatted: match.submittedAt || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      };
+    }
+
+    return null;
   },
 };
 

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { getStoredQuestions } from '../data/surveyQuestions';
 import { useSurveyStore } from '../stores/surveyStore';
-import { fetchParticipantStatus, generateDeterministicCertId } from '../services/supabaseClient';
+import { fetchParticipantStatus, generateDeterministicCertId, saveCertificateToSupabase } from '../services/supabaseClient';
 import {
   generateCertificateDataUrl,
   downloadCertificatePdf,
@@ -89,6 +89,15 @@ export default function SurveyComplete() {
         const dataUrl = await generateCertificateDataUrl(targetName, certDate, certCode);
         if (isMounted) {
           setCertPreviewUrl(dataUrl);
+
+          // Save certificate record to Supabase DB `certificates` table
+          const targetId = participant?.id || participantId || localStorage.getItem('genz_participant_id');
+          saveCertificateToSupabase({
+            participantId: targetId,
+            certCode,
+            certName: targetName,
+            certDate,
+          });
         }
       } catch (err) {
         console.warn('Certificate generation notice:', err);
@@ -102,7 +111,7 @@ export default function SurveyComplete() {
     return () => {
       isMounted = false;
     };
-  }, [certName, certDate, certCode, pName]);
+  }, [certName, certDate, certCode, pName, participant?.id, participantId]);
 
   return (
     <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-x-hidden font-inter">

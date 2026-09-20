@@ -29,7 +29,7 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-2 sm:top-4 left-0 right-0 z-50 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300">
-      <div className="bg-[#FFF8E8] border border-[#109A9B]/35 rounded-full shadow-[0_12px_40px_rgba(11,31,42,0.15)] px-4 sm:px-8 h-[60px] sm:h-[76px] flex items-center justify-between gap-2 relative z-50">
+      <div className="h-[60px] sm:h-[76px] flex items-center justify-between gap-2 relative z-50">
 
         {/* Brand Logo with Responsive Scaling */}
         <Link to="/" className="flex items-center group shrink-0">
@@ -40,8 +40,8 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* Center Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center justify-center gap-2 lg:gap-4 font-inter text-sm font-semibold text-[#0B1F2A]">
+        {/* Center Desktop Navigation Links with Pill Background ONLY around menu items */}
+        <nav className="hidden md:flex items-center justify-center gap-1.5 lg:gap-3 bg-[#FFF8E8] border border-[#109A9B]/35 rounded-full shadow-[0_8px_30px_rgba(11,31,42,0.12)] px-3.5 sm:px-5 py-1.5 sm:py-2 font-inter text-sm font-semibold text-[#0B1F2A]">
           {navLinks.map((link) => {
             const active = isActive(link.path);
 
@@ -51,7 +51,7 @@ export default function Navbar() {
                 to={link.path}
                 className={`relative px-4 lg:px-5 py-2 rounded-full transition-all duration-200 flex items-center gap-2 text-sm ${
                   active
-                    ? 'text-[#0B1F2A] bg-[#109A9B]/15 font-bold shadow-xs'
+                    ? 'text-[#0B1F2A] bg-[#109A9B]/20 font-bold shadow-xs'
                     : 'text-[#53656A] hover:text-[#0B1F2A] hover:bg-[#109A9B]/10'
                 }`}
               >
