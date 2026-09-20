@@ -1052,6 +1052,22 @@ export const adminDataService = {
   },
 
   /**
+   * Verify Certificate Code by matching DB records or deterministic ID
+   */
+  async verifyCertificateCode(certCode) {
+    if (!certCode) return null;
+    const clean = certCode.trim().toUpperCase();
+    const list = await this.getRespondentsList();
+    const found = list.find(
+      (r) =>
+        (r.certificateId && r.certificateId.toUpperCase() === clean) ||
+        r.id.toUpperCase() === clean ||
+        generateDeterministicCertId(r.id || r.email).toUpperCase() === clean
+    );
+    return found || null;
+  },
+
+  /**
    * Get Question Explorer & Response Distributions directly from DB
    */
   async getQuestionDistribution(questionId) {

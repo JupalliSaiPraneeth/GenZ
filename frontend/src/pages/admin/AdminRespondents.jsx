@@ -103,14 +103,6 @@ export default function AdminRespondents() {
     document.body.removeChild(link);
   };
 
-  const handlePurgeDummies = async () => {
-    setLoading(true);
-    await adminDataService.purgeDummyParticipants();
-    const list = await adminDataService.getRespondentsList(searchQuery, filterStatus);
-    setRespondents(list);
-    setLoading(false);
-  };
-
   return (
     <AdminLayout title="Respondents Data Explorer">
       {/* SEARCH, FILTER & EXPORT HEADER TOOLBAR */}
@@ -127,14 +119,6 @@ export default function AdminRespondents() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={handlePurgeDummies}
-              className="px-3 py-2 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 font-bold text-xs rounded-2xl border border-slate-200 hover:border-rose-200 transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-              title="Clean up all temporary unregistered sessions"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-              <span>Purge Unregistered</span>
-            </button>
             <button
               onClick={handleExportCSV}
               className="px-4 py-2 bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold text-xs rounded-2xl shadow-sm transition-all cursor-pointer flex items-center gap-2 shrink-0"

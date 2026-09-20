@@ -23,137 +23,7 @@ import {
   Mail
 } from 'lucide-react';
 
-/* ========================================================= */
-/* VECTOR SVG AVATARS (Clean, Modern, Academic & Developer) */
-/* ========================================================= */
 
-function AcademicAvatar({ className = "w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40" }) {
-  return (
-    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Outer Halo */}
-      <circle cx="100" cy="100" r="92" fill="url(#academic_bg_grad)" stroke="#109A9B" strokeWidth="2.5" strokeDasharray="6 6" opacity="0.6" />
-      <circle cx="100" cy="100" r="82" fill="#F0FDFA" />
-
-      {/* Base Shadow */}
-      <ellipse cx="100" cy="175" rx="55" ry="12" fill="#0D9488" opacity="0.12" />
-
-      {/* Academic Formal Attire */}
-      <path d="M40 180 C40 140, 65 128, 100 128 C135 128, 160 140, 160 180 Z" fill="#0F172A" />
-      <path d="M78 128 L100 166 L122 128 Z" fill="#F8FAFC" />
-      <path d="M93 142 L100 176 L107 142 Z" fill="#0284C7" />
-
-      {/* Suit Lapels */}
-      <path d="M48 175 L78 128 L94 156 Z" fill="#1E293B" />
-      <path d="M152 175 L122 128 L106 156 Z" fill="#1E293B" />
-
-      {/* Neck */}
-      <rect x="88" y="110" width="24" height="22" rx="4" fill="#FDBA74" />
-      <path d="M88 120 C95 125, 105 125, 112 120 Z" fill="#EA580C" opacity="0.18" />
-
-      {/* Head / Face */}
-      <path d="M70 76 C70 52, 82 44, 100 44 C118 44, 130 52, 130 76 C130 100, 118 114, 100 114 C82 114, 70 100, 70 76 Z" fill="#FFEDD5" />
-
-      {/* Ears */}
-      <circle cx="68" cy="78" r="7" fill="#FDBA74" />
-      <circle cx="132" cy="78" r="7" fill="#FDBA74" />
-
-      {/* Hair (Senior Academic Distinguished Haircut) */}
-      <path d="M68 68 C68 44, 80 36, 100 36 C120 36, 132 44, 132 68 C132 60, 126 46, 100 46 C74 46, 68 60, 68 68 Z" fill="#334155" />
-      <path d="M70 54 C75 40, 90 38, 100 38 C115 38, 128 42, 130 54 C122 45, 110 42, 100 42 C88 42, 76 46, 70 54 Z" fill="#475569" />
-
-      {/* Glasses */}
-      <rect x="75" y="68" width="21" height="15" rx="3" fill="#0F172A" opacity="0.08" stroke="#0F172A" strokeWidth="2.8" />
-      <rect x="104" y="68" width="21" height="15" rx="3" fill="#0F172A" opacity="0.08" stroke="#0F172A" strokeWidth="2.8" />
-      <line x1="96" y1="74" x2="104" y2="74" stroke="#0F172A" strokeWidth="2.8" />
-      <line x1="68" y1="73" x2="75" y2="73" stroke="#0F172A" strokeWidth="2.2" />
-      <line x1="125" y1="73" x2="132" y2="73" stroke="#0F172A" strokeWidth="2.2" />
-
-      {/* Eyes */}
-      <circle cx="85.5" cy="75.5" r="2.5" fill="#1E293B" />
-      <circle cx="114.5" cy="75.5" r="2.5" fill="#1E293B" />
-
-      {/* Eyebrows */}
-      <path d="M76 64 Q85 61 93 64" stroke="#334155" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-      <path d="M107 64 Q115 61 124 64" stroke="#334155" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-
-      {/* Nose */}
-      <path d="M100 76 L98 85 L103 85" stroke="#EA580C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6" />
-
-      {/* Smile */}
-      <path d="M90 95 Q100 102 110 95" stroke="#7C2D12" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-
-      <defs>
-        <linearGradient id="academic_bg_grad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0D9488" stopOpacity="0.2" />
-          <stop offset="1" stopColor="#0284C7" stopOpacity="0.25" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function DeveloperAvatar({ className = "w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40" }) {
-  return (
-    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Outer Halo */}
-      <circle cx="100" cy="100" r="92" fill="url(#dev_bg_grad)" stroke="#063E46" strokeWidth="2.5" strokeDasharray="6 6" opacity="0.6" />
-      <circle cx="100" cy="100" r="82" fill="#ECFDF5" />
-
-      {/* Base Shadow */}
-      <ellipse cx="100" cy="175" rx="55" ry="12" fill="#059669" opacity="0.12" />
-
-      {/* Modern Developer Attire */}
-      <path d="M40 180 C40 136, 65 124, 100 124 C135 124, 160 136, 160 180 Z" fill="#063E46" />
-      <path d="M78 124 L100 154 L122 124 Z" fill="#0D9488" />
-      <path d="M86 124 L100 144 L114 124 Z" fill="#14B8A6" />
-      <path d="M92 124 L100 136 L108 124 Z" fill="#F8FAFC" />
-
-      {/* Neck */}
-      <rect x="88" y="106" width="24" height="22" rx="4" fill="#FDBA74" />
-      <path d="M88 116 C95 121, 105 121, 112 116 Z" fill="#EA580C" opacity="0.18" />
-
-      {/* Head / Face */}
-      <path d="M72 72 C72 48, 83 40, 100 40 C117 40, 128 48, 128 72 C128 96, 117 110, 100 110 C83 110, 72 96, 72 72 Z" fill="#FFEDD5" />
-
-      {/* Ears */}
-      <circle cx="70" cy="74" r="7" fill="#FDBA74" />
-      <circle cx="130" cy="74" r="7" fill="#FDBA74" />
-
-      {/* Hair (Young Modern Developer Hairstyle) */}
-      <path d="M68 62 C68 38, 80 30, 100 30 C120 30, 132 38, 132 62 C132 53, 126 34, 100 34 C74 34, 68 53, 68 62 Z" fill="#0F172A" />
-      <path d="M68 56 Q82 32 104 34 Q126 36 134 52 C126 42, 112 38, 98 40 C84 42, 74 48, 68 56 Z" fill="#1E293B" />
-      <path d="M80 42 C88 36, 100 36, 110 38 C102 42, 92 43, 80 42 Z" fill="#334155" />
-
-      {/* Eyes */}
-      <circle cx="86" cy="71" r="3" fill="#0F172A" />
-      <circle cx="114" cy="71" r="3" fill="#0F172A" />
-      <circle cx="87.5" cy="69.5" r="1" fill="#FFFFFF" />
-      <circle cx="115.5" cy="69.5" r="1" fill="#FFFFFF" />
-
-      {/* Eyebrows */}
-      <path d="M78 62 Q86 59 93 62" stroke="#1E293B" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-      <path d="M107 62 Q114 59 122 62" stroke="#1E293B" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-
-      {/* Nose */}
-      <path d="M100 72 L98 81 L103 81" stroke="#EA580C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.6" />
-
-      {/* Smile */}
-      <path d="M89 91 Q100 100 111 91" stroke="#0F172A" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-
-      {/* Subtle Developer Headphones Band Accent */}
-      <path d="M64 68 C64 48, 136 48, 136 68" stroke="#0D9488" strokeWidth="3.5" strokeLinecap="round" fill="none" opacity="0.45" />
-      <rect x="61" y="64" width="6" height="15" rx="3" fill="#0D9488" opacity="0.8" />
-      <rect x="133" y="64" width="6" height="15" rx="3" fill="#0D9488" opacity="0.8" />
-
-      <defs>
-        <linearGradient id="dev_bg_grad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#063E46" stopOpacity="0.2" />
-          <stop offset="1" stopColor="#109A9B" stopOpacity="0.25" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
 
 export default function About() {
   const RESEARCH_DIMENSIONS = [
@@ -352,7 +222,11 @@ export default function About() {
               {/* Avatar & Profile Details */}
               <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
                 <div className="relative group-hover:scale-105 transition-transform duration-300">
-                  <AcademicAvatar className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40" />
+                  <img
+                    src="/1980sDeansir.png"
+                    alt="Dr. K. V. Sambasivarao"
+                    className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-full object-cover border-4 border-[#109A9B]/40 shadow-lg"
+                  />
                 </div>
 
                 <div className="space-y-1">
@@ -393,8 +267,12 @@ export default function About() {
 
               {/* Avatar & Profile Details */}
               <div className="flex flex-col items-center text-center space-y-3 sm:space-y-4">
-                <div className="relative group-hover:scale-105 transition-transform duration-300">
-                  <DeveloperAvatar className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40" />
+                <div className="w-28 h-28 sm:w-36 sm:h-36 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-[#063E46]/40 shadow-lg relative group-hover:scale-105 transition-transform duration-300">
+                  <img
+                    src="/saipraneethnew.png"
+                    alt="J. Sai Praneeth"
+                    className="w-full h-full object-cover object-center"
+                  />
                 </div>
 
                 <div className="space-y-1">

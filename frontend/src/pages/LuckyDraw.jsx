@@ -14,12 +14,21 @@ import { useSurveyStore } from '../stores/surveyStore';
 
 export default function LuckyDraw() {
   const participantName = useSurveyStore((state) => state.participantName);
-  const surveyProgress = useSurveyStore((state) => state.surveyProgress ?? 0);
-  const totalQuestions = useSurveyStore((state) => state.questions?.length || 75);
+  const participantEmail = useSurveyStore((state) => state.participantEmail);
+  const participantId = useSurveyStore((state) => state.participantId);
+  const isCompletedSession = useSurveyStore((state) => state.isCompletedSession);
+  const getProgressPercentage = useSurveyStore((state) => state.getProgressPercentage);
+  const initSession = useSurveyStore((state) => state.initSession);
 
-  const completionPercent = Math.min(Math.round((surveyProgress / totalQuestions) * 100), 100);
-  const isCompleted = surveyProgress >= totalQuestions * 0.9;
-  const isRegistered = Boolean(participantName);
+  useEffect(() => {
+    if (initSession) {
+      initSession();
+    }
+  }, [initSession]);
+
+  const completionPercent = getProgressPercentage ? getProgressPercentage() : 0;
+  const isCompleted = isCompletedSession || completionPercent >= 90;
+  const isRegistered = Boolean(participantName || participantEmail || participantId);
 
   // Target Draw Date: November 14, 2026 00:00:00 IST
   const targetDate = useMemo(() => new Date('2026-11-14T00:00:00+05:30').getTime(), []);
@@ -281,7 +290,7 @@ export default function LuckyDraw() {
               <p className="text-sm text-slate-600 leading-relaxed font-normal">
                 {isRegistered ? (
                   <>
-                    Logged in as <strong className="text-[#063E46] font-bold">{participantName}</strong>.{' '}
+                    Logged in as <strong className="text-[#063E46] font-bold">{participantName || participantEmail || 'Registered Participant'}</strong>.{' '}
                     {isCompleted
                       ? 'Your response is stored and will automatically be included in the draw.'
                       : 'Please complete the rest of the survey questions to qualify your entry for the cash rewards.'}

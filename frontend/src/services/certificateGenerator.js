@@ -1,22 +1,41 @@
 import { jsPDF } from 'jspdf';
 
-/**
- * Helper to load an image from URL
- */
-function loadImage(src) {
+function loadImage(src, timeoutMs = 3000) {
   return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => {
-      // Fallback relative attempt
-      const fallback = new Image();
-      fallback.crossOrigin = 'anonymous';
-      fallback.onload = () => resolve(fallback);
-      fallback.onerror = () => resolve(null);
-      fallback.src = src.startsWith('/') ? '.' + src : src;
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+
+    const tryLoad = (imgSrc, useCors) => {
+      const img = new Image();
+      if (useCors) img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(img);
+        }
+      };
+      img.onerror = () => {
+        if (useCors) {
+          tryLoad(imgSrc, false);
+        } else if (imgSrc.startsWith('/')) {
+          tryLoad('.' + imgSrc, false);
+        } else if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve(null);
+        }
+      };
+      img.src = imgSrc;
     };
-    img.src = src;
+
+    tryLoad(src, false);
   });
 }
 
@@ -24,49 +43,54 @@ function loadImage(src) {
  * Helper to process photo of handwritten signature and remove paper background
  */
 async function loadProcessedSignature(src, threshold = 220) {
-  const img = await loadImage(src);
-  if (!img || img.naturalWidth === 0) return null;
+  try {
+    const img = await loadImage(src);
+    if (!img || img.naturalWidth === 0) return null;
 
-  const canvas = document.createElement('canvas');
-  const MAX_WIDTH = 1000;
-  let width = img.naturalWidth;
-  let height = img.naturalHeight;
+    const canvas = document.createElement('canvas');
+    const MAX_WIDTH = 1000;
+    let width = img.naturalWidth;
+    let height = img.naturalHeight;
 
-  if (width > MAX_WIDTH) {
-    const ratio = MAX_WIDTH / width;
-    width = MAX_WIDTH;
-    height = Math.round(height * ratio);
-  }
-
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  ctx.drawImage(img, 0, 0, width, height);
-
-  const imageData = ctx.getImageData(0, 0, width, height);
-  const pixels = imageData.data;
-
-  for (let i = 0; i < pixels.length; i += 4) {
-    const origAlpha = pixels[i + 3];
-    if (origAlpha === 0) continue; // Keep already-transparent pixels transparent
-
-    const r = pixels[i];
-    const g = pixels[i + 1];
-    const b = pixels[i + 2];
-    const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-
-    if (brightness >= threshold) {
-      pixels[i + 3] = 0;
-    } else {
-      pixels[i] = 10;
-      pixels[i + 1] = 15;
-      pixels[i + 2] = 20;
-      pixels[i + 3] = origAlpha;
+    if (width > MAX_WIDTH) {
+      const ratio = MAX_WIDTH / width;
+      width = MAX_WIDTH;
+      height = Math.round(height * ratio);
     }
-  }
 
-  ctx.putImageData(imageData, 0, 0);
-  return canvas;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+
+    for (let i = 0; i < pixels.length; i += 4) {
+      const origAlpha = pixels[i + 3];
+      if (origAlpha === 0) continue; // Keep already-transparent pixels transparent
+
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+      const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+      if (brightness >= threshold) {
+        pixels[i + 3] = 0;
+      } else {
+        pixels[i] = 10;
+        pixels[i + 1] = 15;
+        pixels[i + 2] = 20;
+        pixels[i + 3] = origAlpha;
+      }
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    return canvas;
+  } catch (err) {
+    console.warn('loadProcessedSignature notice:', err);
+    return null;
+  }
 }
 
 /**
@@ -75,7 +99,7 @@ async function loadProcessedSignature(src, threshold = 220) {
  * @param {string} dateStr - Optional date string (e.g. "September 18, 2026")
  * @returns {Promise<HTMLCanvasElement>}
  */
-export async function generateCertificateCanvas(name, dateStr) {
+export async function generateCertificateCanvas(name, dateStr, certCode) {
   const canvas = document.createElement('canvas');
   canvas.width = 1200;
   canvas.height = 800;
@@ -87,6 +111,7 @@ export async function generateCertificateCanvas(name, dateStr) {
     day: 'numeric',
     year: 'numeric'
   });
+  const finalCertCode = (certCode || 'CERT-GZ2026-89421').toUpperCase();
 
   // Ensure fonts are loaded if available
   if (document.fonts && document.fonts.ready) {
@@ -367,9 +392,20 @@ export async function generateCertificateCanvas(name, dateStr) {
   ctx.fillText('CSE Dept.', rightSigCx, 730);
 
   // 13. Footer
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#075d63';
+  ctx.font = "800 10px 'Montserrat', Arial, sans-serif";
+  ctx.fillText('VERIFIED AUTHENTIC DOCUMENT', 48, 770);
+
+  ctx.textAlign = 'center';
   ctx.fillStyle = '#075d63';
   ctx.font = "800 11px 'Montserrat', Arial, sans-serif";
   ctx.fillText('LISTEN   |   LEARN   |   BUILD TOGETHER', 600, 770);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#075d63';
+  ctx.font = "700 11px font-mono, monospace, sans-serif";
+  ctx.fillText(`Certificate ID: ${finalCertCode}`, 1152, 770);
 
   return canvas;
 }
@@ -377,16 +413,16 @@ export async function generateCertificateCanvas(name, dateStr) {
 /**
  * Returns Base64 PNG Data URL of personalized certificate
  */
-export async function generateCertificateDataUrl(name, dateStr) {
-  const canvas = await generateCertificateCanvas(name, dateStr);
+export async function generateCertificateDataUrl(name, dateStr, certCode) {
+  const canvas = await generateCertificateCanvas(name, dateStr, certCode);
   return canvas.toDataURL('image/png', 1.0);
 }
 
 /**
  * Triggers automatic browser download of PNG Certificate
  */
-export async function downloadCertificateImage(name, dateStr) {
-  const dataUrl = await generateCertificateDataUrl(name, dateStr);
+export async function downloadCertificateImage(name, dateStr, certCode) {
+  const dataUrl = await generateCertificateDataUrl(name, dateStr, certCode);
   const cleanName = (name || 'Participant').trim().replace(/[^a-zA-Z0-9]/g, '_');
   const link = document.createElement('a');
   link.download = `GenZ_Certificate_${cleanName}.png`;
@@ -399,8 +435,8 @@ export async function downloadCertificateImage(name, dateStr) {
 /**
  * Triggers automatic browser download of PDF Certificate using jsPDF
  */
-export async function downloadCertificatePdf(name, dateStr) {
-  const canvas = await generateCertificateCanvas(name, dateStr);
+export async function downloadCertificatePdf(name, dateStr, certCode) {
+  const canvas = await generateCertificateCanvas(name, dateStr, certCode);
   const imgData = canvas.toDataURL('image/png', 1.0);
 
   const pdf = new jsPDF({

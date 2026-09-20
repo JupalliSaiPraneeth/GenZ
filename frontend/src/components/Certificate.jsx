@@ -163,6 +163,7 @@ const Signature = ({
 const Certificate = ({
   participantName = "Your Name",
   completionDate = "September 18, 2026",
+  certificateNumber = "CERT-GZ2026-89421",
 }) => {
 
   return (
@@ -1101,25 +1102,40 @@ const Certificate = ({
 
         .footer {
           position: absolute;
-
           bottom: 28px;
-
           left: 50%;
-
           transform: translateX(-50%);
-
           font-size: 11px;
-
           font-weight: 800;
-
           letter-spacing: 5px;
-
           color: #075d63;
-
           z-index: 30;
-
           white-space: nowrap;
+          text-transform: uppercase;
+        }
 
+        .cert-id-corner {
+          position: absolute;
+          bottom: 26px;
+          right: 48px;
+          font-family: monospace, "Courier New", sans-serif;
+          font-size: 11px;
+          font-weight: 700;
+          color: #075d63;
+          letter-spacing: 0.5px;
+          z-index: 30;
+        }
+
+        .cert-verify-corner {
+          position: absolute;
+          bottom: 26px;
+          left: 48px;
+          font-family: "Montserrat", sans-serif;
+          font-size: 10px;
+          font-weight: 800;
+          color: #075d63;
+          letter-spacing: 1px;
+          z-index: 30;
           text-transform: uppercase;
         }
 
@@ -1506,14 +1522,16 @@ const Certificate = ({
               FOOTER
           ==================================================== */}
 
+          <div className="cert-verify-corner">
+            VERIFIED AUTHENTIC DOCUMENT
+          </div>
+
           <div className="footer">
+            LISTEN &nbsp; | &nbsp; LEARN &nbsp; | &nbsp; BUILD TOGETHER
+          </div>
 
-            LISTEN
-            &nbsp; | &nbsp;
-            LEARN
-            &nbsp; | &nbsp;
-            BUILD TOGETHER
-
+          <div className="cert-id-corner">
+            Certificate ID: {certificateNumber}
           </div>
 
 

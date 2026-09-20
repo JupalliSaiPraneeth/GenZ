@@ -365,22 +365,43 @@ export async function syncResponseToSupabase(participantId, sessionId, questionC
 }
 
 /**
+ * Deterministic certificate code generator
+ */
+export function generateDeterministicCertId(seed) {
+  if (!seed) return 'CERT-GZ2026-10001';
+  const str = String(seed);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  const code = 10000 + (Math.abs(hash) % 90000);
+  return `CERT-GZ2026-${code}`;
+}
+
+/**
  * Mark Survey Status as Completed
  */
 export async function completeParticipantSurvey(participantId, deviceTimestamp = new Date().toISOString()) {
-  if (!participantId || !isValidUUID(participantId)) return;
+  if (!participantId) return;
   try {
     const completedAt = new Date().toISOString();
+    const certCode = generateDeterministicCertId(participantId);
 
     await logUserAction(participantId, 'COMPLETE_SURVEY', deviceTimestamp, {
       status: 'completed',
       completed_at: completedAt,
+      certificate_id: certCode,
     });
 
     await supabase
       .from('participants')
       .update({
         status: 'completed',
+        certificate_id: certCode,
+        certificate_status: 'issued',
+        certificate_issued_at: completedAt,
+        completed_at: completedAt,
         updated_at: completedAt,
         device_timestamp: deviceTimestamp,
       })
@@ -478,58 +499,6 @@ export async function evaluateParticipant(participantId, evaluationData = {}) {
 let cachedAdminSystemParticipantId = null;
 
 export async function getOrCreateAdminSystemParticipant() {
-  if (cachedAdminSystemParticipantId) return cachedAdminSystemParticipantId;
-  if (!isSupabaseConfigured) return null;
-
-  try {
-    const SYSTEM_ADMIN_EMAIL = 'admin_blueprint@genzvoices.org';
-    const { data: existing } = await supabase
-      .from('participants')
-      .select('id')
-      .eq('email', SYSTEM_ADMIN_EMAIL)
-      .maybeSingle();
-
-    if (existing?.id) {
-      cachedAdminSystemParticipantId = existing.id;
-      return existing.id;
-    }
-
-    const newId = generateValidUUID();
-    const payload = {
-      id: newId,
-      name: 'ADMIN_BLUEPRINT_CONFIG',
-      email: SYSTEM_ADMIN_EMAIL,
-      status: 'completed',
-      total_answers_count: 0,
-      device_timestamp: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    const { data: created, error } = await supabase
-      .from('participants')
-      .insert([payload])
-      .select('id')
-      .maybeSingle();
-
-    if (created?.id) {
-      cachedAdminSystemParticipantId = created.id;
-      return created.id;
-    }
-
-    const { data: retryFetch } = await supabase
-      .from('participants')
-      .select('id')
-      .eq('email', SYSTEM_ADMIN_EMAIL)
-      .maybeSingle();
-
-    if (retryFetch?.id) {
-      cachedAdminSystemParticipantId = retryFetch.id;
-      return retryFetch.id;
-    }
-  } catch (err) {
-    console.warn('getOrCreateAdminSystemParticipant error:', err);
-  }
   return null;
 }
 
@@ -641,9 +610,8 @@ async function upsertToSurveyQuestions(questionObj) {
 async function logAdminAuditAction(action, details = {}) {
   if (!isSupabaseConfigured) return;
   try {
-    const systemAdminId = await getOrCreateAdminSystemParticipant();
     await supabase.from('data_logs').insert([{
-      participant_id: systemAdminId || null,
+      participant_id: null,
       action,
       device_timestamp: new Date().toISOString(),
       details,

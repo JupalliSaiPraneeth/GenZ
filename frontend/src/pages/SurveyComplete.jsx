@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Award,
@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { getStoredQuestions } from '../data/surveyQuestions';
 import { useSurveyStore } from '../stores/surveyStore';
-import { fetchParticipantStatus } from '../services/supabaseClient';
+import { fetchParticipantStatus, generateDeterministicCertId } from '../services/supabaseClient';
 import {
   generateCertificateDataUrl,
   downloadCertificatePdf,
@@ -69,21 +69,24 @@ export default function SurveyComplete() {
 
   const pName = participant?.name || certName || localStorage.getItem('genz_participant_name') || 'Gen Z Participant';
   const pEmail = participant?.email || participantEmail || localStorage.getItem('genz_participant_email') || '';
-  const certCode = participant?.certificate_id || `CERT-GZ2026-${Math.floor(10000 + Math.random() * 90000)}`;
+  const certCode = useMemo(() => {
+    if (participant?.certificate_id) return participant.certificate_id;
+    const seed = participant?.id || participantId || localStorage.getItem('genz_participant_id') || pEmail || pName;
+    return generateDeterministicCertId(seed);
+  }, [participant?.certificate_id, participant?.id, participantId, pEmail, pName]);
   const evalStatus = participant?.evaluation_status || 'approved';
   const certStatus = participant?.certificate_status || 'issued';
   const luckyStatus = participant?.lucky_draw_status || 'pending';
   const luckyPrize = participant?.lucky_draw_prize;
 
-  // Render Certificate Preview when certName or certDate changes
   useEffect(() => {
     let isMounted = true;
 
     async function prepareCertificate() {
-      if (!certName) return;
+      const targetName = (certName || pName || 'Gen Z Participant').trim();
       setIsGeneratingCert(true);
       try {
-        const dataUrl = await generateCertificateDataUrl(certName, certDate);
+        const dataUrl = await generateCertificateDataUrl(targetName, certDate, certCode);
         if (isMounted) {
           setCertPreviewUrl(dataUrl);
         }
@@ -99,7 +102,7 @@ export default function SurveyComplete() {
     return () => {
       isMounted = false;
     };
-  }, [certName, certDate]);
+  }, [certName, certDate, certCode, pName]);
 
   return (
     <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-x-hidden font-inter">
@@ -241,7 +244,7 @@ export default function SurveyComplete() {
               {/* ACTION BUTTONS */}
               <div className="space-y-2.5 pt-1">
                 <button
-                  onClick={() => downloadCertificatePdf(certName, certDate)}
+                  onClick={() => downloadCertificatePdf(certName, certDate, certCode)}
                   className="w-full bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-bold text-xs sm:text-sm py-3.5 px-4 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer active:scale-98"
                 >
                   <Download className="w-4 h-4 text-[#FDE7B5] shrink-0" />
@@ -249,7 +252,7 @@ export default function SurveyComplete() {
                 </button>
 
                 <button
-                  onClick={() => downloadCertificateImage(certName, certDate)}
+                  onClick={() => downloadCertificateImage(certName, certDate, certCode)}
                   className="w-full bg-white hover:bg-[#EAF6F6] border-2 border-[#109A9B]/40 text-[#075D63] font-bold text-xs sm:text-sm py-3.5 px-4 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 transition-all shadow-2xs cursor-pointer active:scale-98"
                 >
                   <Download className="w-4 h-4 text-[#109A9B] shrink-0" />

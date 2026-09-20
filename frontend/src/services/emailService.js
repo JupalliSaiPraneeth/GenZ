@@ -56,7 +56,7 @@ export function openEmailClient(recipientEmail, recipientName, dateStr) {
 /**
  * Sends/dispatches certificate email tracking automatically for the user's email address
  */
-export async function sendCertificateEmail(recipientEmail, recipientName, dateStr) {
+export async function sendCertificateEmail(recipientEmail, recipientName, dateStr, certCode) {
   const email = (recipientEmail || '').trim().toLowerCase();
   const name = (recipientName || 'Gen Z Participant').trim();
   const timestamp = new Date().toISOString();
@@ -74,7 +74,7 @@ export async function sendCertificateEmail(recipientEmail, recipientName, dateSt
   try {
     // Generate certificate image data URL
     console.log('%c[CANVAS RENDER] Generating high-resolution certificate canvas...', 'color: #075D63; font-weight: bold;');
-    const certDataUrl = await generateCertificateDataUrl(name, dateStr);
+    const certDataUrl = await generateCertificateDataUrl(name, dateStr, certCode);
     console.log('%c[CANVAS READY] Certificate preview image successfully generated.', 'color: #10B981; font-weight: bold;');
 
     // 1. Log email dispatch in Supabase data_logs table if configured

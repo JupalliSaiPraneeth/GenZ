@@ -438,10 +438,27 @@ export const useSurveyStore = create((set, get) => ({
     });
   },
 
+  getAnsweredCount: () => {
+    const { answersById, questions, isCompletedSession } = get();
+    if (isCompletedSession) return questions?.length || 75;
+    if (!questions || questions.length === 0) return 0;
+    return questions.filter((q) => {
+      const qIdKey = String(q.id).toLowerCase();
+      const qCodeKey = String(q.code || '').toLowerCase();
+      const val =
+        answersById[q.id] ??
+        answersById[qIdKey] ??
+        (qCodeKey ? answersById[qCodeKey] : undefined);
+      return val !== undefined && val !== null && val !== '';
+    }).length;
+  },
+
   getProgressPercentage: () => {
-    const { answersById, questions } = get();
-    const answeredCount = questions.filter(q => Boolean(answersById[q.id] && answersById[q.id] !== 'skipped')).length;
-    return Math.round((answeredCount / questions.length) * 100);
+    const { questions, isCompletedSession } = get();
+    if (isCompletedSession) return 100;
+    if (!questions || questions.length === 0) return 0;
+    const answeredCount = get().getAnsweredCount();
+    return Math.min(100, Math.round((answeredCount / questions.length) * 100));
   },
 
   completeSurvey: async () => {
