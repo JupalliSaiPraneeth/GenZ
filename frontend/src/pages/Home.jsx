@@ -97,7 +97,7 @@ export default function Home() {
 
   return (
     <div
-      className="relative pt-[70px] sm:pt-[94px] min-h-[100svh] lg:min-h-[100svh] w-full overflow-x-hidden overflow-y-auto lg:overflow-hidden flex flex-col justify-center pb-6 lg:pb-0"
+      className="relative pt-[72px] sm:pt-[82px] min-h-[100svh] w-full overflow-x-hidden overflow-y-auto flex flex-col justify-center pb-8"
       ref={heroRef}
       style={{
         background: `
@@ -110,7 +110,7 @@ export default function Home() {
     >
 
       {/* HERO SECTION WITH SOFT LIGHT ELEGANT CREAM & MINT-TEAL EDITORIAL BACKGROUND */}
-      <section className="relative py-2 lg:py-2 overflow-hidden min-h-[calc(100svh-70px)] flex flex-col justify-center">
+      <section className="relative py-2 sm:py-4 overflow-hidden min-h-0 flex flex-col justify-center">
 
         {/* 1. TOP-LEFT BACKGROUND CORNER: SOFT LIGHT TEAL BLOB */}
         <div className="absolute -top-28 -left-28 w-[320px] sm:w-[680px] h-[320px] sm:h-[620px] bg-[#109A9B]/30 sm:bg-[#109A9B]/40 rounded-full blur-2xl pointer-events-none -z-20" />
@@ -134,13 +134,13 @@ export default function Home() {
 
         {/* HERO CONTENT CONTAINER */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-[clamp(1rem,2vw,2.5rem)] items-center min-h-0 lg:min-h-[calc(100svh-105px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-[clamp(1rem,2vw,2.5rem)] items-center min-h-0 py-2">
 
             {/* LEFT HERO CONTENT (~50% Desktop width) */}
-            <div className="lg:col-span-6 xl:col-span-6 pt-1 sm:pt-4 lg:pt-0 text-center lg:text-left z-20 min-w-0">
+            <div className="lg:col-span-6 xl:col-span-6 pt-1 sm:pt-2 lg:pt-0 text-center lg:text-left z-20 min-w-0">
 
               {/* Supported by NRI Institute Banner Pill */}
-              <div className="hero-fade inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-white/85 backdrop-blur-md border border-[#109A9B]/25 shadow-[0_8px_25px_rgba(6,62,70,0.08)] hover:shadow-[0_12px_30px_rgba(6,62,70,0.14)] hover:border-[#109A9B]/40 transition-all duration-300 mb-3 sm:mb-5 group cursor-default">
+              <div className="hero-fade inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-white/85 backdrop-blur-md border border-[#109A9B]/25 shadow-[0_8px_25px_rgba(6,62,70,0.08)] hover:shadow-[0_12px_30px_rgba(6,62,70,0.14)] hover:border-[#109A9B]/40 transition-all duration-300 mb-2.5 sm:mb-4 group cursor-default">
                 <span className="relative flex h-2 w-2 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#109A9B] opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-[#075D63]" />
@@ -159,8 +159,8 @@ export default function Home() {
                 />
               </div>
 
-              {/* Massive Main Headline */}
-              <h1 className="hero-fade font-archivo text-[clamp(2.25rem,4.3vw,4.5rem)] text-[#0B1F2A] tracking-tight sm:tracking-[-2px] leading-[0.96] mb-3 sm:mb-5 drop-shadow-xs">
+              {/* Main Headline */}
+              <h1 className="hero-fade font-archivo text-[clamp(2rem,3.6vw,3.8rem)] text-[#0B1F2A] tracking-tight sm:tracking-[-2px] leading-[0.96] mb-2.5 sm:mb-4 drop-shadow-xs">
                 <span className="inline-block sm:whitespace-nowrap">GIVE A VOICE TO</span> <br className="hidden sm:inline" />
                 <span className="text-[#109A9B] uppercase font-black relative inline-block ml-1.5 sm:ml-0">
                   GEN Z
@@ -179,23 +179,23 @@ export default function Home() {
               </h1>
 
               {/* Editorial Tagline */}
-              <p className="hero-fade text-[clamp(1rem,1.65vw,1.55rem)] font-extrabold text-[#0B1F2A] mb-2 sm:mb-3 font-sora leading-snug">
+              <p className="hero-fade text-[clamp(0.95rem,1.4vw,1.35rem)] font-extrabold text-[#0B1F2A] mb-2 sm:mb-3 font-sora leading-snug">
                 “Your Perspective. A Brighter Tomorrow.”
               </p>
 
               {/* Description Paragraph */}
-              <p className="hero-fade text-[#0F353C] text-[clamp(0.72rem,1.05vw,1.05rem)] max-w-[520px] mx-auto lg:mx-0 mb-4 sm:mb-6 leading-[1.5] sm:leading-[1.6] font-inter font-medium tracking-tight">
+              <p className="hero-fade text-[#0F353C] text-[clamp(0.72rem,0.95vw,0.98rem)] max-w-[520px] mx-auto lg:mx-0 mb-3.5 sm:mb-5 leading-[1.45] sm:leading-[1.55] font-inter font-medium tracking-tight">
                 Join thousands of young minds across India shaping the future. Share your honest perspective on career, technology, values, lifestyle, and aspirations in an engaging digital experience.
               </p>
 
               {/* Dynamic Primary CTA Button */}
-              <div className="hero-fade flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-3 sm:mb-4 font-inter">
+              <div className="hero-fade flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-2 sm:mb-3 font-inter">
                 {isCompleted ? (
                   <button
                     type="button"
                     disabled
                     onClick={(e) => e.preventDefault()}
-                    className="w-full sm:w-auto bg-[#063E46]/90 border border-emerald-400/40 text-emerald-200 font-sora font-extrabold text-sm sm:text-base h-[48px] sm:h-[60px] px-6 sm:px-9 rounded-[14px] sm:rounded-[18px] shadow-md flex items-center justify-center gap-2.5 sm:gap-3 cursor-not-allowed opacity-90 select-none"
+                    className="w-full sm:w-auto bg-[#063E46]/90 border border-emerald-400/40 text-emerald-200 font-sora font-extrabold text-sm sm:text-base h-[44px] sm:h-[50px] px-6 sm:px-8 rounded-[14px] sm:rounded-[16px] shadow-md flex items-center justify-center gap-2.5 sm:gap-3 cursor-not-allowed opacity-90 select-none"
                     title="You have already completed the survey"
                   >
                     <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -204,7 +204,7 @@ export default function Home() {
                 ) : isStarted ? (
                   <Link
                     to="/survey"
-                    className="w-full sm:w-auto bg-gradient-to-r from-[#0D5960] to-[#063E46] hover:from-[#08484E] hover:to-[#042B31] text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[48px] sm:h-[60px] px-6 sm:px-9 rounded-[14px] sm:rounded-[18px] shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 sm:gap-3 transform hover:-translate-y-0.5 group cursor-pointer"
+                    className="w-full sm:w-auto bg-gradient-to-r from-[#0D5960] to-[#063E46] hover:from-[#08484E] hover:to-[#042B31] text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[44px] sm:h-[50px] px-6 sm:px-8 rounded-[14px] sm:rounded-[16px] shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 sm:gap-3 transform hover:-translate-y-0.5 group cursor-pointer"
                   >
                     <span>Continue Survey</span>
                     <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
@@ -212,7 +212,7 @@ export default function Home() {
                 ) : (
                   <Link
                     to="/survey"
-                    className="w-full sm:w-auto bg-gradient-to-r from-[#0D5960] to-[#063E46] hover:from-[#08484E] hover:to-[#042B31] text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[48px] sm:h-[60px] px-6 sm:px-9 rounded-[14px] sm:rounded-[18px] shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 sm:gap-3 transform hover:-translate-y-0.5 group cursor-pointer"
+                    className="w-full sm:w-auto bg-gradient-to-r from-[#0D5960] to-[#063E46] hover:from-[#08484E] hover:to-[#042B31] text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[44px] sm:h-[50px] px-6 sm:px-8 rounded-[14px] sm:rounded-[16px] shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 sm:gap-3 transform hover:-translate-y-0.5 group cursor-pointer"
                   >
                     <span>Take the Survey</span>
                     <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
@@ -225,7 +225,7 @@ export default function Home() {
             {/* RIGHT HERO VISUAL (~50% Desktop width) */}
             <div className="lg:col-span-6 xl:col-span-6 relative mt-2 lg:mt-0 flex items-center justify-center min-w-0 min-h-0">
 
-              <div className="relative w-full max-w-[280px] xs:max-w-[340px] sm:max-w-[480px] lg:max-w-[min(580px,42vw)] aspect-square flex items-center justify-center">
+              <div className="relative w-full max-w-[260px] xs:max-w-[320px] sm:max-w-[420px] lg:max-w-[min(460px,36vw)] aspect-square flex items-center justify-center">
 
                 {/* 1. SOFT ELEGANT SUNBURST CREAM GLOW */}
                 <div
