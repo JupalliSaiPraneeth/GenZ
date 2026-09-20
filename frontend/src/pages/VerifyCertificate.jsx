@@ -61,7 +61,7 @@ export default function VerifyCertificate() {
       <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
       <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
 
-      <div className="relative z-10 pt-[85px] sm:pt-[110px] pb-16 px-3.5 sm:px-6 max-w-2xl mx-auto space-y-6">
+      <div className="relative z-10 pt-[88px] sm:pt-[108px] lg:pt-[120px] pb-16 px-3.5 sm:px-6 max-w-2xl mx-auto space-y-6">
 
         {/* HEADER */}
         <div className="text-center space-y-2">

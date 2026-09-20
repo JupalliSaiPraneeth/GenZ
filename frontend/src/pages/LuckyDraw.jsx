@@ -63,7 +63,7 @@ export default function LuckyDraw() {
   }, [targetDate]);
 
   return (
-    <div className="pt-24 sm:pt-28 pb-20 min-h-screen bg-[#FAF9F5] text-[#0F1E24] antialiased">
+    <div className="pt-[88px] sm:pt-[108px] lg:pt-[118px] pb-20 min-h-screen bg-[#FAF9F5] text-[#0F1E24] antialiased">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
 
         {/* 1. HERO BANNER */}

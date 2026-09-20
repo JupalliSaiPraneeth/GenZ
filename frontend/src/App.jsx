@@ -26,8 +26,10 @@ import AdminVerifyCertificate from './pages/admin/AdminVerifyCertificate';
 
 import { useSurveyStore } from './stores/surveyStore';
 import { syncService } from './services/syncService';
+import { useZoomLock } from './hooks/useZoomLock';
 
 function AppLayout() {
+  useZoomLock();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
 

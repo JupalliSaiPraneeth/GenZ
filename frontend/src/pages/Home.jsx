@@ -97,7 +97,7 @@ export default function Home() {
 
   return (
     <div
-      className="relative pt-[70px] sm:pt-[94px] min-h-screen lg:h-screen w-full overflow-y-auto lg:overflow-hidden flex flex-col justify-center pb-6 lg:pb-0"
+      className="relative pt-[70px] sm:pt-[94px] min-h-[100svh] lg:min-h-[100svh] w-full overflow-x-hidden overflow-y-auto lg:overflow-hidden flex flex-col justify-center pb-6 lg:pb-0"
       ref={heroRef}
       style={{
         background: `
@@ -110,7 +110,7 @@ export default function Home() {
     >
 
       {/* HERO SECTION WITH SOFT LIGHT ELEGANT CREAM & MINT-TEAL EDITORIAL BACKGROUND */}
-      <section className="relative py-2 lg:py-2 overflow-hidden min-h-full flex flex-col justify-center">
+      <section className="relative py-2 lg:py-2 overflow-hidden min-h-[calc(100svh-70px)] flex flex-col justify-center">
 
         {/* 1. TOP-LEFT BACKGROUND CORNER: SOFT LIGHT TEAL BLOB */}
         <div className="absolute -top-28 -left-28 w-[320px] sm:w-[680px] h-[320px] sm:h-[620px] bg-[#109A9B]/30 sm:bg-[#109A9B]/40 rounded-full blur-2xl pointer-events-none -z-20" />
@@ -134,10 +134,10 @@ export default function Home() {
 
         {/* HERO CONTENT CONTAINER */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center min-h-[440px] sm:min-h-[560px]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-[clamp(1rem,2vw,2.5rem)] items-center min-h-0 lg:min-h-[calc(100svh-105px)]">
 
             {/* LEFT HERO CONTENT (~50% Desktop width) */}
-            <div className="lg:col-span-6 xl:col-span-6 pt-1 sm:pt-4 lg:pt-0 text-center lg:text-left z-20">
+            <div className="lg:col-span-6 xl:col-span-6 pt-1 sm:pt-4 lg:pt-0 text-center lg:text-left z-20 min-w-0">
 
               {/* Supported by NRI Institute Banner Pill */}
               <div className="hero-fade inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-white/85 backdrop-blur-md border border-[#109A9B]/25 shadow-[0_8px_25px_rgba(6,62,70,0.08)] hover:shadow-[0_12px_30px_rgba(6,62,70,0.14)] hover:border-[#109A9B]/40 transition-all duration-300 mb-3 sm:mb-5 group cursor-default">
@@ -160,7 +160,7 @@ export default function Home() {
               </div>
 
               {/* Massive Main Headline */}
-              <h1 className="hero-fade font-archivo text-2xl xs:text-3xl sm:text-5xl lg:text-6xl xl:text-[72px] text-[#0B1F2A] tracking-tight sm:tracking-[-2px] leading-[1.1] sm:leading-[0.96] mb-3 sm:mb-6 drop-shadow-xs">
+              <h1 className="hero-fade font-archivo text-[clamp(2.25rem,4.3vw,4.5rem)] text-[#0B1F2A] tracking-tight sm:tracking-[-2px] leading-[0.96] mb-3 sm:mb-5 drop-shadow-xs">
                 <span className="inline-block sm:whitespace-nowrap">GIVE A VOICE TO</span> <br className="hidden sm:inline" />
                 <span className="text-[#109A9B] uppercase font-black relative inline-block ml-1.5 sm:ml-0">
                   GEN Z
@@ -179,17 +179,17 @@ export default function Home() {
               </h1>
 
               {/* Editorial Tagline */}
-              <p className="hero-fade text-base sm:text-2xl md:text-[25px] font-extrabold text-[#0B1F2A] mb-2 sm:mb-4 font-sora leading-snug">
+              <p className="hero-fade text-[clamp(1rem,1.65vw,1.55rem)] font-extrabold text-[#0B1F2A] mb-2 sm:mb-3 font-sora leading-snug">
                 “Your Perspective. A Brighter Tomorrow.”
               </p>
 
               {/* Description Paragraph */}
-              <p className="hero-fade text-[#0F353C] text-xs xs:text-sm sm:text-lg md:text-[18px] max-w-[520px] mx-auto lg:mx-0 mb-4 sm:mb-8 leading-[1.55] sm:leading-[1.65] font-inter font-medium tracking-tight">
+              <p className="hero-fade text-[#0F353C] text-[clamp(0.72rem,1.05vw,1.05rem)] max-w-[520px] mx-auto lg:mx-0 mb-4 sm:mb-6 leading-[1.5] sm:leading-[1.6] font-inter font-medium tracking-tight">
                 Join thousands of young minds across India shaping the future. Share your honest perspective on career, technology, values, lifestyle, and aspirations in an engaging digital experience.
               </p>
 
               {/* Dynamic Primary CTA Button */}
-              <div className="hero-fade flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-3 sm:mb-4 font-inter">
+              <div className="hero-fade flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-3 sm:mb-4 font-inter">
                 {isCompleted ? (
                   <button
                     type="button"
@@ -223,13 +223,13 @@ export default function Home() {
             </div>
 
             {/* RIGHT HERO VISUAL (~50% Desktop width) */}
-            <div className="lg:col-span-6 xl:col-span-6 relative mt-2 lg:mt-0 flex items-center justify-center">
+            <div className="lg:col-span-6 xl:col-span-6 relative mt-2 lg:mt-0 flex items-center justify-center min-w-0 min-h-0">
 
-              <div className="relative w-full max-w-[280px] xs:max-w-[340px] sm:max-w-[480px] lg:max-w-[580px] flex items-center justify-center">
-                
+              <div className="relative w-full max-w-[280px] xs:max-w-[340px] sm:max-w-[480px] lg:max-w-[min(580px,42vw)] aspect-square flex items-center justify-center">
+
                 {/* 1. SOFT ELEGANT SUNBURST CREAM GLOW */}
                 <div
-                  className="absolute pointer-events-none -z-10 rounded-full w-[260px] xs:w-[320px] sm:w-[540px] lg:w-[660px] h-[260px] xs:h-[320px] sm:h-[540px] lg:h-[660px]"
+                  className="absolute pointer-events-none -z-10 rounded-full w-[112%] h-[112%]"
                   style={{
                     background: 'radial-gradient(circle, #FFFDF0 0%, #FDF1C7 35%, rgba(253,241,199,0.55) 55%, transparent 75%)',
                     filter: 'blur(6px)'
@@ -237,10 +237,10 @@ export default function Home() {
                 />
 
                 {/* 2. PROMINENT #109A9B TEAL CIRCULAR SHAPE */}
-                <div className="absolute w-[230px] xs:w-[280px] sm:w-[460px] lg:w-[560px] h-[230px] xs:h-[280px] sm:h-[460px] lg:h-[560px] rounded-full bg-[#109A9B]/35 border-2 border-[#109A9B]/60 shadow-lg pointer-events-none -z-10" />
+                <div className="absolute w-[90%] aspect-square rounded-full bg-[#109A9B]/35 border-2 border-[#109A9B]/60 shadow-lg pointer-events-none -z-10" />
 
                 {/* 3. THIN TEAL OUTLINE ARC RING */}
-                <div className="absolute w-[245px] xs:w-[300px] sm:w-[500px] lg:w-[600px] h-[245px] xs:h-[300px] sm:h-[500px] lg:h-[600px] rounded-full border-2 border-[#109A9B]/40 pointer-events-none -z-10 shadow-xs" />
+                <div className="absolute w-[96%] aspect-square rounded-full border-2 border-[#109A9B]/40 pointer-events-none -z-10 shadow-xs" />
 
                 {/* 4. DECORATIVE DOT MATRIX GRID */}
                 <div className="absolute top-[14%] right-[14%] pointer-events-none -z-10 hidden sm:grid grid-cols-6 gap-3.5 opacity-35">
@@ -270,12 +270,12 @@ export default function Home() {
                   <img
                     src="/GenZ-removebg-preview.png"
                     alt="Gen Z student portrait holding tablet"
-                    className="w-auto h-[250px] xs:h-[290px] sm:h-[420px] lg:h-[480px] xl:h-[530px] max-h-[55vh] object-contain drop-shadow-[0_20px_30px_rgba(11,31,42,0.2)] transition-transform duration-500 hover:scale-[1.01]"
+                    className="w-auto h-[clamp(280px,58svh,530px)] max-h-[58svh] object-contain drop-shadow-[0_20px_30px_rgba(11,31,42,0.2)] transition-transform duration-500 hover:scale-[1.01]"
                   />
                 </div>
 
                 {/* FLOATING STICKY NOTE */}
-                <div className="absolute bottom-0 sm:bottom-6 right-0 sm:-right-6 bg-[#FDE7B5] text-[#0B1F2A] p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-xl transform rotate-[6deg] border border-[#075D63]/30 max-w-[130px] xs:max-w-[150px] sm:max-w-[200px] z-40">
+                <div className="absolute bottom-[2%] sm:bottom-[4%] right-0 sm:-right-4 bg-[#FDE7B5] text-[#0B1F2A] p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-xl transform rotate-[6deg] border border-[#075D63]/30 max-w-[130px] xs:max-w-[150px] sm:max-w-[180px] z-40">
                   <div className="flex items-center gap-1 mb-0.5 text-[#075D63]">
                     <span className="text-xs sm:text-base">👑</span>
                     <span className="font-handwritten text-sm sm:text-xl font-black text-[#0B1F2A]">GEN Z</span>

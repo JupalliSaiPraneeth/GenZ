@@ -114,7 +114,7 @@ export default function SurveyComplete() {
       <div className="absolute top-20 -left-20 w-80 h-80 rounded-full bg-[#FFF8E8]/20 blur-3xl pointer-events-none z-0" />
       <div className="absolute top-40 -right-20 w-96 h-96 rounded-full bg-[#109A9B]/30 blur-3xl pointer-events-none z-0" />
 
-      <div className="relative z-10 pt-[75px] sm:pt-[95px] pb-16 px-3.5 sm:px-6 max-w-5xl lg:max-w-6xl mx-auto text-center space-y-5 sm:space-y-6">
+      <div className="relative z-10 pt-[88px] sm:pt-[105px] lg:pt-[115px] pb-16 px-3.5 sm:px-6 max-w-5xl lg:max-w-6xl mx-auto text-center space-y-5 sm:space-y-6">
 
         {/* Header Icon Box */}
         <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/15 text-[#FDE7B5] flex items-center justify-center mx-auto shadow-md border border-white/25 backdrop-blur-md">

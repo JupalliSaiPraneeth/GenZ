@@ -357,7 +357,7 @@ export default function Analytics() {
       <div className="absolute top-10 -left-20 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-[#109A9B]/20 blur-3xl pointer-events-none z-0" />
 
       {/* MAIN CONTENT CONTAINER */}
-      <div className="relative z-10 pt-[76px] sm:pt-[96px] pb-16 sm:pb-24 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-8">
+      <div className="relative z-10 pt-[88px] sm:pt-[105px] lg:pt-[115px] pb-16 sm:pb-24 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-8">
 
         {/* 75 QUESTIONS DEEP DIVE SECTION */}
         <div className="space-y-6">

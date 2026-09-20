@@ -458,7 +458,7 @@ export default function Survey() {
   // ONBOARDING STEP 0: MASTER PROMPT WELCOME EXPERIENCE
   if (onboardingStep === 0) {
     return (
-      <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto sm:overflow-hidden bg-[#FAF7F0] flex flex-col justify-center sm:justify-end pt-[72px] sm:pt-[96px] pb-4 sm:pb-6 touch-auto sm:touch-none overscroll-none select-none">
+      <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-center items-center pt-[88px] sm:pt-[105px] pb-6 sm:pb-10 select-none">
 
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
         <div className="absolute top-0 left-0 right-0 h-[50vh] min-h-[300px] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
@@ -472,13 +472,13 @@ export default function Survey() {
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[50%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.65),transparent_55%)] pointer-events-none z-0" />
 
         {/* DECORATIVE BACKGROUND ELEMENTS - POSITIONS IN TOP TEAL HALF */}
-        <div className="absolute top-28 sm:top-32 left-[4%] lg:left-[8%] xl:left-[12%] text-white/90 z-10 pointer-events-none hidden sm:block">
+        <div className="absolute top-28 sm:top-32 left-[2%] lg:left-[5%] xl:left-[8%] text-white/90 z-10 pointer-events-none hidden xl:block">
           <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-[#FFF8E8] drop-shadow-xs">
             Your <br /> Voice <br /> Matters
           </div>
         </div>
 
-        <div className="absolute top-28 sm:top-32 right-[4%] lg:right-[8%] xl:right-[12%] text-white/90 z-10 pointer-events-none hidden sm:block text-right">
+        <div className="absolute top-28 sm:top-32 right-[2%] lg:right-[5%] xl:right-[8%] text-white/90 z-10 pointer-events-none hidden xl:block text-right">
           <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-[#FFF8E8] drop-shadow-xs">
             Ideas Today <br /> Better Tomorrow
           </div>
@@ -600,7 +600,7 @@ export default function Survey() {
   // ONBOARDING STEP 1: ATTRACTIVE, PROFESSIONAL EDITORIAL 4-SECTION ROADMAP
   if (onboardingStep === 1) {
     return (
-      <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto sm:overflow-hidden bg-[#FAF7F0] flex flex-col justify-center items-center pt-[72px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 touch-auto sm:touch-none overscroll-none select-none">
+      <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-center items-center pt-[88px] sm:pt-[105px] pb-6 sm:pb-10 select-none">
 
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
         <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
@@ -791,7 +791,7 @@ export default function Survey() {
   // ONBOARDING STEP 2: PRIVACY GUARANTEE
   if (onboardingStep === 2) {
     return (
-      <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto flex items-center justify-center pt-[72px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] touch-auto sm:touch-none overscroll-none select-none">
+      <div className="relative min-h-screen w-full overflow-y-auto flex items-center justify-center pt-[88px] sm:pt-[105px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
         <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
@@ -859,7 +859,7 @@ export default function Survey() {
   // ONBOARDING STEP 2.5: PARTICIPANT NAME & EMAIL ENTRY (Persists immediately to Supabase DB)
   if (onboardingStep === 2.5 || (onboardingStep === 3 && !participantName)) {
     return (
-      <div className="relative min-h-screen sm:fixed sm:inset-0 sm:h-screen sm:h-[100dvh] w-screen overflow-y-auto flex items-center justify-center pt-[72px] sm:pt-[90px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] touch-auto sm:touch-none overscroll-none select-none">
+      <div className="relative min-h-screen w-full overflow-y-auto flex items-center justify-center pt-[88px] sm:pt-[105px] pb-6 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
         {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
         <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
@@ -997,23 +997,18 @@ export default function Survey() {
               )}
             </div>
 
-            <div className="bg-[#EAF6F6] p-2.5 sm:p-3.5 rounded-2xl border border-[#109A9B]/20 text-[11px] sm:text-xs text-[#075D63] flex items-center gap-2 font-medium">
-              <ShieldCheck className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-[#109A9B] flex-shrink-0" />
-              <span>Your details and answers are saved directly to the Supabase database.</span>
-            </div>
-
-            <div className="pt-1 sm:pt-2 flex gap-2.5 sm:gap-3">
+            <div className="pt-1 flex gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setOnboardingStep(2)}
-                className="w-1/3 py-2.5 sm:py-3.5 px-3 sm:px-4 bg-slate-100 hover:bg-slate-200 text-[#10242C] font-bold text-xs sm:text-sm rounded-2xl transition-colors cursor-pointer"
+                className="w-1/3 py-2 sm:py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-[#10242C] font-bold text-xs rounded-xl transition-colors cursor-pointer h-[40px] sm:h-[44px]"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={!nameInput.trim() || !emailInput.trim() || isSavingName}
-                className="flex-1 py-2.5 sm:py-3.5 px-3 sm:px-4 bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs sm:text-base rounded-2xl shadow-lg shadow-teal-900/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 disabled:opacity-50"
+                className="flex-1 py-2 sm:py-2.5 px-3 sm:px-4 bg-[#063E46] hover:bg-[#075D63] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-teal-900/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 h-[40px] sm:h-[44px]"
               >
                 {isSavingName ? (
                   <span>Checking & Loading...</span>
@@ -1034,7 +1029,7 @@ export default function Survey() {
 
   // ACTIVE 207-QUESTION SURVEY EXPERIENCE (Step 3: Master Prompt Implementation)
   return (
-    <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-between items-center pt-[76px] sm:pt-[96px] lg:pt-[104px] pb-6 select-none">
+    <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-between items-center pt-[88px] sm:pt-[105px] lg:pt-[115px] pb-6 select-none">
 
       {/* ==================================================== */}
       {/* OVERALL PAGE BACKGROUND — ORIGINAL TEAL ATMOSPHERIC GRADIENT */}
