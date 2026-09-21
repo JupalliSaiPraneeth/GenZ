@@ -110,8 +110,13 @@ export default function AdminQuestions() {
       'Confirm Deletion',
       `Are you sure you want to delete question ${qCode}? Question numbers across sections will re-sequence automatically.`,
       async () => {
-        await deleteQuestion(qId);
-        setSavedSuccessMsg(`Deleted question ${qCode} and synced to Supabase database.`);
+        const res = await deleteQuestion(qId);
+        if (res) {
+          setSavedSuccessMsg(`Deleted question ${qCode} and synced remaining questions to Supabase database.`);
+        } else {
+          showAlert('Supabase Database Notice', `Question was deleted locally, but Supabase rejected DB deletion. Check RLS policies if persistence fails.`, 'warning');
+        }
+        await loadQuestionsFromSupabase();
         setTimeout(() => setSavedSuccessMsg(''), 4000);
         setEditingQuestion(null);
       },

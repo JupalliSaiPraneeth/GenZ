@@ -207,16 +207,13 @@ export const adminDataService = {
 
         if (dbQuestions && dbQuestions.length > 0) {
           const officialMap = new Map(OFFICIAL_75_QUESTIONS.map((q) => [q.id, q]));
-          const localQs = getStoredQuestions() || OFFICIAL_75_QUESTIONS;
-          const localMap = new Map(localQs.map((q) => [q.id, q]));
 
           return dbQuestions.map((q, idx) => {
             const qId = String(q.id).toLowerCase();
             const officialMatch = officialMap.get(qId);
-            const localMatch = localMap.get(qId);
 
-            const qCode = q.question_code || officialMatch?.code || localMatch?.code || `Q${idx + 1}`;
-            const secId = q.section_id || officialMatch?.sectionId || localMatch?.sectionId || 'sec-1';
+            const qCode = q.question_code || officialMatch?.code || `Q${idx + 1}`;
+            const secId = q.section_id || officialMatch?.sectionId || 'sec-1';
             const secNum = parseInt(secId.replace(/\D/g, ''), 10) || 1;
 
             return {
@@ -224,9 +221,9 @@ export const adminDataService = {
               code: qCode,
               sectionId: secId,
               sectionNumber: secNum,
-              topic: q.topic || officialMatch?.topic || localMatch?.topic || 'General',
-              text: q.question_text || officialMatch?.text || localMatch?.text || '',
-              options: q.options || officialMatch?.options || localMatch?.options || [],
+              topic: q.topic || officialMatch?.topic || 'General',
+              text: q.question_text || officialMatch?.text || '',
+              options: q.options || officialMatch?.options || [],
               isMultiSelect: Boolean(q.is_multi_select || q.selection_type === 'multiple' || officialMatch?.isMultiSelect),
             };
           });

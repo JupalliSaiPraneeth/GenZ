@@ -651,13 +651,17 @@ export async function syncAllQuestionsToSupabase(questionsList) {
   }
 }
 
-/**
- * Delete Question from Supabase DB
- */
 export async function deleteQuestionFromSupabase(questionId) {
   if (!questionId || !isSupabaseConfigured) return false;
   try {
     const qIdKey = String(questionId).toLowerCase();
+
+    // 1. Delete associated survey responses if any to prevent foreign key errors
+    try {
+      await supabase.from('survey_responses').delete().eq('question_id', qIdKey);
+    } catch (e) {}
+
+    // 2. Delete the question record from survey_questions
     const { error } = await supabase.from('survey_questions').delete().eq('id', qIdKey);
     if (!error) {
       await logAdminAuditAction('ADMIN_DELETE_QUESTION', { questionId: qIdKey });
@@ -666,15 +670,14 @@ export async function deleteQuestionFromSupabase(questionId) {
     if (error.status === 401 || error.code === '42501') {
       console.info('Supabase survey_questions delete notice: RLS policy grant required in SQL editor.');
     }
+    console.error('deleteQuestionFromSupabase error:', error.message);
     return false;
   } catch (e) {
+    console.error('deleteQuestionFromSupabase exception:', e);
     return false;
   }
 }
 
-/**
- * Fetch stored questions blueprint from Supabase DB
- */
 export async function fetchQuestionsFromSupabase() {
   if (!isSupabaseConfigured) return null;
   try {
@@ -698,10 +701,42 @@ export async function fetchQuestionsFromSupabase() {
         isMultiSelect: Boolean(item.is_multi_select || item.selection_type === 'multiple'),
       }));
     }
+
+    // Auto-seed if survey_questions in Supabase DB is empty
+    if (!error && (!qData || qData.length === 0)) {
+      const { OFFICIAL_75_QUESTIONS } = await import('../data/surveyQuestions');
+      if (Array.isArray(OFFICIAL_75_QUESTIONS) && OFFICIAL_75_QUESTIONS.length > 0) {
+        await syncAllQuestionsToSupabase(OFFICIAL_75_QUESTIONS);
+        return OFFICIAL_75_QUESTIONS;
+      }
+    }
   } catch (err) {
     console.warn('fetchQuestionsFromSupabase notice:', err);
   }
   return null;
+}
+
+/**
+ * Subscribe to real-time database changes on `survey_questions` table
+ */
+export function subscribeToQuestionsRealtime(onChangeCallback) {
+  if (!isSupabaseConfigured || typeof onChangeCallback !== 'function') return null;
+  try {
+    const channel = supabase
+      .channel('public:survey_questions_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'survey_questions' },
+        (payload) => {
+          onChangeCallback(payload);
+        }
+      )
+      .subscribe();
+    return channel;
+  } catch (e) {
+    console.warn('Realtime subscription notice:', e);
+    return null;
+  }
 }
 
 /**

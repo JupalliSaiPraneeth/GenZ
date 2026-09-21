@@ -40,14 +40,11 @@ export const useSurveyStore = create((set, get) => ({
   loadQuestionsFromSupabase: async () => {
     const dbQuestions = await fetchQuestionsFromSupabase();
     if (dbQuestions && Array.isArray(dbQuestions) && dbQuestions.length > 0) {
-      const localQs = getStoredQuestions();
-      const localMap = new Map(localQs.map((q) => [q.id, q]));
       const officialMap = new Map(OFFICIAL_75_QUESTIONS.map((q) => [q.id, q]));
 
-      const merged = dbQuestions.map((dbQ) => {
-        const localMatch = localMap.get(dbQ.id);
+      const processed = dbQuestions.map((dbQ) => {
         const officialMatch = officialMap.get(dbQ.id);
-        const fallbackOpts = localMatch?.options || officialMatch?.options || [
+        const fallbackOpts = officialMatch?.options || [
           { label: 'Option 1', value: 'option_1' },
           { label: 'Option 2', value: 'option_2' },
         ];
@@ -55,23 +52,19 @@ export const useSurveyStore = create((set, get) => ({
         return {
           ...dbQ,
           options: hasDbOptions ? dbQ.options : fallbackOpts,
-          selectionType: dbQ.selectionType || localMatch?.selectionType || officialMatch?.selectionType || 'single',
-          isMultiSelect: dbQ.isMultiSelect ?? localMatch?.isMultiSelect ?? officialMatch?.isMultiSelect ?? false,
+          selectionType: dbQ.selectionType || officialMatch?.selectionType || 'single',
+          isMultiSelect: dbQ.isMultiSelect ?? officialMatch?.isMultiSelect ?? false,
         };
       });
 
-      localQs.forEach((lq) => {
-        if (!merged.some((m) => m.id === lq.id)) {
-          merged.push(lq);
-        }
-      });
-
-      const savedResequenced = saveStoredQuestions(merged);
+      // Directly resequence database questions and overwrite local storage as authority
+      const savedResequenced = saveStoredQuestions(processed);
       const updatedSections = getDynamicSections(savedResequenced);
       set({
         questions: savedResequenced,
         sections: updatedSections,
       });
+      return savedResequenced;
     }
   },
 
@@ -139,8 +132,12 @@ export const useSurveyStore = create((set, get) => ({
       sections: updatedSections,
     });
 
-    // Delete question and sync remaining blueprint sequence to Supabase DB
-    await deleteQuestionFromSupabase(questionId);
+    // Delete question from Supabase DB and sync remaining blueprint sequence to Supabase DB
+    const deleteRes = await deleteQuestionFromSupabase(questionId);
+    if (deleteRes) {
+      await syncAllQuestionsToSupabase(savedResequenced);
+    }
+    return deleteRes;
   },
 
   currentSectionIndex: 0,

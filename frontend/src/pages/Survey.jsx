@@ -59,7 +59,12 @@ export default function Survey() {
     syncStatus,
     lastSyncedAt,
     completeSurvey,
+    loadQuestionsFromSupabase,
   } = useSurveyStore();
+
+  useEffect(() => {
+    loadQuestionsFromSupabase();
+  }, [loadQuestionsFromSupabase]);
 
   // Smooth Card Moving Animation State
   const [cardAnimClass, setCardAnimClass] = useState('translate-x-0 opacity-100 scale-100');

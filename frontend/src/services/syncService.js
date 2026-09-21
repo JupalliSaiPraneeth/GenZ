@@ -1,21 +1,34 @@
 import { getUnsyncedAnswers, markAnswerSynced } from './db';
-import { syncResponseToSupabase, isSupabaseConfigured } from './supabaseClient';
+import { syncResponseToSupabase, isSupabaseConfigured, subscribeToQuestionsRealtime } from './supabaseClient';
+import { useSurveyStore } from '../stores/surveyStore';
 
 class SyncService {
   constructor() {
     this.isSyncing = false;
+    this.realtimeChannel = null;
   }
 
   startAutoSync(intervalMs = 10000) {
     if (typeof window === 'undefined') return;
 
     // Trigger sync on online event
-    window.addEventListener('online', () => this.syncPendingAnswers());
+    window.addEventListener('online', () => {
+      this.syncPendingAnswers();
+      useSurveyStore.getState().loadQuestionsFromSupabase();
+    });
 
-    // Periodic sync timer
+    // 1. Subscribe to Live Realtime changes on `survey_questions` table across all clients
+    if (isSupabaseConfigured && !this.realtimeChannel) {
+      this.realtimeChannel = subscribeToQuestionsRealtime(() => {
+        useSurveyStore.getState().loadQuestionsFromSupabase();
+      });
+    }
+
+    // 2. Periodic sync timer for pending responses & questions blueprint refresh
     setInterval(() => {
       if (navigator.onLine) {
         this.syncPendingAnswers();
+        useSurveyStore.getState().loadQuestionsFromSupabase();
       }
     }, intervalMs);
   }

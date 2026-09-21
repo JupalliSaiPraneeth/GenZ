@@ -7,8 +7,12 @@ import { OFFICIAL_75_QUESTIONS, getStoredQuestions } from '../data/surveyQuestio
 import AnimatedQuestionPieChart from '../components/analytics/AnimatedQuestionPieChart';
 
 export default function Analytics() {
-  const { answersById } = useSurveyStore();
+  const { answersById, questions: storeQuestions, loadQuestionsFromSupabase } = useSurveyStore();
   const [dbResponses, setDbResponses] = useState([]);
+
+  useEffect(() => {
+    if (loadQuestionsFromSupabase) loadQuestionsFromSupabase();
+  }, [loadQuestionsFromSupabase]);
 
   // Question Deep Dive Filters & Search States
   const [selectedQuestionId, setSelectedQuestionId] = useState('q1');
@@ -134,7 +138,7 @@ export default function Analytics() {
     return dbResponses.length > 0 ? dbResponses : personalRecords;
   }, [dbResponses, personalRecords]);
 
-  const allQuestions = useMemo(() => getStoredQuestions() || OFFICIAL_75_QUESTIONS, []);
+  const allQuestions = useMemo(() => (storeQuestions && storeQuestions.length > 0 ? storeQuestions : getStoredQuestions() || OFFICIAL_75_QUESTIONS), [storeQuestions]);
 
   // Filtered Questions List for Deep Dive
   const filteredQuestions = useMemo(() => {
@@ -452,7 +456,7 @@ export default function Analytics() {
                   userSelectedAnswer={userSelectedAnswer}
                   onSelectPrev={handleSelectPrevQuestion}
                   onSelectNext={handleSelectNextQuestion}
-                  totalQuestionsCount={OFFICIAL_75_QUESTIONS.length}
+                  totalQuestionsCount={allQuestions.length}
                   currentIndex={selectedQuestionIndex}
                   isAdmin={false}
                 />

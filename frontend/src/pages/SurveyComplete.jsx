@@ -22,7 +22,7 @@ import {
 import GridModal from '../components/common/GridModal';
 
 export default function SurveyComplete() {
-  const { participantName, participantEmail, participantId, setParticipantDetails, completeSurvey } = useSurveyStore();
+  const { participantName, participantEmail, participantId, setParticipantDetails, completeSurvey, questions } = useSurveyStore();
   const [participant, setParticipant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -39,7 +39,7 @@ export default function SurveyComplete() {
   const [isGeneratingCert, setIsGeneratingCert] = useState(true);
   const [showFullImageModal, setShowFullImageModal] = useState(false);
 
-  const totalQs = (getStoredQuestions() || []).length || 75;
+  const totalQs = (questions && questions.length > 0 ? questions : getStoredQuestions() || []).length || 75;
 
   const loadStatus = async () => {
     setIsRefreshing(true);
