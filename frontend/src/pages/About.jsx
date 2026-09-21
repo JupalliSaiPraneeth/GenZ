@@ -42,15 +42,15 @@ export default function About() {
     <div className="relative min-h-screen w-full bg-[#FAF7F0] text-[#10242C] font-inter overflow-x-hidden pt-[85px] sm:pt-[110px] lg:pt-[125px] pb-16 sm:pb-24">
 
       {/* ==================================================== */}
-      {/* BACKGROUND ATMOSPHERIC GRADIENTS & GLOW BLOBS */}
-      {/* ==================================================== */}
-      <div className="absolute top-0 left-0 right-0 h-[48vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.18),transparent_65%)]" />
+      {/* UNIFIED CREAM BACKGROUND & ATMOSPHERIC GLOW BLOBS */}
+      {/* UNIFIED CREAM BACKGROUND & ATMOSPHERIC GLOW BLOBS */}
+      <div className="absolute inset-0 bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
       </div>
 
       {/* Decorative Blur Blobs */}
-      <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-[#075D63]/40 rounded-full blur-3xl pointer-events-none z-0" />
-      <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-[#063E46]/50 via-[#075D63]/30 to-transparent rounded-bl-[260px] blur-xl pointer-events-none z-0" />
+      <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-[#109A9B]/10 rounded-full blur-3xl pointer-events-none z-0" />
+      <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-[#075D63]/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none z-0" />
       <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none z-0" />
 
       {/* MAIN ALIGNED CONTAINER */}
@@ -58,11 +58,11 @@ export default function About() {
 
         {/* 1. HERO SECTION */}
         <div className="text-center space-y-3 sm:space-y-4 max-w-4xl mx-auto pt-2 sm:pt-4">
-          <h1 className="font-sora font-extrabold text-2.5xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight drop-shadow-sm">
+          <h1 className="font-sora font-extrabold text-2.5xl sm:text-4xl lg:text-5xl text-[#10242C] tracking-tight leading-tight drop-shadow-xs">
             About Gen Z Voices
           </h1>
 
-          <p className="text-sm sm:text-lg lg:text-xl font-sora font-semibold text-[#FFF8E8] leading-relaxed max-w-2xl mx-auto px-2">
+          <p className="text-sm sm:text-lg lg:text-xl font-sora font-semibold text-[#075D63] leading-relaxed max-w-2xl mx-auto px-2">
             Understanding Gen Z. Capturing Perspectives. Shaping Tomorrow.
           </p>
         </div>

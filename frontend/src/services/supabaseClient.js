@@ -382,30 +382,57 @@ export function generateDeterministicCertId(seed) {
 /**
  * Mark Survey Status as Completed
  */
-export async function completeParticipantSurvey(participantId, deviceTimestamp = new Date().toISOString()) {
+export async function completeParticipantSurvey(participantId, deviceTimestamp = new Date().toISOString(), answersById = {}) {
   if (!participantId) return;
   try {
     const completedAt = new Date().toISOString();
     const certCode = generateDeterministicCertId(participantId);
 
+    // Calculate Attention Check score (AC1, AC2, AC3)
+    let acScore = 0;
+    const ac1Val = String(answersById['ac1'] ?? answersById['AC1'] ?? '').trim().toLowerCase();
+    const ac2Val = String(answersById['ac2'] ?? answersById['AC2'] ?? '').trim().toLowerCase();
+    const ac3Val = String(answersById['ac3'] ?? answersById['AC3'] ?? '').trim().toLowerCase();
+
+    if (ac1Val === 'agree' || ac1Val === 'strongly_agree') acScore++;
+    if (ac2Val === 'sometimes') acScore++;
+    if (ac3Val === 'agree' || ac3Val === 'strongly_agree') acScore++;
+
+    const acPassed = (acScore === 3);
+
     await logUserAction(participantId, 'COMPLETE_SURVEY', deviceTimestamp, {
       status: 'completed',
       completed_at: completedAt,
       certificate_id: certCode,
+      attention_check_score: acScore,
+      attention_check_passed: acPassed,
     });
 
-    await supabase
+    const updatePayload = {
+      status: 'completed',
+      certificate_id: certCode,
+      certificate_status: 'issued',
+      certificate_issued_at: completedAt,
+      completed_at: completedAt,
+      updated_at: completedAt,
+      device_timestamp: deviceTimestamp,
+      attention_check_score: acScore,
+      attention_check_passed: acPassed,
+    };
+
+    const { error: updateErr } = await supabase
       .from('participants')
-      .update({
-        status: 'completed',
-        certificate_id: certCode,
-        certificate_status: 'issued',
-        certificate_issued_at: completedAt,
-        completed_at: completedAt,
-        updated_at: completedAt,
-        device_timestamp: deviceTimestamp,
-      })
+      .update(updatePayload)
       .eq('id', participantId);
+
+    if (updateErr) {
+      delete updatePayload.attention_check_score;
+      delete updatePayload.attention_check_passed;
+      await supabase
+        .from('participants')
+        .update(updatePayload)
+        .eq('id', participantId);
+    }
   } catch (e) {
     console.warn('completeParticipantSurvey notice:', e);
   }
@@ -699,6 +726,8 @@ export async function fetchQuestionsFromSupabase() {
           : (typeof item.options === 'string' ? JSON.parse(item.options) : null),
         selectionType: item.selection_type || (item.is_multi_select ? 'multiple' : 'single'),
         isMultiSelect: Boolean(item.is_multi_select || item.selection_type === 'multiple'),
+        correctAnswer: item.correct_answer || null,
+        isAttentionCheck: Boolean(item.is_attention_check || String(item.id).toLowerCase().startsWith('ac')),
       }));
     }
 

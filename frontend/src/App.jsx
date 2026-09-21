@@ -17,7 +17,6 @@ import AdminRespondents from './pages/admin/AdminRespondents';
 import AdminRespondentDetail from './pages/admin/AdminRespondentDetail';
 import AdminResponses from './pages/admin/AdminResponses';
 import AdminQuestions from './pages/admin/AdminQuestions';
-import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminComparative from './pages/admin/AdminComparative';
 import AdminDatabase from './pages/admin/AdminDatabase';
 import AdminExport from './pages/admin/AdminExport';
@@ -100,14 +99,7 @@ function AppLayout() {
               </AdminProtectedRoute>
             }
           />
-          <Route
-            path="/admin/analytics"
-            element={
-              <AdminProtectedRoute>
-                <AdminAnalytics />
-              </AdminProtectedRoute>
-            }
-          />
+          <Route path="/admin/analytics" element={<Navigate to="/admin/dashboard" replace />} />
           <Route
             path="/admin/comparative-analysis"
             element={

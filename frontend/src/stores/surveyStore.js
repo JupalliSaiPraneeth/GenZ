@@ -459,12 +459,12 @@ export const useSurveyStore = create((set, get) => ({
   },
 
   completeSurvey: async () => {
-    const { participantId, sessionId } = get();
+    const { participantId, sessionId, answersById } = get();
     const targetId = participantId || localStorage.getItem('genz_participant_id') || sessionId;
     localStorage.setItem('genz_participant_completed', 'true');
     set({ isCompletedSession: true });
     if (targetId) {
-      await completeParticipantSurvey(targetId);
+      await completeParticipantSurvey(targetId, new Date().toISOString(), answersById);
     }
   },
 }));

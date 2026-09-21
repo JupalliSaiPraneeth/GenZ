@@ -465,26 +465,23 @@ export default function Survey() {
     return (
       <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
 
-        {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
-        <div className="absolute top-0 left-0 right-0 h-[50vh] min-h-[300px] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
-
-        {/* PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
-        <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
+        {/* UNIFIED CREAM BACKGROUND */}
+        <div className="absolute inset-0 bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none" />
 
         {/* ORGANIC BACKGROUND SHAPES */}
         <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-[#109A9B]/20 blur-3xl pointer-events-none z-0" />
         <div className="absolute -bottom-16 -right-16 w-80 h-80 rounded-full bg-[#075D63]/15 blur-3xl pointer-events-none z-0" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[50%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.65),transparent_55%)] pointer-events-none z-0" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[50%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_55%)] pointer-events-none z-0" />
 
-        {/* DECORATIVE BACKGROUND ELEMENTS - POSITIONS IN TOP TEAL HALF */}
-        <div className="absolute top-28 sm:top-32 left-[2%] lg:left-[5%] xl:left-[8%] text-white/90 z-10 pointer-events-none hidden xl:block">
-          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-[#FFF8E8] drop-shadow-xs">
+        {/* DECORATIVE BACKGROUND ELEMENTS - POSITIONS IN TOP CREAM HALF */}
+        <div className="absolute top-28 sm:top-32 left-[2%] lg:left-[5%] xl:left-[8%] text-[#075D63] z-10 pointer-events-none hidden xl:block">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-[#075D63] drop-shadow-xs">
             Your <br /> Voice <br /> Matters
           </div>
         </div>
 
-        <div className="absolute top-28 sm:top-32 right-[2%] lg:right-[5%] xl:right-[8%] text-white/90 z-10 pointer-events-none hidden xl:block text-right">
-          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-[#FFF8E8] drop-shadow-xs">
+        <div className="absolute top-28 sm:top-32 right-[2%] lg:right-[5%] xl:right-[8%] text-[#075D63] z-10 pointer-events-none hidden xl:block text-right">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-[#075D63] drop-shadow-xs">
             Ideas Today <br /> Better Tomorrow
           </div>
         </div>
@@ -607,11 +604,8 @@ export default function Survey() {
     return (
       <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
 
-        {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
-        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
-
-        {/* PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
-        <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
+        {/* UNIFIED CREAM BACKGROUND */}
+        <div className="absolute inset-0 bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none" />
 
         {/* MAIN COMPOSITION CONTAINER */}
         <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-start items-center py-2 sm:py-4">
@@ -798,11 +792,8 @@ export default function Survey() {
     return (
       <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
-        {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
-        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
-
-        {/* PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
-        <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
+        {/* UNIFIED CREAM BACKGROUND */}
+        <div className="absolute inset-0 bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none" />
 
         <div className="max-w-xl w-full bg-white rounded-3xl p-4 sm:p-7 border border-[#109A9B]/20 shadow-2xl relative z-20 overflow-hidden my-3 sm:my-5">
           <div className="space-y-4 sm:space-y-6">
@@ -866,11 +857,8 @@ export default function Survey() {
     return (
       <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
-        {/* TOP TEAL 50% / BOTTOM CREAM 50% DUAL COLOR SPLIT BACKGROUND */}
-        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden" />
-
-        {/* PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
-        <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
+        {/* UNIFIED CREAM BACKGROUND */}
+        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-[#FAF7F0] z-0 overflow-hidden" />
 
         <div className="max-w-xl w-full bg-white rounded-3xl p-4 sm:p-7 border border-[#109A9B]/20 shadow-2xl relative z-20 overflow-hidden my-3 sm:my-5">
 
@@ -1036,24 +1024,8 @@ export default function Survey() {
   return (
     <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-between items-center pt-[88px] sm:pt-[105px] lg:pt-[115px] pb-6 select-none">
 
-      {/* ==================================================== */}
-      {/* OVERALL PAGE BACKGROUND — ORIGINAL TEAL ATMOSPHERIC GRADIENT */}
-      {/* ==================================================== */}
-
-      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-[#109A9B] to-[#075D63] z-0 overflow-hidden">
-        {/* Radial Glow Lighting */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.18),transparent_65%)]" />
-      </div>
-
-      {/* 1. TOP LEFT OVERSIZED TEAL ORGANIC BLOB */}
-      <div className="absolute -top-24 -left-28 w-[500px] h-[500px] bg-[#075D63]/40 rounded-full blur-3xl pointer-events-none z-0" />
-      <div className="absolute top-0 left-0 w-[380px] h-[380px] bg-[#109A9B]/30 rounded-br-[220px] blur-2xl pointer-events-none z-0" />
-
-      {/* 2. TOP RIGHT DEEP TEAL ORGANIC WAVE SECTION */}
-      <div className="absolute top-0 right-0 w-[550px] h-[400px] bg-gradient-to-bl from-[#063E46]/50 via-[#075D63]/30 to-transparent rounded-bl-[260px] blur-xl pointer-events-none z-0" />
-
-      {/* 3. PERFECT STRAIGHT HORIZONTAL SPLIT DIVIDER AT EXACT 50% HEIGHT */}
-      <div className="absolute top-[50vh] left-0 right-0 h-[2px] bg-[#FAF7F0]/40 z-0 pointer-events-none" />
+      {/* UNIFIED CREAM BACKGROUND */}
+      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-[#FAF7F0] z-0 overflow-hidden" />
 
       {/* 4. BOTTOM LEFT ORGANIC SHAPE */}
       <div className="absolute bottom-0 -left-20 w-[520px] h-[520px] rounded-full bg-[#109A9B]/15 blur-3xl pointer-events-none z-0" />

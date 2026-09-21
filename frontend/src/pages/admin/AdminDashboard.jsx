@@ -200,7 +200,7 @@ function SegmentedPillBarCard({ rawRecords }) {
       <div className="space-y-1">
         <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 leading-snug">
           <Users className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
-          <span>Gender Distribution (100% Segmented Pill)</span>
+          <span>Gender Distribution</span>
         </h3>
         <p className="text-xs text-[#53656A] font-medium">Proportional segmentation of active survey participants</p>
       </div>
@@ -331,7 +331,7 @@ function WaffleChartCard({ rawRecords }) {
       <div className="space-y-1">
         <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 leading-snug">
           <Tv className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
-          <span>Daily Screen Time (Waffle Chart 100-Grid)</span>
+          <span>Daily Screen Time</span>
         </h3>
         <p className="text-xs text-[#53656A] font-medium">Each square represents 1% of survey population</p>
       </div>
@@ -414,7 +414,7 @@ function LollipopChartCard({ rawRecords }) {
       <div className="space-y-1">
         <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 leading-snug">
           <Calendar className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
-          <span>Age Group Distribution (Lollipop Chart)</span>
+          <span>Age Group Distribution</span>
         </h3>
         <p className="text-xs text-[#53656A] font-medium">Research-grade distribution comparison</p>
       </div>
@@ -484,16 +484,23 @@ function StoryCardVisualization({ rawRecords }) {
     y: 0,
   });
 
-  // Calculate sleep breakdown data
+  // Calculate sleep breakdown data from Q16 (Nightly Sleep Duration) in DB
   const sleepData = useMemo(() => {
-    const sleepRecords = rawRecords.filter(
-      (r) =>
-        String(r.questionId).toLowerCase() === 'q17' ||
-        String(r.questionId).toLowerCase() === 'q19' ||
-        String(r.questionId) === '17' ||
-        String(r.questionId) === '19' ||
-        String(r.questionCode || '').toLowerCase().includes('sleep')
-    );
+    const sleepRecords = rawRecords.filter((r) => {
+      const qId = String(r.questionId || '').toLowerCase().trim();
+      const qCode = String(r.questionCode || '').toLowerCase().trim();
+      const qText = String(r.questionText || '').toLowerCase();
+      return (
+        qId === 'q16' ||
+        qId === '16' ||
+        qCode === 'q16' ||
+        qId === 'q17' ||
+        qId === '17' ||
+        qCode.includes('q16') ||
+        qText.includes('sleep') ||
+        qCode.includes('sleep')
+      );
+    });
 
     let idealCount = 0;
     let deprivedCount = 0;
@@ -501,31 +508,50 @@ function StoryCardVisualization({ rawRecords }) {
     let totalCount = sleepRecords.length;
 
     sleepRecords.forEach((r) => {
-      const val = String(r.value ?? '').toLowerCase();
+      let rawVal = r.value;
+      if (typeof rawVal === 'object' && rawVal !== null) {
+        rawVal = rawVal.value !== undefined ? rawVal.value : (rawVal.label !== undefined ? rawVal.label : rawVal);
+      }
+      const val = String(rawVal ?? '').toLowerCase();
+
       if (
-        val.includes('6_7') ||
-        val.includes('7_8') ||
-        val.includes('more_than_8') ||
-        val.includes('6_8') ||
-        val.includes('6-8') ||
-        val.includes('7') ||
-        val.includes('8') ||
-        val.includes('ideal')
+        val.includes('less_than_4') ||
+        val.includes('under_4') ||
+        val.includes('<4') ||
+        val.includes('less than 4') ||
+        val === '1'
       ) {
-        idealCount++;
+        severeCount++;
       } else if (
         val.includes('4_5') ||
         val.includes('5_6') ||
-        val.includes('4_6') ||
-        val.includes('4-6') ||
-        val.includes('5') ||
-        val.includes('deprived')
+        val.includes('4-5') ||
+        val.includes('5-6') ||
+        val.includes('4–5') ||
+        val.includes('5–6') ||
+        val === '2' ||
+        val === '3'
       ) {
         deprivedCount++;
-      } else if (val.includes('less_than_4') || val.includes('under_4') || val.includes('<4') || val.includes('severe') || val.includes('4')) {
-        severeCount++;
-      } else {
+      } else if (
+        val.includes('6_7') ||
+        val.includes('7_8') ||
+        val.includes('more_than_8') ||
+        val.includes('6-7') ||
+        val.includes('7-8') ||
+        val.includes('6–7') ||
+        val.includes('7–8') ||
+        val.includes('6_8') ||
+        val.includes('6-8') ||
+        val === '4' ||
+        val === '5' ||
+        val === '6'
+      ) {
         idealCount++;
+      } else {
+        if (val.includes('less')) severeCount++;
+        else if (val.includes('4') || val.includes('5')) deprivedCount++;
+        else idealCount++;
       }
     });
 
@@ -815,8 +841,8 @@ function StoryCardVisualization({ rawRecords }) {
                       filter: isHovered
                         ? `brightness(1.15) drop-shadow(0px 8px 16px ${slice.glowColor})`
                         : slice.isExploded
-                        ? `drop-shadow(0px 6px 12px ${slice.glowColor})`
-                        : 'none',
+                          ? `drop-shadow(0px 6px 12px ${slice.glowColor})`
+                          : 'none',
                     }}
                     onMouseEnter={(e) => handleMouseEnter(idx, e)}
                   />
@@ -844,13 +870,12 @@ function StoryCardVisualization({ rawRecords }) {
                 ref={(el) => (legendRefs.current[idx] = el)}
                 onMouseEnter={(e) => handleMouseEnter(idx, e)}
                 onMouseLeave={handleMouseLeave}
-                className={`py-2 sm:py-2.5 px-3 rounded-xl border transition-all duration-300 cursor-pointer flex items-center justify-between gap-2 ${
-                  isHovered
-                    ? 'bg-[#EAF6F6] border-[#109A9B]/60 shadow-md scale-[1.02]'
-                    : slice.isExploded
+                className={`py-2 sm:py-2.5 px-3 rounded-xl border transition-all duration-300 cursor-pointer flex items-center justify-between gap-2 ${isHovered
+                  ? 'bg-[#EAF6F6] border-[#109A9B]/60 shadow-md scale-[1.02]'
+                  : slice.isExploded
                     ? 'bg-slate-50/90 border-slate-200/90 hover:bg-slate-100/90'
                     : 'bg-slate-50/50 border-slate-200/60 hover:bg-slate-100/70'
-                }`}
+                  }`}
               >
                 {/* LEGEND BADGE + NAME */}
                 <div className="flex items-center gap-2 min-w-0">
@@ -880,9 +905,8 @@ function StoryCardVisualization({ rawRecords }) {
       {/* FLOATING GLASSMORPHIC TOOLTIP */}
       <div
         ref={tooltipRef}
-        className={`absolute z-30 pointer-events-none px-3.5 py-2 rounded-xl bg-slate-900/95 border border-slate-700/80 text-white shadow-2xl backdrop-blur-md transition-opacity duration-200 flex flex-col gap-0.5 transform -translate-x-1/2 ${
-          tooltipState.visible ? 'opacity-100' : 'opacity-0'
-        }`}
+        className={`absolute z-30 pointer-events-none px-3.5 py-2 rounded-xl bg-slate-900/95 border border-slate-700/80 text-white shadow-2xl backdrop-blur-md transition-opacity duration-200 flex flex-col gap-0.5 transform -translate-x-1/2 ${tooltipState.visible ? 'opacity-100' : 'opacity-0'
+          }`}
         style={{
           left: tooltipState.x,
           top: tooltipState.y,
@@ -899,56 +923,96 @@ function StoryCardVisualization({ rawRecords }) {
 }
 
 // =========================================================================
-// 6. SOLID 2D PIE CHART WITH IN-SLICE PERCENTAGES (TECHNOLOGY OPTIMISM Q50)
+// 6. SOLID 2D PIE CHART WITH IN-SLICE PERCENTAGES (FAVORITE ENTERTAINMENT TYPE Q24)
 // =========================================================================
 function SpectrumBarCard({ rawRecords }) {
   const [activeIdx, setActiveIdx] = useState(null);
 
   const spectrumData = useMemo(() => {
-    const q50Responses = rawRecords.filter(
+    const q24Responses = rawRecords.filter(
       (r) =>
-        String(r.questionId).toLowerCase() === 'q50' ||
-        String(r.questionId) === '50' ||
-        String(r.questionCode || '').toLowerCase() === 'q50'
+        String(r.questionId || '').toLowerCase() === 'q24' ||
+        String(r.questionId || '') === '24' ||
+        String(r.questionCode || '').toLowerCase() === 'q24' ||
+        String(r.displayOrder || '') === '24' ||
+        String(r.questionText || '').toLowerCase().includes('what type of entertainment') ||
+        String(r.questionText || '').toLowerCase().includes('entertainment do you enjoy')
     );
 
     const options = [
-      { label: 'Very Positive', value: 'very_positive', color: '#3B82F6', glow: 'rgba(59, 130, 246, 0.7)' },
-      { label: 'Positive', value: 'positive', color: '#EF4444', glow: 'rgba(239, 68, 68, 0.7)' },
-      { label: 'Neutral', value: 'neutral', color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.7)' },
-      { label: 'Negative', value: 'negative', color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.7)' },
+      { value: 'movies_series', label: 'Watching movies or series', color: '#3B82F6', glow: 'rgba(59, 130, 246, 0.7)' },
+      { value: 'listening_music', label: 'Listening to music', color: '#EF4444', glow: 'rgba(239, 68, 68, 0.7)' },
+      { value: 'playing_games', label: 'Playing games', color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.7)' },
+      { value: 'social_media_videos', label: 'Social media/content videos', color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.7)' },
+      { value: 'reading', label: 'Reading', color: '#10B981', glow: 'rgba(16, 185, 129, 0.7)' },
+      { value: 'outdoor_activities', label: 'Outdoor activities', color: '#EC4899', glow: 'rgba(236, 72, 153, 0.7)' },
+      { value: 'live_events', label: 'Live events or concerts', color: '#14B8A6', glow: 'rgba(20, 184, 166, 0.7)' },
+      { value: 'creative_hobbies', label: 'Creative hobbies', color: '#6366F1', glow: 'rgba(99, 102, 241, 0.7)' },
+      { value: 'other', label: 'Other', color: '#64748B', glow: 'rgba(100, 116, 139, 0.7)' },
     ];
 
-    const counts = [0, 0, 0, 0];
-    let totalCount = q50Responses.length;
-    let scoreSum = 0;
+    const counts = new Array(options.length).fill(0);
+    let totalCount = q24Responses.length;
 
-    q50Responses.forEach((r) => {
-      const val = String(r.value ?? '').trim().toLowerCase();
-      let score = 3;
-
-      if (val.includes('very_often') || val.includes('strongly_agree') || val.includes('very_positive') || val.includes('high') || val === '5') {
-        counts[0]++;
-        score = 5;
-      } else if (val.includes('often') || val.includes('agree') || val.includes('positive') || val.includes('moderate') || val === '4') {
-        counts[1]++;
-        score = 4;
-      } else if (val.includes('sometimes') || val.includes('neutral') || val === '3') {
-        counts[2]++;
-        score = 3;
-      } else {
-        counts[3]++;
-        score = val.includes('rarely') ? 2 : 1;
+    q24Responses.forEach((r) => {
+      let rawVal = r.value;
+      if (typeof rawVal === 'string') {
+        const trimmed = rawVal.trim();
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+          try { rawVal = JSON.parse(trimmed); } catch (e) { }
+        } else if (trimmed.includes(',')) {
+          rawVal = trimmed.split(',').map((s) => s.trim());
+        }
       }
-      scoreSum += score;
+
+      if (typeof rawVal === 'object' && rawVal !== null && !Array.isArray(rawVal)) {
+        rawVal = rawVal.value !== undefined ? rawVal.value : (rawVal.label !== undefined ? rawVal.label : rawVal);
+        if (typeof rawVal === 'string' && rawVal.startsWith('[')) {
+          try { rawVal = JSON.parse(rawVal); } catch (e) { }
+        }
+      }
+
+      let valList = Array.isArray(rawVal) ? rawVal : [rawVal];
+      if (valList.length === 1 && typeof valList[0] === 'string' && valList[0].includes(',')) {
+        valList = valList[0].split(',').map((s) => s.trim());
+      }
+
+      valList.forEach((item) => {
+        let itemVal = item;
+        if (typeof itemVal === 'object' && itemVal !== null) {
+          itemVal = itemVal.value !== undefined ? itemVal.value : (itemVal.label !== undefined ? itemVal.label : itemVal);
+        }
+        const cleanVal = String(itemVal ?? '').trim().toLowerCase();
+        if (!cleanVal) return;
+
+        const matchedIdx = options.findIndex((o) => {
+          const optVal = String(o.value ?? '').trim().toLowerCase();
+          const optLbl = String(o.label ?? '').trim().toLowerCase();
+          return (
+            optVal === cleanVal ||
+            optLbl === cleanVal ||
+            optVal.replace(/_/g, '-') === cleanVal ||
+            optVal.replace(/-/g, '_') === cleanVal ||
+            optVal.replace(/ /g, '_') === cleanVal ||
+            optVal.replace(/_/g, '') === cleanVal.replace(/_/g, '') ||
+            (cleanVal.length > 2 && (optVal.includes(cleanVal) || optLbl.includes(cleanVal))) ||
+            (optVal.length > 2 && cleanVal.includes(optVal)) ||
+            (optLbl.length > 2 && cleanVal.includes(optLbl))
+          );
+        });
+
+        if (matchedIdx !== -1) {
+          counts[matchedIdx]++;
+        }
+      });
     });
 
-    const avgScore = totalCount > 0 ? scoreSum / totalCount : 0;
+    const totalVotesAcrossOptions = counts.reduce((sum, c) => sum + c, 0);
 
     let cumPct = 0;
     const slices = options.map((opt, idx) => {
       const c = counts[idx];
-      const pct = totalCount > 0 ? Math.round((c / totalCount) * 100) : 0;
+      const pct = totalVotesAcrossOptions > 0 ? Math.round((c / totalVotesAcrossOptions) * 100) : 0;
       const startAngle = cumPct * 3.6;
       cumPct += pct;
       const endAngle = cumPct * 3.6;
@@ -973,7 +1037,11 @@ function SpectrumBarCard({ rawRecords }) {
       };
     });
 
-    return { totalCount, avgScore, slices };
+    const maxCount = Math.max(...counts);
+    const topIdx = counts.indexOf(maxCount);
+    const dominantLabel = totalCount > 0 && maxCount > 0 ? options[topIdx].label : 'None';
+
+    return { totalCount, dominantLabel, slices };
   }, [rawRecords]);
 
   const sliceRefs = useRef([]);
@@ -1082,139 +1150,109 @@ function SpectrumBarCard({ rawRecords }) {
   return (
     <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-md space-y-5 flex flex-col justify-between">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div className="min-w-0">
           <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2">
             <Zap className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
-            <span>Technology Optimism</span>
+            <span>Favorite Entertainment Type</span>
           </h3>
-          <p className="text-xs text-[#53656A] font-medium line-clamp-1 mt-0.5">
-            GSAP Animated Exploded Pie Chart representation of Q50 responses
-          </p>
         </div>
 
         <div className="text-right shrink-0">
           <span className="font-mono font-extrabold text-base text-[#075D63] block">
-            {spectrumData.avgScore.toFixed(2)} / 5.0
+            {spectrumData.totalCount}
           </span>
           <span className="text-[9.5px] text-[#53656A] font-bold uppercase block">
-            DB Avg Score
+            Total Responses
           </span>
         </div>
       </div>
 
-      {/* SOLID 2D GSAP SVG PIE CHART & UNTRUNCATED LEGEND */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center flex-1">
-        {/* SOLID PIE CHART CANVAS WITH OVERLAY TOOLTIP */}
-        <div className="md:col-span-6 flex items-center justify-center relative py-2">
-          <svg
-            width="270"
-            height="270"
-            viewBox="0 0 270 270"
-            className="overflow-visible"
-            onMouseLeave={handleMouseLeave}
-          >
-            {/* PIE SLICES */}
-            {spectrumData.slices.map((slice, idx) => {
-              const isHovered = activeIdx === idx;
-              const textRadius = radius * 0.62;
-              const tx = cx + textRadius * slice.dx;
-              const ty = cy + textRadius * slice.dy;
-              const isFullCircle = slice.pct >= 99.9;
+      {/* SOLID 2D GSAP SVG PIE CHART */}
+      <div className="flex flex-col items-center justify-center flex-1 relative py-2">
+        <svg
+          width="270"
+          height="270"
+          viewBox="0 0 270 270"
+          className="overflow-visible"
+          onMouseLeave={handleMouseLeave}
+        >
+          {/* PIE SLICES */}
+          {spectrumData.slices.map((slice, idx) => {
+            const isHovered = activeIdx === idx;
+            const textRadius = radius * 0.62;
+            const tx = cx + textRadius * slice.dx;
+            const ty = cy + textRadius * slice.dy;
+            const isFullCircle = slice.pct >= 99.9;
 
-              return (
-                <g key={slice.id}>
-                  {isFullCircle ? (
-                    <circle
-                      ref={(el) => (sliceRefs.current[idx] = el)}
-                      cx={cx}
-                      cy={cy}
-                      r={radius}
-                      fill={slice.color}
-                      stroke="#FFFFFF"
-                      strokeWidth="2.5"
-                      className="cursor-pointer transition-all duration-200 shadow-md"
-                      style={{
-                        filter: isHovered ? `drop-shadow(0 0 12px ${slice.glow})` : 'none',
-                      }}
-                      onMouseEnter={() => handleMouseEnter(idx)}
-                    />
-                  ) : (
-                    <path
-                      ref={(el) => (sliceRefs.current[idx] = el)}
-                      d={createArcPath(cx, cy, radius, slice.startAngle, slice.endAngle)}
-                      fill={slice.color}
-                      stroke="#FFFFFF"
-                      strokeWidth="2.5"
-                      className="cursor-pointer transition-all duration-200 shadow-md"
-                      style={{
-                        filter: isHovered ? `drop-shadow(0 0 12px ${slice.glow})` : 'none',
-                      }}
-                      onMouseEnter={() => handleMouseEnter(idx)}
-                    />
-                  )}
+            return (
+              <g key={slice.id}>
+                {isFullCircle ? (
+                  <circle
+                    ref={(el) => (sliceRefs.current[idx] = el)}
+                    cx={cx}
+                    cy={cy}
+                    r={radius}
+                    fill={slice.color}
+                    stroke="#FFFFFF"
+                    strokeWidth="2.5"
+                    className="cursor-pointer transition-all duration-200 shadow-md"
+                    style={{
+                      filter: isHovered ? `drop-shadow(0 0 12px ${slice.glow})` : 'none',
+                    }}
+                    onMouseEnter={() => handleMouseEnter(idx)}
+                  />
+                ) : (
+                  <path
+                    ref={(el) => (sliceRefs.current[idx] = el)}
+                    d={createArcPath(cx, cy, radius, slice.startAngle, slice.endAngle)}
+                    fill={slice.color}
+                    stroke="#FFFFFF"
+                    strokeWidth="2.5"
+                    className="cursor-pointer transition-all duration-200 shadow-md"
+                    style={{
+                      filter: isHovered ? `drop-shadow(0 0 12px ${slice.glow})` : 'none',
+                    }}
+                    onMouseEnter={() => handleMouseEnter(idx)}
+                  />
+                )}
 
-                  {/* IN-SLICE PERCENTAGE TEXT */}
-                  {slice.pct >= 5 && (
-                    <text
-                      ref={(el) => (textRefs.current[idx] = el)}
-                      x={tx}
-                      y={ty}
-                      fill="#FFFFFF"
-                      fontSize="14"
-                      fontWeight="800"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      className="pointer-events-none drop-shadow-md select-none font-sans"
-                    >
-                      {slice.pct}%
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
+                {/* IN-SLICE PERCENTAGE TEXT */}
+                {slice.pct >= 5 && (
+                  <text
+                    ref={(el) => (textRefs.current[idx] = el)}
+                    x={tx}
+                    y={ty}
+                    fill="#FFFFFF"
+                    fontSize="14"
+                    fontWeight="800"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    className="pointer-events-none drop-shadow-md select-none font-sans"
+                  >
+                    {slice.pct}%
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
 
-          {/* GSAP SLEEK GLASSMORPHISM HOVER TOOLTIP CARD */}
-          {activeIdx !== null && (
-            <div className="absolute top-0 left-0 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-3 rounded-2xl shadow-2xl pointer-events-none z-20 text-white animate-in fade-in zoom-in-95 duration-150 min-w-[130px]">
-              <div className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold mb-0.5">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: spectrumData.slices[activeIdx].color }} />
-                <span className="truncate">{spectrumData.slices[activeIdx].label}</span>
-              </div>
-              <div className="font-heading font-extrabold text-2xl text-teal-300 leading-tight">
-                {spectrumData.slices[activeIdx].pct}%
-              </div>
-              <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                {spectrumData.slices[activeIdx].count} resp.
-              </div>
+        {/* GSAP SLEEK GLASSMORPHISM HOVER TOOLTIP CARD */}
+        {activeIdx !== null && (
+          <div className="absolute top-0 right-0 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 p-3 rounded-2xl shadow-2xl pointer-events-none z-20 text-white animate-in fade-in zoom-in-95 duration-150 min-w-[130px]">
+            <div className="flex items-center gap-1.5 text-xs text-slate-300 font-semibold mb-0.5">
+              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: spectrumData.slices[activeIdx].color }} />
+              <span className="truncate">{spectrumData.slices[activeIdx].label}</span>
             </div>
-          )}
-        </div>
-
-        {/* UNTRUNCATED FULL-WORD LEGEND BADGES */}
-        <div className="md:col-span-6 space-y-2">
-          {spectrumData.slices.map((slice, idx) => (
-            <div
-              key={slice.id}
-              className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-xs ${activeIdx === idx
-                  ? 'bg-[#EAF6F6] border-[#109A9B]/40 shadow-xs scale-[1.02]'
-                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80'
-                }`}
-              onMouseEnter={() => handleMouseEnter(idx)}
-              onMouseLeave={handleMouseLeave}
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-3.5 h-3.5 rounded-md shrink-0 shadow-2xs" style={{ backgroundColor: slice.color }} />
-                <span className="font-bold text-[#10242C] text-xs leading-tight whitespace-normal">{slice.label}</span>
-              </div>
-              <div className="text-right font-mono shrink-0">
-                <span className="font-extrabold text-[#075D63] text-xs block">{slice.pct}%</span>
-                <span className="text-[9.5px] text-[#53656A] block font-semibold">{slice.count} resp.</span>
-              </div>
+            <div className="font-heading font-extrabold text-2xl text-teal-300 leading-tight">
+              {spectrumData.slices[activeIdx].pct}%
             </div>
-          ))}
-        </div>
+            <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+              {spectrumData.slices[activeIdx].count} resp.
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1227,39 +1265,69 @@ function RankingProgressCard({ rawRecords }) {
   const [activeIdx, setActiveIdx] = useState(null);
 
   const rankingData = useMemo(() => {
-    const q50Responses = rawRecords.filter(
-      (r) =>
-        String(r.questionId).toLowerCase() === 'q50' ||
-        String(r.questionId) === '50' ||
-        String(r.questionId).toLowerCase() === 'q52' ||
-        String(r.questionId) === '52' ||
-        String(r.questionCode || '').toLowerCase() === 'q50' ||
-        String(r.questionCode || '').toLowerCase() === 'q52'
-    );
-
-    let chatGpt = 0, copilots = 0, designAi = 0, research = 0;
-    q50Responses.forEach((r) => {
-      const str = String(r.value || '').toLowerCase();
-      if (str.includes('very_often') || str.includes('chatgpt') || str.includes('conversational') || str.includes('strongly_agree') || str.includes('5')) chatGpt++;
-      else if (str.includes('often') || str.includes('code') || str.includes('copilot') || str.includes('agree') || str.includes('4')) copilots++;
-      else if (str.includes('sometimes') || str.includes('design') || str.includes('image') || str.includes('neutral') || str.includes('3')) designAi++;
-      else research++;
+    const aiResponses = rawRecords.filter((r) => {
+      const qId = String(r.questionId || '').toLowerCase().trim();
+      const qCode = String(r.questionCode || '').toLowerCase().trim();
+      const qText = String(r.questionText || '').toLowerCase();
+      const qOrder = r.displayOrder !== undefined && r.displayOrder !== null ? String(r.displayOrder) : '';
+      return (
+        qId === 'q44' ||
+        qId === '44' ||
+        qCode === 'q44' ||
+        qCode === '44' ||
+        qOrder === '44' ||
+        qCode.includes('q44') ||
+        qText.includes('which ai tool') ||
+        (qText.includes('ai tool') && qText.includes('most'))
+      );
     });
 
-    const hasData = q50Responses.length > 0;
-    const total = hasData ? q50Responses.length : 0;
-    const pChat = hasData && total > 0 ? Math.round((chatGpt / total) * 100) : 0;
-    const pCopilots = hasData && total > 0 ? Math.round((copilots / total) * 100) : 0;
-    const pDesign = hasData && total > 0 ? Math.round((designAi / total) * 100) : 0;
-    const pResearch = hasData && total > 0 ? Math.max(0, 100 - pChat - pCopilots - pDesign) : 0;
+    let chatGpt = 0, gemini = 0, claude = 0, metaAi = 0, perplexity = 0;
+    let total = aiResponses.length;
 
-    const topRankedPct = Math.max(pChat, pCopilots, pDesign, pResearch);
+    aiResponses.forEach((r) => {
+      let rawVal = r.value;
+      if (typeof rawVal === 'object' && rawVal !== null) {
+        rawVal = rawVal.value !== undefined ? rawVal.value : (rawVal.label !== undefined ? rawVal.label : rawVal);
+      }
+      const str = String(rawVal ?? '').trim().toLowerCase();
+      const labelStr = String(r.optionLabel ?? '').trim().toLowerCase();
+      const combined = `${str} ${labelStr}`;
+
+      if (combined.includes('chatgpt') || combined.includes('gpt')) {
+        chatGpt++;
+      } else if (combined.includes('gemini') || combined.includes('google')) {
+        gemini++;
+      } else if (combined.includes('claude')) {
+        claude++;
+      } else if (combined.includes('meta')) {
+        metaAi++;
+      } else if (combined.includes('perplexity')) {
+        perplexity++;
+      } else {
+        if (str === '0' || str.includes('chat')) chatGpt++;
+        else if (str === '1' || str.includes('claude')) claude++;
+        else if (str === '2' || str.includes('gemini')) gemini++;
+        else if (str === '3' || str.includes('meta')) metaAi++;
+        else if (str === '4' || str.includes('perplexity')) perplexity++;
+      }
+    });
+
+    const hasData = total > 0;
+    const pChat = hasData ? Math.round((chatGpt / total) * 100) : 0;
+    const pGemini = hasData ? Math.round((gemini / total) * 100) : 0;
+    const pClaude = hasData ? Math.round((claude / total) * 100) : 0;
+    const pMeta = hasData ? Math.round((metaAi / total) * 100) : 0;
+    const pPerplexity = hasData ? Math.round((perplexity / total) * 100) : 0;
+
+    const topRankedPct = Math.max(pChat, pGemini, pClaude, pMeta, pPerplexity);
 
     const rings = [
-      { id: 'chat', rank: '01', label: 'ChatGPT', fullLabel: 'ChatGPT & Conversational AI', pct: pChat, count: chatGpt, color: '#3B82F6', glow: 'rgba(59, 130, 246, 0.7)', radius: 120 },
-      { id: 'copilot', rank: '02', label: 'Copilots', fullLabel: 'Coding & Developer Copilots', pct: pCopilots, count: copilots, color: '#10B981', glow: 'rgba(16, 185, 129, 0.7)', radius: 96 },
-      { id: 'design', rank: '03', label: 'Design AI', fullLabel: 'Design & Visual AI Tools', pct: pDesign, count: designAi, color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.7)', radius: 72 },
-      { id: 'research', rank: '04', label: 'Research', fullLabel: 'Research & Search Assistants', pct: pResearch, count: research, color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.7)', radius: 48 },
+      { id: 'chatgpt', rank: '01', label: 'ChatGPT', fullLabel: 'ChatGPT (OpenAI)', pct: pChat, count: chatGpt, color: '#3B82F6', glow: 'rgba(59, 130, 246, 0.7)', radius: 120 },
+      { id: 'gemini', rank: '02', label: 'Google Gemini', fullLabel: 'Google Gemini AI', pct: pGemini, count: gemini, color: '#F59E0B', glow: 'rgba(245, 158, 11, 0.7)', radius: 98 },
+      { id: 'claude', rank: '03', label: 'Claude', fullLabel: 'Claude (Anthropic)', pct: pClaude, count: claude, color: '#EC4899', glow: 'rgba(236, 72, 153, 0.7)', radius: 76 },
+      { id: 'meta', rank: '04', label: 'Meta AI', fullLabel: 'Meta AI (Llama)', pct: pMeta, count: metaAi, color: '#8B5CF6', glow: 'rgba(139, 92, 246, 0.7)', radius: 54 },
+      { id: 'perplexity', rank: '05', label: 'Perplexity', fullLabel: 'Perplexity AI', pct: pPerplexity, count: perplexity, color: '#10B981', glow: 'rgba(16, 185, 129, 0.7)', radius: 32 },
     ];
 
     return { total, topRankedPct, rings };
@@ -1373,7 +1441,7 @@ function RankingProgressCard({ rawRecords }) {
   };
 
   const cx = 150;
-  const cy = 145;
+  const cy = 135;
 
   return (
     <div
@@ -1381,22 +1449,19 @@ function RankingProgressCard({ rawRecords }) {
       className="bg-white p-6 rounded-3xl border border-slate-200 shadow-md space-y-4 flex flex-col justify-between"
     >
       {/* Card Header */}
-      <div className="space-y-1">
+      <div>
         <h3 className="font-heading font-extrabold text-base text-[#10242C] flex items-center gap-2 leading-snug">
           <Award className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
-          <span>Top AI Tools Usage Ranking (Concentric Gauge)</span>
+          <span>Top AI Tools Usage Ranking</span>
         </h3>
-        <p className="text-xs text-[#53656A] font-medium">
-          GSAP Staggered Concentric Gauge Animation with Scale & Dim Hover Focus
-        </p>
       </div>
 
       {/* SVG CONCENTRIC SEMI-CIRCLE RAINBOW ARC CANVAS WITH FLOATING TOOLTIP */}
-      <div className="flex items-center justify-center py-2 relative">
+      <div className="flex items-center justify-center py-1 relative">
         <svg
           width="300"
-          height="175"
-          viewBox="0 0 300 175"
+          height="145"
+          viewBox="0 0 300 145"
           className="overflow-visible"
           onMouseLeave={handleMouseLeave}
         >
@@ -1404,7 +1469,6 @@ function RankingProgressCard({ rawRecords }) {
             const r = ring.radius;
             const arcLength = Math.PI * r;
             const offset = arcLength * (1 - Math.max(2, ring.pct) / 100);
-            const startX = cx - r;
             const isHovered = activeIdx === idx;
 
             // Calculate End Cap Position
@@ -1457,21 +1521,6 @@ function RankingProgressCard({ rawRecords }) {
                     filter: isHovered ? `drop-shadow(0 0 8px ${ring.glow})` : 'none',
                   }}
                 />
-
-                {/* 4. Vertical Start Label under each Ring Start */}
-                <text
-                  transform={`rotate(-90 ${startX} ${cy + 12})`}
-                  x={startX}
-                  y={cy + 12}
-                  textAnchor="end"
-                  fill="#64748B"
-                  fontSize="8"
-                  fontWeight="800"
-                  fontFamily="sans-serif"
-                  className="pointer-events-none select-none"
-                >
-                  {ring.label}
-                </text>
               </g>
             );
           })}
@@ -1503,11 +1552,12 @@ function RankingProgressCard({ rawRecords }) {
       </div>
 
       {/* LEGEND RANK BADGES GRID */}
-      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
         {rankingData.rings.map((ring, idx) => (
           <div
             key={ring.id}
-            className={`p-2.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${activeIdx === idx
+            className={`p-2.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between ${idx === 4 ? 'col-span-2' : ''
+              } ${activeIdx === idx
                 ? 'bg-[#EAF6F6] border-[#109A9B]/40 shadow-xs scale-[1.02]'
                 : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80'
               }`}
@@ -1703,7 +1753,7 @@ function SubmissionCompletionGsapPieCard({ kpis }) {
           Submission Completion Ratio
         </h3>
         <p className="text-xs text-[#53656A] font-medium">
-          Powered by GSAP: SVG Path Animation | Percentage Counters | Hover States
+
         </p>
       </div>
 
@@ -1817,6 +1867,235 @@ function SubmissionCompletionGsapPieCard({ kpis }) {
 
 // =========================================================================
 // MAIN PAGE COMPONENT: ADMIN DASHBOARD
+// =========================================================================
+// 8. PREFERRED CAREER PATH VERTICAL BAR GRAPH (Q35 FEATURED AT BOTTOM)
+// =========================================================================
+function CareerPathBarChartCard({ rawRecords }) {
+  const [activeIdx, setActiveIdx] = useState(null);
+
+  const careerData = useMemo(() => {
+    const q35Responses = rawRecords.filter((r) => {
+      const qId = String(r.questionId || '').toLowerCase().trim();
+      const qCode = String(r.questionCode || '').toLowerCase().trim();
+      const qText = String(r.questionText || '').toLowerCase();
+      const qOrder = r.displayOrder !== undefined && r.displayOrder !== null ? String(r.displayOrder) : '';
+      return (
+        qId === 'q35' ||
+        qId === '35' ||
+        qCode === 'q35' ||
+        qCode === '35' ||
+        qOrder === '35' ||
+        qCode.includes('q35') ||
+        qText.includes('which career path') ||
+        (qText.includes('career') && qText.includes('prefer'))
+      );
+    });
+
+    const options = [
+      { id: 'private_sector', label: 'Private-sector job', shortLabel: 'Private Sector', color: '#3B82F6', gradient: 'from-[#3B82F6] to-[#1D4ED8]' },
+      { id: 'government_job', label: 'Government job', shortLabel: 'Govt Job', color: '#075D63', gradient: 'from-[#075D63] to-[#043E42]' },
+      { id: 'start_business', label: 'Start my own business', shortLabel: 'Startup / Own Biz', color: '#F59E0B', gradient: 'from-[#F59E0B] to-[#D97706]' },
+      { id: 'family_business', label: 'Family business', shortLabel: 'Family Biz', color: '#8B5CF6', gradient: 'from-[#8B5CF6] to-[#6D28D9]' },
+      { id: 'research_teaching', label: 'Research or teaching', shortLabel: 'Research / Teach', color: '#EC4899', gradient: 'from-[#EC4899] to-[#BE185D]' },
+      { id: 'work_abroad', label: 'Work abroad', shortLabel: 'Work Abroad', color: '#10B981', gradient: 'from-[#10B981] to-[#047857]' },
+      { id: 'sports_entertainment', label: 'Sports or entertainment', shortLabel: 'Sports / Ent.', color: '#14B8A6', gradient: 'from-[#14B8A6] to-[#0F766E]' },
+      { id: 'freelancing', label: 'Freelancing/Gig work', shortLabel: 'Freelancing', color: '#6366F1', gradient: 'from-[#6366F1] to-[#4338CA]' },
+      { id: 'other', label: 'Other', shortLabel: 'Other', color: '#64748B', gradient: 'from-[#64748B] to-[#334155]' },
+    ];
+
+    const counts = new Array(options.length).fill(0);
+    let totalCount = q35Responses.length;
+
+    q35Responses.forEach((r) => {
+      let rawVal = r.value;
+      if (typeof rawVal === 'string') {
+        const trimmed = rawVal.trim();
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+          try { rawVal = JSON.parse(trimmed); } catch (e) { }
+        } else if (trimmed.includes(',')) {
+          rawVal = trimmed.split(',').map((s) => s.trim());
+        }
+      }
+
+      if (typeof rawVal === 'object' && rawVal !== null && !Array.isArray(rawVal)) {
+        rawVal = rawVal.value !== undefined ? rawVal.value : (rawVal.label !== undefined ? rawVal.label : rawVal);
+        if (typeof rawVal === 'string' && rawVal.startsWith('[')) {
+          try { rawVal = JSON.parse(rawVal); } catch (e) { }
+        }
+      }
+
+      let valList = Array.isArray(rawVal) ? rawVal : [rawVal];
+      if (valList.length === 1 && typeof valList[0] === 'string' && valList[0].includes(',')) {
+        valList = valList[0].split(',').map((s) => s.trim());
+      }
+
+      valList.forEach((item) => {
+        let itemVal = item;
+        if (typeof itemVal === 'object' && itemVal !== null) {
+          itemVal = itemVal.value !== undefined ? itemVal.value : (itemVal.label !== undefined ? itemVal.label : itemVal);
+        }
+        const str = String(itemVal ?? '').trim().toLowerCase();
+        const labelStr = String(r.optionLabel ?? '').trim().toLowerCase();
+        const combined = `${str} ${labelStr}`;
+
+        if (combined.includes('private') || combined.includes('sector')) {
+          counts[0]++;
+        } else if (combined.includes('government') || combined.includes('govt')) {
+          counts[1]++;
+        } else if (combined.includes('start') || combined.includes('business') || combined.includes('own') || combined.includes('startup')) {
+          counts[2]++;
+        } else if (combined.includes('family')) {
+          counts[3]++;
+        } else if (combined.includes('research') || combined.includes('teaching')) {
+          counts[4]++;
+        } else if (combined.includes('abroad')) {
+          counts[5]++;
+        } else if (combined.includes('sports') || combined.includes('entertainment')) {
+          counts[6]++;
+        } else if (combined.includes('freelanc') || combined.includes('gig')) {
+          counts[7]++;
+        } else if (combined.includes('other')) {
+          counts[8]++;
+        } else {
+          const matchedIdx = options.findIndex((o) => {
+            const optVal = String(o.id ?? '').trim().toLowerCase();
+            const optLbl = String(o.label ?? '').trim().toLowerCase();
+            return optVal.includes(str) || optLbl.includes(str) || str.includes(optVal);
+          });
+          if (matchedIdx !== -1) counts[matchedIdx]++;
+        }
+      });
+    });
+
+    const isMultiSelect = Boolean(
+      q35Responses.some((r) => Array.isArray(r.value) || (typeof r.value === 'string' && r.value.includes(',')))
+    );
+
+    const totalVotesAcrossOptions = counts.reduce((sum, c) => sum + c, 0);
+    const denominator = isMultiSelect && totalVotesAcrossOptions > 0 ? totalVotesAcrossOptions : totalCount;
+
+    const items = options.map((opt, idx) => {
+      const c = counts[idx];
+      const pct = denominator > 0 ? Math.round((c / denominator) * 100) : 0;
+      return {
+        id: opt.id,
+        label: opt.label,
+        shortLabel: opt.shortLabel,
+        count: c,
+        pct,
+        color: opt.color,
+        gradient: opt.gradient,
+      };
+    });
+
+    const maxCount = Math.max(...counts);
+    const topIdx = counts.indexOf(maxCount);
+    const dominantItem = totalCount > 0 && maxCount > 0 ? items[topIdx] : items[2];
+
+    return { totalCount, dominantItem, items };
+  }, [rawRecords]);
+
+  return (
+    <div className="bg-white p-6 sm:p-7 rounded-3xl border border-[#109A9B]/20 shadow-md space-y-6">
+      {/* COMPACT ATTRACTIVE HEADER & DOMINANT CAREER BADGE */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <h3 className="font-heading font-extrabold text-lg sm:text-xl text-[#10242C] flex items-center gap-2">
+          <Briefcase className="w-5 h-5 text-[#109A9B] shrink-0" />
+          <span>Preferred Career Path Analysis</span>
+        </h3>
+
+        {/* COMPACT & ATTRACTIVE DOMINANT AMBITION BADGE */}
+        <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#EAF6F6] to-teal-50 py-1.5 px-3.5 rounded-xl border border-[#109A9B]/30 shadow-2xs text-xs font-bold text-[#075D63] shrink-0">
+          <Sparkles className="w-3.5 h-3.5 text-[#109A9B] shrink-0 animate-pulse" />
+          <span className="text-[11px] text-[#53656A] font-semibold">Dominant Ambition:</span>
+          <span className="font-mono font-extrabold text-[#075D63] bg-white px-2 py-0.5 rounded-lg border border-[#109A9B]/20">
+            {careerData.dominantItem.label} ({careerData.dominantItem.pct}%)
+          </span>
+        </div>
+      </div>
+
+      {/* VERTICAL BAR GRAPH CANVAS SECTION */}
+      <div className="relative pt-6 pb-2 overflow-x-auto scrollbar-thin">
+        <div className="min-w-[700px] relative">
+          {/* Y-AXIS GRID LINES & LABELS */}
+          <div className="absolute inset-x-0 top-6 bottom-20 flex flex-col justify-between pointer-events-none z-0">
+            {[100, 75, 50, 25, 0].map((level) => (
+              <div key={level} className="flex items-center gap-3 w-full">
+                <span className="font-mono text-[10px] text-slate-400 font-bold w-8 text-right shrink-0">
+                  {level}%
+                </span>
+                <div className="h-px bg-slate-200/70 w-full border-t border-dashed border-slate-200" />
+              </div>
+            ))}
+          </div>
+
+          {/* 9 VERTICAL BARS CONTAINER */}
+          <div className="relative z-10 pl-11 pr-2 pt-2 grid grid-cols-9 gap-3 sm:gap-4 items-end h-[280px]">
+            {careerData.items.map((item, idx) => {
+              const isHovered = activeIdx === idx;
+              const barHeightPct = Math.max(item.pct, item.count > 0 ? 8 : 3);
+
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-col items-center justify-end h-full group cursor-pointer"
+                  onMouseEnter={() => setActiveIdx(idx)}
+                  onMouseLeave={() => setActiveIdx(null)}
+                >
+                  {/* VALUE BADGE ABOVE BAR */}
+                  <div
+                    className={`flex flex-col items-center mb-1.5 transition-all duration-300 ${isHovered ? 'scale-110 -translate-y-1' : ''
+                      }`}
+                  >
+                    <span
+                      className={`font-mono font-extrabold text-[11px] px-2 py-0.5 rounded-full shadow-2xs border transition-colors ${item.pct > 0
+                        ? 'bg-[#075D63] text-white border-[#075D63]'
+                        : 'bg-slate-100 text-slate-400 border-slate-200'
+                        }`}
+                    >
+                      {item.pct}%
+                    </span>
+                    <span className="text-[9px] text-slate-400 font-semibold font-mono">
+                      {item.count} {item.count === 1 ? 'vote' : 'votes'}
+                    </span>
+                  </div>
+
+                  {/* THE VERTICAL BAR COLUMN */}
+                  <div className="w-full max-w-[44px] sm:max-w-[58px] h-full flex items-end justify-center bg-slate-100/60 rounded-t-2xl p-0.5 border border-slate-200/60">
+                    <div
+                      className={`w-full rounded-t-xl bg-gradient-to-t ${item.gradient} transition-all duration-700 shadow-md relative overflow-hidden ${isHovered ? 'brightness-110 shadow-lg ring-2 ring-[#109A9B]/60 scale-x-105' : ''
+                        }`}
+                      style={{ height: `${barHeightPct}%` }}
+                    >
+                      {/* TOP GLOW SHINE EFFECT */}
+                      <div className="absolute top-0 inset-x-0 h-1.5 bg-white/40 rounded-t-xl" />
+                    </div>
+                  </div>
+
+                  {/* X-AXIS LABEL AT BOTTOM */}
+                  <div className="mt-3 text-center w-full min-h-[44px] flex flex-col items-center justify-start">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0 mb-1 shadow-2xs"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span
+                      className={`text-[10px] sm:text-[11px] font-bold leading-tight transition-colors line-clamp-2 ${isHovered ? 'text-[#075D63] font-extrabold scale-105' : 'text-[#10242C]'
+                        }`}
+                      title={item.label}
+                    >
+                      {item.shortLabel}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // =========================================================================
 export default function AdminDashboard() {
   const [kpis, setKpis] = useState(null);
@@ -2036,7 +2315,8 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-
+        {/* 4. FEATURED PREFERRED CAREER PATH ANALYSIS (Q35 BOTTOM ATTRACIVE BAR GRAPH SECTION) */}
+        <CareerPathBarChartCard rawRecords={rawRecords} />
 
       </div>
     </AdminLayout>

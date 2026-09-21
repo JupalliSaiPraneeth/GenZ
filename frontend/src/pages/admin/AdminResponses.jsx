@@ -249,11 +249,10 @@ function Solid2DPieChart({ distribution, colors }) {
         {slices.map((slice, idx) => (
           <div
             key={slice.id}
-            className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-xs ${
-              activeIdx === idx
+            className={`p-3 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 text-xs ${activeIdx === idx
                 ? 'bg-[#EAF6F6] border-[#109A9B]/40 shadow-xs scale-[1.02]'
                 : 'bg-slate-50 border-slate-200 hover:bg-slate-100/80'
-            }`}
+              }`}
             onMouseEnter={() => handleMouseEnter(idx)}
             onMouseLeave={handleMouseLeave}
           >
@@ -277,24 +276,41 @@ function Solid2DPieChart({ distribution, colors }) {
 // =========================================================================
 export default function AdminResponses() {
   const [selectedQId, setSelectedQId] = useState('q1');
+  const [allQuestions, setAllQuestions] = useState([]);
   const [data, setData] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [chartMode, setChartMode] = useState('pie'); // 'pie' | 'bar'
-  const allQuestions = getStoredQuestions();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadQs() {
+      const qs = await adminDataService.getQuestionsList();
+      if (qs && qs.length > 0) {
+        setAllQuestions(qs);
+        if (!qs.some((q) => q.id === selectedQId)) {
+          setSelectedQId(qs[0].id);
+        }
+      }
+    }
+    loadQs();
+  }, []);
 
   useEffect(() => {
     async function loadDist() {
+      if (!selectedQId) return;
+      setLoading(true);
       const res = await adminDataService.getQuestionDistribution(selectedQId);
       setData(res);
+      setLoading(false);
     }
     loadDist();
   }, [selectedQId]);
 
   const filteredQs = allQuestions.filter(
     (q) =>
-      q.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      q.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      q.topic.toLowerCase().includes(searchQuery.toLowerCase())
+      (q.code || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (q.text || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (q.topic || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const colors = ['#3B82F6', '#EF4444', '#F59E0B', '#8B5CF6', '#10B981', '#EC4899', '#14B8A6', '#6366F1'];
@@ -326,11 +342,10 @@ export default function AdminResponses() {
               <button
                 key={q.id}
                 onClick={() => setSelectedQId(q.id)}
-                className={`w-full text-left p-3 rounded-2xl border text-xs transition-all cursor-pointer ${
-                  selectedQId === q.id
+                className={`w-full text-left p-3 rounded-2xl border text-xs transition-all cursor-pointer ${selectedQId === q.id
                     ? 'bg-[#075D63] text-white border-[#075D63] font-bold shadow-md'
                     : 'bg-white hover:bg-slate-50 text-[#10242C] border-slate-200 font-medium'
-                }`}
+                  }`}
               >
                 <div className="font-mono text-[10px] opacity-80">{q.code} • {q.topic}</div>
                 <div className="truncate font-semibold mt-0.5">{q.text}</div>
@@ -383,22 +398,20 @@ export default function AdminResponses() {
                   <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 shrink-0">
                     <button
                       onClick={() => setChartMode('pie')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                        chartMode === 'pie'
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${chartMode === 'pie'
                           ? 'bg-[#075D63] text-white shadow-xs'
                           : 'text-[#53656A] hover:bg-slate-200'
-                      }`}
+                        }`}
                     >
                       <PieChart className="w-3.5 h-3.5" />
                       <span>Pie Chart</span>
                     </button>
                     <button
                       onClick={() => setChartMode('bar')}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                        chartMode === 'bar'
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${chartMode === 'bar'
                           ? 'bg-[#075D63] text-white shadow-xs'
                           : 'text-[#53656A] hover:bg-slate-200'
-                      }`}
+                        }`}
                     >
                       <BarChart2 className="w-3.5 h-3.5" />
                       <span>Bar Chart</span>

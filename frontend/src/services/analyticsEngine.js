@@ -42,13 +42,60 @@ export function getQuestionScore(q, userVal) {
   }
 
   const str = String(actualVal).trim().toLowerCase();
+  const qId = q ? String(q.id || '').toLowerCase() : '';
 
-  if (['strongly_agree', 'very_often', 'daily', 'always', '5'].includes(str)) return 5;
-  if (['agree', 'often', 'weekly', 'frequently', '4'].includes(str)) return 4;
-  if (['neutral', 'sometimes', 'occasionally', 'moderate', '3'].includes(str)) return 3;
-  if (['disagree', 'rarely', 'monthly', 'seldom', '2'].includes(str)) return 2;
-  if (['strongly_disagree', 'never', 'rarely_never', '1'].includes(str)) return 1;
+  // 1. Direct High-Positive Strings (5.0 / 100%)
+  if ([
+    'strongly_agree', 'very_often', 'daily', 'always', '5', 'excellent',
+    'very_well', 'definitely_yes', 'very_confident', 'very_comfortable',
+    'highly_planned', 'main_consideration', 'every_day', 'yes_multiple',
+    'regularly', 'very_regularly', 'extremely_important', 'very_important', 'extremely'
+  ].includes(str)) return 5.0;
 
+  // 2. Positive / Good Strings (4.0 / 75%)
+  if ([
+    'agree', 'often', 'weekly', 'frequently', '4', 'good', 'well',
+    'probably_yes', 'somewhat_comfortable', 'mostly_planned',
+    'consider_a_lot', '3_4_days', '1_2_days', 'yes_one', 'yes', 'true',
+    'corporate_sector', 'public_sector', 'entrepreneurship', 'research_academia',
+    'financially_stable', 'comfortable', 'very_comfortable', 'bachelors_degree',
+    'postgraduate_degree', 'smartphone_and_computer', 'moderately_planned'
+  ].includes(str)) return 4.0;
+
+  // 3. Neutral / Moderate Strings (3.0 / 50%)
+  if ([
+    'neutral', 'sometimes', 'occasionally', 'moderate', '3', 'average',
+    'not_sure', 'it_depends', 'moderately_planned', 'consider_sometimes',
+    'working_toward', '1_2_times_year', 'somewhat', 'a_little',
+    'slightly_important', 'moderately_important', 'depends_on_trip',
+    'depends_on_situation'
+  ].includes(str)) return 3.0;
+
+  // 4. Low / Slight Strings (2.0 / 25%)
+  if ([
+    'disagree', 'rarely', 'monthly', 'seldom', '2', 'poor', 'poorly',
+    'probably_not', 'somewhat_uncomfortable', 'slightly_planned',
+    'consider_a_little', 'less_than_once_year', 'struggling_a_little',
+    'managing_with_difficulty'
+  ].includes(str)) return 2.0;
+
+  // 5. Very Low / Negative Strings (1.0 / 0%)
+  if ([
+    'strongly_disagree', 'never', 'not_important', 'very_poor', 'very_poorly',
+    'definitely_not', 'very_uncomfortable', 'not_planned_at_all',
+    'dont_consider', 'no', 'false', 'none', 'struggling_a_lot'
+  ].includes(str)) return 1.0;
+
+  // 6. Inverted Questions (where low frequency = high score, e.g. procrastination q9, phone checking q23, screen time q22, food ordering q15)
+  if (['q9', 'q15', 'q22', 'q23'].includes(qId)) {
+    if (['never', 'less_than_1h'].includes(str)) return 5.0;
+    if (['rarely', '1_2h'].includes(str)) return 4.0;
+    if (['sometimes', '2_4h'].includes(str)) return 3.0;
+    if (['often', '4_6h'].includes(str)) return 2.0;
+    if (['very_often', 'more_than_6h'].includes(str)) return 1.0;
+  }
+
+  // 7. Option Position Matching with Positive Baseline
   if (q && Array.isArray(q.options) && q.options.length > 0) {
     const matchedIdx = q.options.findIndex((opt) => {
       const optVal = String(opt.value ?? '').trim().toLowerCase();
@@ -63,8 +110,8 @@ export function getQuestionScore(q, userVal) {
     });
 
     if (matchedIdx !== -1) {
-      if (q.options.length === 1) return 5;
-      return 1 + (matchedIdx / (q.options.length - 1)) * 4;
+      if (q.options.length === 1) return 4.5;
+      return 2.0 + (matchedIdx / (q.options.length - 1)) * 3.0;
     }
   }
 
@@ -74,26 +121,26 @@ export function getQuestionScore(q, userVal) {
     if (num >= 0 && num <= 100) return (num / 100) * 4 + 1;
   }
 
-  return normalizeScore(actualVal) || 3;
+  return normalizeScore(actualVal) || 3.5;
 }
 
-// 2. Aspect Definitions (15 Core Thematic Aspects mapping 75 Questions)
+// 2. Aspect Definitions (15 Core Thematic Aspects mapping 64+ Questions)
 export const ASPECT_DEFINITIONS = [
   { id: 'aspect-1', name: 'Socio-Economic & Demographics', description: 'Age, gender, status, study stage & financial background', qIds: ['q1', 'q2', 'q3', 'q4', 'q5', 'q6'] },
-  { id: 'aspect-2', name: 'Routine & Time Management', description: 'Daily planning, procrastination, work-life balance & prep timing', qIds: ['q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13'] },
-  { id: 'aspect-3', name: 'Food, Nutrition & Health', description: 'Meals, online food ordering, nutrition quality & exercise frequency', qIds: ['q14', 'q15', 'q16', 'q17', 'q18', 'q19'] },
-  { id: 'aspect-4', name: 'Screen Time & Digital Entertainment', description: 'Screen hours, social media, OTT, gaming & content choices', qIds: ['q20', 'q21', 'q22', 'q23', 'q24', 'q25', 'q26', 'q27'] },
-  { id: 'aspect-5', name: 'Reading & Media Habits', description: 'Book reading, news sources, audiobooks & podcasts', qIds: ['q28', 'q29', 'q30'] },
-  { id: 'aspect-6', name: 'Family & Social Connections', description: 'Family closeness, peer influence & relationship values', qIds: ['q31', 'q32', 'q33', 'q34', 'q35', 'q36'] },
-  { id: 'aspect-7', name: 'Career Aspirations & Work Values', description: 'Career priorities, work environment preference & risk tolerance', qIds: ['q37', 'q38', 'q39', 'q40', 'q41'] },
-  { id: 'aspect-8', name: 'Financial Management & Money', description: 'Monthly allowance, budgeting, saving habits & investment confidence', qIds: ['q42', 'q43', 'q44', 'q45', 'q46'] },
-  { id: 'aspect-9', name: 'Travel & Mobility Preference', description: 'Travel frequency, preferred destinations & relocation openness', qIds: ['q47', 'q48', 'q49'] },
+  { id: 'aspect-2', name: 'Routine & Time Management', description: 'Daily planning, procrastination, work-life balance & prep timing', qIds: ['q8', 'q9', 'q10', 'q11', 'q12'] },
+  { id: 'aspect-3', name: 'Food, Nutrition & Health', description: 'Meals, online food ordering, nutrition quality & exercise frequency', qIds: ['q14', 'q15', 'q16', 'q17', 'q18', 'q19', 'q20', 'q21'] },
+  { id: 'aspect-4', name: 'Screen Time & Digital Entertainment', description: 'Screen hours, social media, OTT, gaming & content choices', qIds: ['q7', 'q22', 'q23', 'q24', 'q25', 'q26', 'q27'] },
+  { id: 'aspect-5', name: 'Reading & Media Habits', description: 'Content genres, entertainment choices & problem solving', qIds: ['q28', 'q29', 'q30'] },
+  { id: 'aspect-6', name: 'Family & Social Connections', description: 'Family closeness, peer influence & relationship values', qIds: ['q31', 'q32', 'q33', 'q34', 'q35', 'q36', 'q66'] },
+  { id: 'aspect-7', name: 'Career Aspirations & Work Values', description: 'Career priorities, work environment preference & risk tolerance', qIds: ['q37', 'q38', 'q39', 'q40', 'q41', 'q49'] },
+  { id: 'aspect-8', name: 'Financial Management & Money', description: 'Financial situation, money management, saving habits & income sources', qIds: ['q5', 'q38', 'q42', 'q43', 'q44'] },
+  { id: 'aspect-9', name: 'Travel & Mobility Preference', description: 'Travel frequency, preferred destinations & relocation openness', qIds: ['q45', 'q46', 'q47', 'q48'] },
   { id: 'aspect-10', name: 'AI & Digital Technology Adoption', description: 'AI tools usage for studies, tech reliance & privacy concerns', qIds: ['q50', 'q51', 'q52', 'q53'] },
-  { id: 'aspect-11', name: 'Values, Ethics & Spirituality', description: 'Moral values, spiritual practices & personal goal setting', qIds: ['q54', 'q55', 'q56', 'q57'] },
-  { id: 'aspect-12', name: 'Self-Learning & Skill Credentials', description: 'Online certificates earned, personal growth & habit control', qIds: ['q58', 'q59', 'q60', 'q61', 'q62'] },
-  { id: 'aspect-13', name: 'Campus Culture & Social Events', description: 'Cultural participation, campus events & relationship principles', qIds: ['q63', 'q64', 'q65', 'q66'] },
-  { id: 'aspect-14', name: 'Engineering College Experience', description: 'Class attendance, facility importance & college expectations', qIds: ['q67', 'q68', 'q69', 'q70', 'q71'] },
-  { id: 'aspect-15', name: 'Faculty Dynamics & Student Feedback', description: 'Teacher-student conflict reasons, fairness reaction & criticism', qIds: ['q72', 'q73', 'q74', 'q75'] },
+  { id: 'aspect-11', name: 'Values, Ethics & Spirituality', description: 'Moral values, spiritual practices & personal goal setting', qIds: ['q54', 'q55', 'q60', 'q61'] },
+  { id: 'aspect-12', name: 'Self-Learning & Skill Credentials', description: 'Online certificates earned, personal growth & goal setting', qIds: ['q13', 'q30', 'q58', 'q59', 'q62'] },
+  { id: 'aspect-13', name: 'Campus Culture & Social Events', description: 'Participation in campus events, cultural activities & hobbies', qIds: ['q27', 'q28', 'q63', 'q64', 'q65'] },
+  { id: 'aspect-14', name: 'Engineering College Experience', description: 'Class attendance, facility importance & college expectations', qIds: ['q3', 'q4', 'q6', 'q13', 'q58', 'q62', 'q67', 'q68', 'q69', 'q70', 'q71'] },
+  { id: 'aspect-15', name: 'Faculty Dynamics & Student Feedback', description: 'Teacher-student interaction, feedback & academic environment', qIds: ['q30', 'q53', 'q58', 'q72', 'q73', 'q74', 'q75'] },
 ];
 
 // 3. Higher Level 10 Combined Life Dimensions Definitions
