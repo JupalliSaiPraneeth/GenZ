@@ -1,4 +1,4 @@
-# 🚀 GEN Z VOICES — MASTER RESEARCH ECOSYSTEM
+# GEN Z VOICES — MASTER RESEARCH ECOSYSTEM
 
 > **Tagline:** *"Your Perspective. A Brighter Tomorrow."*
 
@@ -6,7 +6,7 @@ Gen Z Voices is a large-scale, research-driven digital platform designed to unde
 
 ---
 
-## 🎨 Official Brand Design System
+## Official Brand Design System
 
 - **Primary Azure Blue:** `#265AFC` (Trust, Technology, Innovation)
 - **Secondary Sunglow Yellow:** `#FFDA38` (Youth, Optimism, Energy)
@@ -16,7 +16,7 @@ Gen Z Voices is a large-scale, research-driven digital platform designed to unde
 
 ---
 
-## 🏗️ Architecture & Stack
+##  Architecture & Stack
 
 ### Frontend Architecture
 - **Framework:** React 18 + Vite
@@ -65,7 +65,7 @@ gen-z-voices/
 
 ---
 
-## 🚀 Running the Application
+##  Running the Application
 
 ### 1. Frontend Development Server
 ```bash
