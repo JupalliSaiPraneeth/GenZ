@@ -353,12 +353,31 @@ export default function Analytics() {
   return (
     <div className="relative min-h-screen w-full bg-[#FAF7F0] overflow-y-auto overflow-x-hidden font-inter text-[#10242C]">
 
-      {/* TOP TEAL HEADER ATMOSPHERE */}
-      <div className="absolute top-0 left-0 right-0 h-[200px] sm:h-[220px] bg-gradient-to-b from-[#109A9B] via-[#075D63] to-[#063E46] z-0 overflow-hidden" />
+      {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
+      <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
+        <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
+      </div>
 
-      {/* BACKGROUND DECORATIVE GLOW SHAPES */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12),transparent_65%)] pointer-events-none z-0" />
-      <div className="absolute top-10 -left-20 w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-[#109A9B]/20 blur-3xl pointer-events-none z-0" />
+      {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
+      <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
+        <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none" />
+      </div>
+
+      {/* DECORATIVE HANDWRITTEN SLOGANS IN TOP TEAL SECTION */}
+      <div className="absolute top-28 sm:top-36 left-[2%] lg:left-[4%] xl:left-[6%] text-teal-100 z-10 pointer-events-none hidden xl:block">
+        <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-teal-100 drop-shadow-xs">
+          Real Insights <br /> Real Data
+        </div>
+      </div>
+
+      <div className="absolute top-28 sm:top-36 right-[2%] lg:right-[4%] xl:right-[6%] text-teal-100 z-10 pointer-events-none hidden xl:block text-right">
+        <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-teal-100 drop-shadow-xs">
+          Ideas Today <br /> Better Tomorrow
+        </div>
+      </div>
 
       {/* MAIN CONTENT CONTAINER */}
       <div className="relative z-10 pt-[88px] sm:pt-[105px] lg:pt-[115px] pb-16 sm:pb-24 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-5 sm:space-y-8">

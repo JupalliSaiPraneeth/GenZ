@@ -19,7 +19,8 @@ import {
   Lightbulb,
   BarChart3,
   Bookmark,
-  Mail
+  Mail,
+  Sparkles
 } from 'lucide-react';
 
 
@@ -42,27 +43,75 @@ export default function About() {
     <div className="relative min-h-screen w-full bg-[#FAF7F0] text-[#10242C] font-inter overflow-x-hidden pt-[85px] sm:pt-[110px] lg:pt-[125px] pb-16 sm:pb-24">
 
       {/* ==================================================== */}
-      {/* UNIFIED CREAM BACKGROUND & ATMOSPHERIC GLOW BLOBS */}
-      {/* UNIFIED CREAM BACKGROUND & ATMOSPHERIC GLOW BLOBS */}
-      <div className="absolute inset-0 bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
+      {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
+      {/* ==================================================== */}
+      <div className="absolute top-0 left-0 right-0 h-[350px] sm:h-[410px] lg:h-[450px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
+
+        {/* ============================================================
+            GEN Z VOICES — PREMIUM LOGO BACKDROP
+            Designed to make the navbar logo visually stand out without
+            changing the actual logo asset.
+        ============================================================ */}
+
+        {/* Deep atmospheric gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(111,245,232,0.20),transparent_24%),radial-gradient(circle_at_92%_18%,rgba(35,210,203,0.13),transparent_24%),linear-gradient(135deg,#075D63_0%,#07535B_48%,#063E46_100%)]" />
+
+        {/* Soft glow behind the logo area */}
+        <div className="absolute -top-8 -left-8 sm:left-4 lg:left-8 w-[250px] sm:w-[330px] lg:w-[390px] h-[180px] sm:h-[230px] lg:h-[260px] rounded-full bg-[#8FF7EE]/20 blur-[55px]" />
+
+        {/* Large translucent brush-stroke layers */}
+        <div className="absolute top-[62px] left-[-45px] sm:left-[-25px] lg:left-[15px] w-[340px] sm:w-[430px] lg:w-[500px] h-[120px] sm:h-[150px] rotate-[-8deg] bg-gradient-to-r from-[#7FF8EF]/0 via-[#7FF8EF]/25 to-[#7FF8EF]/0 blur-[2px] opacity-80"
+          style={{ clipPath: 'polygon(3% 42%, 12% 25%, 27% 34%, 41% 15%, 58% 31%, 76% 12%, 97% 38%, 90% 66%, 73% 55%, 58% 77%, 42% 59%, 25% 82%, 8% 65%)' }}
+        />
+
+        <div className="absolute top-[88px] left-[-25px] sm:left-[5px] lg:left-[35px] w-[360px] sm:w-[460px] lg:w-[520px] h-[105px] rotate-[-7deg] border-y border-[#9CFFF6]/20 opacity-70"
+          style={{ clipPath: 'polygon(0 35%, 15% 18%, 31% 30%, 48% 10%, 65% 27%, 82% 8%, 100% 30%, 92% 68%, 75% 52%, 57% 72%, 40% 55%, 21% 78%, 5% 60%)' }}
+        />
+
+        {/* Logo-zone grid/dot accents */}
+        <div className="absolute top-[92px] left-[28px] sm:left-[55px] lg:left-[78px] w-16 h-16 opacity-60"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(133,250,242,0.75) 1.5px, transparent 1.5px)',
+            backgroundSize: '16px 16px'
+          }}
+        />
+
+        {/* Decorative orbital rings — right side */}
+        <div className="absolute -top-[150px] -right-[95px] sm:-top-[170px] sm:-right-[75px] w-[330px] h-[330px] rounded-full border border-[#67EEE5]/30" />
+        <div className="absolute -top-[125px] -right-[70px] sm:-top-[145px] sm:-right-[50px] w-[280px] h-[280px] rounded-full border border-[#67EEE5]/15" />
+        <div className="absolute top-[48px] right-[55px] w-2.5 h-2.5 rounded-full bg-[#67EEE5] shadow-[0_0_18px_rgba(103,238,229,0.9)]" />
+
+        {/* Bottom-left orbital accent */}
+        <div className="absolute -bottom-[185px] -left-[145px] w-[360px] h-[360px] rounded-full border border-[#67EEE5]/25" />
+        <div className="absolute -bottom-[155px] -left-[115px] w-[300px] h-[300px] rounded-full border border-[#67EEE5]/10" />
+
+        {/* Fine diagonal texture */}
+        <div className="absolute inset-0 opacity-[0.055]"
+          style={{
+            backgroundImage: 'repeating-linear-gradient(135deg, transparent 0, transparent 38px, rgba(255,255,255,0.8) 39px, transparent 40px)'
+          }}
+        />
+
+        {/* Existing atmospheric lighting */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.18),transparent_70%)]" />
       </div>
 
-      {/* Decorative Blur Blobs */}
-      <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-[#109A9B]/10 rounded-full blur-3xl pointer-events-none z-0" />
-      <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-[#075D63]/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none z-0" />
-      <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none z-0" />
+      {/* UNIFIED CREAM BACKGROUND & ATMOSPHERIC GLOW BLOBS FOR LOWER PAGE */}
+      <div className="absolute inset-0 top-[350px] sm:top-[410px] lg:top-[450px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
+        <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none" />
+      </div>
 
       {/* MAIN ALIGNED CONTAINER */}
       <div className="relative z-10 max-w-[1400px] mx-auto px-3.5 sm:px-6 lg:px-8 w-full space-y-8 sm:space-y-12 lg:space-y-14">
 
         {/* 1. HERO SECTION */}
         <div className="text-center space-y-3 sm:space-y-4 max-w-4xl mx-auto pt-2 sm:pt-4">
-          <h1 className="font-sora font-extrabold text-2.5xl sm:text-4xl lg:text-5xl text-[#10242C] tracking-tight leading-tight drop-shadow-xs">
+          <h1 className="font-sora font-extrabold text-2.5xl sm:text-4xl lg:text-5xl text-white tracking-tight leading-tight drop-shadow-[0_4px_18px_rgba(0,0,0,0.18)]">
             About Gen Z Voices
           </h1>
 
-          <p className="text-sm sm:text-lg lg:text-xl font-sora font-semibold text-[#075D63] leading-relaxed max-w-2xl mx-auto px-2">
+          <p className="text-sm sm:text-lg lg:text-xl font-sora font-semibold text-white/95 leading-relaxed max-w-2xl mx-auto px-2">
             Understanding Gen Z. Capturing Perspectives. Shaping Tomorrow.
           </p>
         </div>

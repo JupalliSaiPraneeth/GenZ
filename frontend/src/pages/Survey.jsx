@@ -465,23 +465,28 @@ export default function Survey() {
     return (
       <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
 
-        {/* UNIFIED CREAM BACKGROUND */}
-        <div className="absolute inset-0 bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none" />
+        {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
+        <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
+          <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
+        </div>
 
-        {/* ORGANIC BACKGROUND SHAPES */}
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-[#109A9B]/20 blur-3xl pointer-events-none z-0" />
-        <div className="absolute -bottom-16 -right-16 w-80 h-80 rounded-full bg-[#075D63]/15 blur-3xl pointer-events-none z-0" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-[50%] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.15),transparent_55%)] pointer-events-none z-0" />
+        {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
+        <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
+          <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none" />
+        </div>
 
-        {/* DECORATIVE BACKGROUND ELEMENTS - POSITIONS IN TOP CREAM HALF */}
-        <div className="absolute top-28 sm:top-32 left-[2%] lg:left-[5%] xl:left-[8%] text-[#075D63] z-10 pointer-events-none hidden xl:block">
-          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-[#075D63] drop-shadow-xs">
+        {/* DECORATIVE BACKGROUND ELEMENTS - POSITIONS IN TOP DARK TEAL HALF */}
+        <div className="absolute top-28 sm:top-32 left-[2%] lg:left-[5%] xl:left-[8%] text-teal-100 z-10 pointer-events-none hidden xl:block">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-teal-100 drop-shadow-xs">
             Your <br /> Voice <br /> Matters
           </div>
         </div>
 
-        <div className="absolute top-28 sm:top-32 right-[2%] lg:right-[5%] xl:right-[8%] text-[#075D63] z-10 pointer-events-none hidden xl:block text-right">
-          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-[#075D63] drop-shadow-xs">
+        <div className="absolute top-28 sm:top-32 right-[2%] lg:right-[5%] xl:right-[8%] text-teal-100 z-10 pointer-events-none hidden xl:block text-right">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-teal-100 drop-shadow-xs">
             Ideas Today <br /> Better Tomorrow
           </div>
         </div>
@@ -604,8 +609,31 @@ export default function Survey() {
     return (
       <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
 
-        {/* UNIFIED CREAM BACKGROUND */}
-        <div className="absolute inset-0 bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none" />
+        {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
+        <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
+          <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
+        </div>
+
+        {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
+        <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
+          <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none" />
+        </div>
+
+        {/* DECORATIVE BACKGROUND ELEMENTS - POSITIONS IN TOP DARK TEAL HALF */}
+        <div className="absolute top-28 sm:top-32 left-[2%] lg:left-[5%] xl:left-[8%] text-teal-100 z-10 pointer-events-none hidden xl:block">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-teal-100 drop-shadow-xs">
+            Your <br /> Voice <br /> Matters
+          </div>
+        </div>
+
+        <div className="absolute top-28 sm:top-32 right-[2%] lg:right-[5%] xl:right-[8%] text-teal-100 z-10 pointer-events-none hidden xl:block text-right">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-teal-100 drop-shadow-xs">
+            Ideas Today <br /> Better Tomorrow
+          </div>
+        </div>
 
         {/* MAIN COMPOSITION CONTAINER */}
         <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-start items-center py-2 sm:py-4">
@@ -792,8 +820,31 @@ export default function Survey() {
     return (
       <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
-        {/* UNIFIED CREAM BACKGROUND */}
-        <div className="absolute inset-0 bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none" />
+        {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
+        <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
+          <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
+        </div>
+
+        {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
+        <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
+          <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none" />
+        </div>
+
+        {/* DECORATIVE BACKGROUND ELEMENTS - POSITIONS IN TOP DARK TEAL HALF */}
+        <div className="absolute top-28 sm:top-32 left-[2%] lg:left-[5%] xl:left-[8%] text-teal-100 z-10 pointer-events-none hidden xl:block">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-teal-100 drop-shadow-xs">
+            Your <br /> Voice <br /> Matters
+          </div>
+        </div>
+
+        <div className="absolute top-28 sm:top-32 right-[2%] lg:right-[5%] xl:right-[8%] text-teal-100 z-10 pointer-events-none hidden xl:block text-right">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-teal-100 drop-shadow-xs">
+            Ideas Today <br /> Better Tomorrow
+          </div>
+        </div>
 
         <div className="max-w-xl w-full bg-white rounded-3xl p-4 sm:p-7 border border-[#109A9B]/20 shadow-2xl relative z-20 overflow-hidden my-3 sm:my-5">
           <div className="space-y-4 sm:space-y-6">
@@ -857,8 +908,31 @@ export default function Survey() {
     return (
       <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
-        {/* UNIFIED CREAM BACKGROUND */}
-        <div className="absolute top-0 left-0 right-0 h-[50vh] bg-[#FAF7F0] z-0 overflow-hidden" />
+        {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
+        <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
+          <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
+        </div>
+
+        {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
+        <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
+          <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none" />
+        </div>
+
+        {/* DECORATIVE BACKGROUND ELEMENTS - POSITIONS IN TOP DARK TEAL HALF */}
+        <div className="absolute top-28 sm:top-32 left-[2%] lg:left-[5%] xl:left-[8%] text-teal-100 z-10 pointer-events-none hidden xl:block">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[-8deg] leading-tight text-teal-100 drop-shadow-xs">
+            Your <br /> Voice <br /> Matters
+          </div>
+        </div>
+
+        <div className="absolute top-28 sm:top-32 right-[2%] lg:right-[5%] xl:right-[8%] text-teal-100 z-10 pointer-events-none hidden xl:block text-right">
+          <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-teal-100 drop-shadow-xs">
+            Ideas Today <br /> Better Tomorrow
+          </div>
+        </div>
 
         <div className="max-w-xl w-full bg-white rounded-3xl p-4 sm:p-7 border border-[#109A9B]/20 shadow-2xl relative z-20 overflow-hidden my-3 sm:my-5">
 
@@ -1024,8 +1098,25 @@ export default function Survey() {
   return (
     <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-between items-center pt-[88px] sm:pt-[105px] lg:pt-[115px] pb-6 select-none">
 
-      {/* UNIFIED CREAM BACKGROUND */}
-      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-[#FAF7F0] z-0 overflow-hidden" />
+      {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
+      <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
+        <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
+      </div>
+
+      {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
+      <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(7,93,99,0.05),transparent_65%)]" />
+        <div className="absolute bottom-10 left-5 w-[300px] sm:w-[450px] h-[300px] sm:h-[450px] rounded-full bg-[#109A9B]/10 blur-3xl pointer-events-none" />
+      </div>
+
+
+      <div className="absolute top-28 sm:top-36 right-[1.5%] lg:right-[3%] xl:right-[4%] text-teal-100 z-10 pointer-events-none hidden xl:block text-right">
+        <div className="font-handwritten text-xl lg:text-2xl font-extrabold rotate-[8deg] leading-tight text-teal-100 drop-shadow-xs">
+          Ideas Today <br /> Better Tomorrow
+        </div>
+      </div>
 
       {/* 4. BOTTOM LEFT ORGANIC SHAPE */}
       <div className="absolute bottom-0 -left-20 w-[520px] h-[520px] rounded-full bg-[#109A9B]/15 blur-3xl pointer-events-none z-0" />

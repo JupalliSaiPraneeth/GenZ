@@ -34,7 +34,7 @@ export default function Navbar() {
         {/* Brand Logo with Responsive Scaling */}
         <Link to="/" className="flex items-center group shrink-0">
           <img
-            src="/logo.png"
+            src={['/about', '/survey', '/analytics'].includes(location.pathname) ? '/brightlogo.png' : '/logo.png'}
             alt="Gen Z Voices Logo"
             className="h-10 sm:h-[64px] md:h-[70px] max-h-[48px] sm:max-h-[68px] md:max-h-[72px] w-auto max-w-[160px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-[360px] object-contain transition-transform duration-300 group-hover:scale-105"
           />
@@ -49,11 +49,10 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 to={link.path}
-                className={`relative px-4 lg:px-5 py-2 rounded-full transition-all duration-200 flex items-center gap-2 text-sm ${
-                  active
+                className={`relative px-4 lg:px-5 py-2 rounded-full transition-all duration-200 flex items-center gap-2 text-sm ${active
                     ? 'text-[#0B1F2A] bg-[#109A9B]/20 font-bold shadow-xs'
                     : 'text-[#53656A] hover:text-[#0B1F2A] hover:bg-[#109A9B]/10'
-                }`}
+                  }`}
               >
                 <span className="tracking-tight">{link.name}</span>
                 {active && (
@@ -120,11 +119,10 @@ export default function Navbar() {
                   key={link.name}
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`px-4 py-3 rounded-2xl font-bold text-base flex items-center gap-3 transition-colors ${
-                    active
+                  className={`px-4 py-3 rounded-2xl font-bold text-base flex items-center gap-3 transition-colors ${active
                       ? 'bg-[#109A9B]/20 text-[#0B1F2A]'
                       : 'text-[#53656A] hover:bg-[#109A9B]/10 hover:text-[#0B1F2A]'
-                  }`}
+                    }`}
                 >
                   <span>{link.name}</span>
                 </Link>
