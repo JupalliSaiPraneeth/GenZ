@@ -449,7 +449,7 @@ export default function AdminRespondentDetail() {
               <div className="flex items-center gap-2">
                 <Clock className="w-4.5 h-4.5 text-[#109A9B] shrink-0" />
                 <span className="font-mono font-extrabold text-base text-[#075D63]">
-                  {qualityMetrics.avgSecPerQ ? `${qualityMetrics.avgSecPerQ}s` : '4.8s'}
+                  {qualityMetrics.avgSecPerQ ? `${qualityMetrics.avgSecPerQ}s` : 'N/A'}
                 </span>
               </div>
             </div>
@@ -594,7 +594,7 @@ export default function AdminRespondentDetail() {
                 <span className="text-[10px] text-[#53656A] font-bold uppercase block">Average Time per Question</span>
                 <div className="flex items-center justify-between mt-0.5">
                   <span className="font-mono font-extrabold text-base text-[#075D63]">
-                    {qualityMetrics.avgSecPerQ ? `${qualityMetrics.avgSecPerQ}s / Q` : '4.8s / Q'}
+                    {qualityMetrics.avgSecPerQ ? `${qualityMetrics.avgSecPerQ}s / Q` : 'N/A'}
                   </span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
                     qualityMetrics.speedAnomaly

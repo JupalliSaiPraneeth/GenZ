@@ -62,13 +62,13 @@ export default function AdminLayout({ children, title = 'Admin Portal' }) {
           }`}
       >
         {/* TOP BRAND HEADER WITH WHITE BACKGROUND */}
-        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200 bg-white shrink-0">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200 bg-white shrink-0 overflow-hidden">
           <Link to="/admin/dashboard" className="flex items-center gap-3 group min-w-0">
             <img
-              src="/logo.png"
-              onError={(e) => { e.currentTarget.src = "/GenZ.png"; }}
-              alt="Gen Z Voices Logo"
-              className="h-13 max-h-13 w-auto object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
+              src="/adminlogo.png"
+              onError={(e) => { e.currentTarget.src = "/logo.png"; }}
+              alt="Gen Z Voices Admin Logo"
+              className="h-12 max-h-13 w-auto max-w-[210px] object-contain shrink-0 transition-transform duration-200 group-hover:scale-105"
             />
           </Link>
 
@@ -93,8 +93,8 @@ export default function AdminLayout({ children, title = 'Admin Portal' }) {
                   to={item.path}
                   onClick={() => setIsSidebarOpen(false)}
                   className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all duration-200 group ${isActive
-                      ? 'bg-gradient-to-r from-[#109A9B] to-[#075D63] text-white shadow-md shadow-teal-950/40 border border-white/10'
-                      : 'text-white hover:text-[#FDE7B5] hover:bg-white/10'
+                    ? 'bg-gradient-to-r from-[#109A9B] to-[#075D63] text-white shadow-md shadow-teal-950/40 border border-white/10'
+                    : 'text-white hover:text-[#FDE7B5] hover:bg-white/10'
                     }`}
                 >
                   <div className="flex items-center gap-3">

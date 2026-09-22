@@ -54,40 +54,29 @@ export default function AdminExport() {
   };
 
   const generatePDF = (title, subtitle, headers, rows, filename) => {
-    const isLandscape = headers.length > 5;
+    const isLandscape = headers.length > 4;
     const doc = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait' });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10;
     const printableWidth = pageWidth - margin * 2;
-    const fontSize = isLandscape ? 8 : 7.5;
+    const fontSize = isLandscape ? 7.5 : 7.0;
+    const lineSpacing = isLandscape ? 3.4 : 3.2;
 
-    const fitText = (d, txt, maxW) => {
-      let str = String(txt ?? '').trim();
-      if (!str) return '';
-      if (d.getTextWidth(str) <= maxW) return str;
-      let truncated = str;
-      while (truncated.length > 1 && d.getTextWidth(truncated + '…') > maxW) {
-        truncated = truncated.slice(0, -1);
-      }
-      return truncated.length > 0 ? truncated + '…' : '';
-    };
-
-    // Measure exact text widths for headers & data cells in mm
+    // Smart Column Width Distribution
     doc.setFontSize(fontSize);
-    const desiredWidths = headers.map((h, colIdx) => {
-      doc.setFont('helvetica', 'bold');
-      let maxW = doc.getTextWidth(String(h));
-      doc.setFont('helvetica', 'normal');
-      rows.forEach((r) => {
-        const cellW = doc.getTextWidth(String(r[colIdx] ?? ''));
-        if (cellW > maxW) maxW = cellW;
-      });
-      return Math.max(maxW + 4, 12);
+
+    const weights = headers.map((h) => {
+      const lower = String(h).toLowerCase();
+      if (lower.includes('code') || lower.includes('id') || lower === 'q#') return 1.2;
+      if (lower.includes('sec') || lower.includes('age') || lower.includes('type') || lower.includes('pct') || lower.includes('quality') || lower.includes('gender')) return 1.5;
+      if (lower.includes('topic') || lower.includes('category') || lower.includes('name') || lower.includes('email') || lower.includes('field') || lower.includes('status') || lower.includes('time')) return 2.2;
+      if (lower.includes('question') || lower.includes('text') || lower.includes('answer') || lower.includes('options') || lower.includes('value') || lower.includes('raw')) return 4.5;
+      return 2.5;
     });
 
-    const totalDesired = desiredWidths.reduce((a, b) => a + b, 0) || headers.length;
-    const colWidths = desiredWidths.map((w) => (w / totalDesired) * printableWidth);
+    const totalWeight = weights.reduce((a, b) => a + b, 0) || headers.length;
+    const colWidths = weights.map((w) => (w / totalWeight) * printableWidth);
 
     const colPositions = [];
     let currentX = margin;
@@ -98,76 +87,100 @@ export default function AdminExport() {
 
     // Header Title Block
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
+    doc.setFontSize(13);
     doc.setTextColor(7, 93, 99); // #075D63
-    doc.text('GEN Z VOICES — RESEARCH PLATFORM', margin, 15);
+    doc.text('GEN Z VOICES — RESEARCH PLATFORM', margin, 13);
 
-    doc.setFontSize(10.5);
+    doc.setFontSize(10);
     doc.setTextColor(16, 36, 44); // #10242C
-    doc.text(title, margin, 22);
+    doc.text(title, margin, 19);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setTextColor(83, 101, 106); // #53656A
-    doc.text(`${subtitle} | Exported: ${new Date().toLocaleString()}`, margin, 27);
+    doc.text(`${subtitle} | Exported: ${new Date().toLocaleString()}`, margin, 24);
 
     // Header Border Line
     doc.setDrawColor(16, 154, 155);
-    doc.setLineWidth(0.5);
-    doc.line(margin, 30, pageWidth - margin, 30);
+    doc.setLineWidth(0.4);
+    doc.line(margin, 27, pageWidth - margin, 27);
 
-    let y = 37;
-    const rowHeight = 7.5;
+    let y = 32;
 
     const renderTableHeader = (currentY) => {
       doc.setFont('helvetica', 'bold');
-      doc.setFillColor(7, 93, 99); // Solid dark teal header
-      doc.rect(margin, currentY - 5, printableWidth, rowHeight, 'F');
-      doc.setTextColor(255, 255, 255); // White text
       doc.setFontSize(fontSize);
 
-      headers.forEach((h, i) => {
-        const maxCellW = colWidths[i] - 2;
-        const safeText = fitText(doc, String(h), maxCellW);
-        doc.text(safeText, colPositions[i] + 1.5, currentY - 0.5);
+      const headerCellLines = headers.map((h, i) => {
+        const maxCellW = colWidths[i] - 2.5;
+        return doc.splitTextToSize(String(h ?? ''), maxCellW);
       });
+
+      const maxHeaderLines = Math.max(1, ...headerCellLines.map((l) => l.length));
+      const headerHeight = Math.max(7, maxHeaderLines * lineSpacing + 3.0);
+
+      doc.setFillColor(7, 93, 99); // Solid dark teal header
+      doc.rect(margin, currentY, printableWidth, headerHeight, 'F');
+      doc.setTextColor(255, 255, 255); // White text
+
+      headers.forEach((h, i) => {
+        const lines = headerCellLines[i];
+        lines.forEach((lineText, lineIdx) => {
+          doc.text(lineText, colPositions[i] + 1.5, currentY + 3.8 + (lineIdx * lineSpacing));
+        });
+      });
+
+      return headerHeight;
     };
 
-    renderTableHeader(y);
+    let currentHeaderHeight = renderTableHeader(y);
+    y += currentHeaderHeight;
 
-    y += rowHeight;
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(16, 36, 44);
 
     rows.forEach((row, rowIndex) => {
-      if (y > pageHeight - 16) {
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      // Pre-calculate full multiline wrapping for every cell (NO TRUNCATION!)
+      const cellLinesArray = row.map((cell, i) => {
+        const maxCellW = colWidths[i] - 2.5;
+        return doc.splitTextToSize(String(cell ?? '').trim(), maxCellW);
+      });
+
+      const maxLinesInRow = Math.max(1, ...cellLinesArray.map((lines) => lines.length));
+      const rowHeight = Math.max(6.5, maxLinesInRow * lineSpacing + 3.0);
+
+      // Check for Page Overflow
+      if (y + rowHeight > pageHeight - 14) {
         doc.addPage();
-        y = 20;
-        renderTableHeader(y);
-        y += rowHeight;
+        y = 15;
+        currentHeaderHeight = renderTableHeader(y);
+        y += currentHeaderHeight;
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(16, 36, 44);
       }
 
-      // Alternating row background
+      // Alternating row background fill
       if (rowIndex % 2 === 1) {
-        doc.setFillColor(244, 249, 249);
-        doc.rect(margin, y - 5, printableWidth, rowHeight, 'F');
+        doc.setFillColor(245, 249, 249);
+        doc.rect(margin, y, printableWidth, rowHeight, 'F');
       } else {
         doc.setFillColor(255, 255, 255);
-        doc.rect(margin, y - 5, printableWidth, rowHeight, 'F');
+        doc.rect(margin, y, printableWidth, rowHeight, 'F');
       }
 
-      // Border line under each row
-      doc.setDrawColor(230, 235, 237);
+      // Border line under row
+      doc.setDrawColor(226, 232, 234);
       doc.setLineWidth(0.1);
-      doc.line(margin, y + 2.5, pageWidth - margin, y + 2.5);
+      doc.line(margin, y + rowHeight, pageWidth - margin, y + rowHeight);
 
-      doc.setFontSize(fontSize);
-      row.forEach((cell, i) => {
-        const maxCellW = colWidths[i] - 2;
-        const safeText = fitText(doc, String(cell ?? ''), maxCellW);
-        doc.text(safeText, colPositions[i] + 1.5, y - 0.5);
+      // Render cell text lines
+      cellLinesArray.forEach((lines, i) => {
+        lines.forEach((lineText, lineIdx) => {
+          doc.text(lineText, colPositions[i] + 1.5, y + 3.8 + (lineIdx * lineSpacing));
+        });
       });
 
       y += rowHeight;
@@ -178,12 +191,12 @@ export default function AdminExport() {
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
+      doc.setFontSize(7.0);
       doc.setTextColor(120, 120, 120);
       doc.text(
         `Page ${i} of ${pageCount} — Gen Z Voices Confidential Administrative Export`,
         pageWidth - margin,
-        pageHeight - 6,
+        pageHeight - 5,
         { align: 'right' }
       );
     }
