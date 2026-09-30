@@ -276,6 +276,9 @@ export default function About() {
                   <h3 className="font-sora font-extrabold text-xl sm:text-2xl text-[#10242C] tracking-tight group-hover:text-[#109A9B] transition-colors">
                     Dr. K. V. Sambasivarao
                   </h3>
+                  <p className="text-xs sm:text-sm font-sora font-extrabold text-[#075D63]">
+                    Director R&D
+                  </p>
                   <p className="text-xs sm:text-sm font-bold text-[#53656A] flex items-center justify-center gap-1.5">
                     <GraduationCap className="w-4 h-4 text-[#075D63] shrink-0" />
                     <span>Computer Science Department</span>

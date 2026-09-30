@@ -34,7 +34,7 @@ export default function Navbar() {
         {/* Brand Logo with Responsive Scaling */}
         <Link to="/" className="flex items-center group shrink-0">
           <img
-            src={['/about', '/survey', '/analytics'].includes(location.pathname) ? '/brightlogo.png' : '/logo.png'}
+            src={['/about', '/survey', '/survey-complete', '/analytics', '/lucky-draw'].includes(location.pathname) || location.pathname.startsWith('/survey') ? '/brightlogo.png' : '/logo.png'}
             alt="Gen Z Voices Logo"
             className="h-10 sm:h-[64px] md:h-[70px] max-h-[48px] sm:max-h-[68px] md:max-h-[72px] w-auto max-w-[160px] xs:max-w-[200px] sm:max-w-[320px] md:max-w-[360px] object-contain transition-transform duration-300 group-hover:scale-105"
           />
