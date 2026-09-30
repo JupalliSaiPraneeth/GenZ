@@ -75,7 +75,6 @@ export default function LuckyDraw() {
           <div className="relative z-10 space-y-6 text-center max-w-3xl mx-auto">
             {/* Pill Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/15 text-amber-200 border border-amber-300/30 text-xs font-bold tracking-wide backdrop-blur-md shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
               <span>OFFICIAL RESEARCH REWARDS EVENT</span>
             </div>
 
@@ -99,10 +98,9 @@ export default function LuckyDraw() {
           {/* COUNTDOWN TIMER */}
           <div className="mt-10 pt-8 border-t border-white/10 relative z-10">
             <div className="text-center space-y-3">
-              <span className="text-[11px] font-mono font-semibold tracking-widest text-teal-200/80 uppercase flex items-center justify-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-amber-300" />
+              <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 font-sora font-extrabold text-xs sm:text-sm tracking-wider uppercase shadow-sm backdrop-blur-md">
                 Time Remaining Until Announcement
-              </span>
+              </div>
 
               <div className="grid grid-cols-4 gap-2.5 sm:gap-4 max-w-lg mx-auto">
                 {[
@@ -134,10 +132,6 @@ export default function LuckyDraw() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-80 bg-gradient-to-r from-teal-200/20 via-amber-200/30 to-teal-200/20 rounded-full blur-3xl pointer-events-none -z-10" />
 
           <div className="text-center space-y-3">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold uppercase tracking-widest shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-              <span>Guaranteed Rewards</span>
-            </div>
             <h2 className="font-heading font-black text-3xl sm:text-4xl text-[#0B1F2A] tracking-tight flex items-center justify-center gap-3">
               <Trophy className="w-8 h-8 text-amber-500 drop-shadow-sm" />
               Prize Pool & Honors

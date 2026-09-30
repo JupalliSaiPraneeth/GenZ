@@ -26,8 +26,10 @@ export default function AdminVerifyCertificate() {
         setResult({
           valid: true,
           code: participantData.certificateId || cleanCode,
-          recipient: participantData.name || 'Gen Z Participant',
-          email: participantData.email || 'Registered Participant',
+          recipient: (participantData.name && participantData.name !== 'ADMIN_BLUEPRINT_CONFIG')
+            ? participantData.name
+            : (participantData.email ? participantData.email.split('@')[0] : 'Gen Z Participant'),
+          email: participantData.email || 'N/A',
           status: participantData.certificateStatus === 'issued' ? 'Issued & Authentic' : (participantData.certificateStatus || 'Issued & Authentic'),
           issuedAt: participantData.completedAtFormatted || participantData.submittedAt || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
           type: 'Official Certificate of Participation',

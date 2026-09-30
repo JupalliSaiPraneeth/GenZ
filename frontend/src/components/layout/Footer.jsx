@@ -24,7 +24,8 @@ export default function Footer() {
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center mb-3 sm:mb-4">
               <img
-                src="/logo.png"
+                src="/brightlogo.png"
+                onError={(e) => { e.currentTarget.src = "/logo.png"; }}
                 alt="Gen Z Voices Logo"
                 className="h-10 sm:h-14 w-auto object-contain"
               />

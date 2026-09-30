@@ -14,6 +14,7 @@ import {
   Trash2,
   Copy,
   Check,
+  User,
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminDataService } from '../../services/adminDataService';
@@ -159,17 +160,17 @@ export default function AdminRespondents() {
 
       {/* RESPONDENTS TABLE CONTAINER */}
       <div className="bg-white rounded-3xl border border-[#109A9B]/20 shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           <table className="w-full text-left text-xs font-medium border-collapse">
-            <thead className="bg-[#EAF6F6] text-[#063E46] font-bold uppercase text-[10px] tracking-wider border-b border-[#109A9B]/20">
+            <thead className="bg-[#EAF6F6] text-[#063E46] font-serif font-bold uppercase text-xs sm:text-[13px] tracking-wider border-b border-[#109A9B]/20">
               <tr className="whitespace-nowrap">
-                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Participant</th>
-                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Email</th>
-                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Progress %</th>
-                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Time Taken</th>
-                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Certificate ID</th>
-                <th className="py-3.5 px-4 sm:px-5 whitespace-nowrap">Lucky Draw</th>
-                <th className="py-3.5 px-4 sm:px-5 text-right sticky right-0 z-10 bg-[#EAF6F6] shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)] whitespace-nowrap">
+                <th className="py-2.5 px-3 whitespace-nowrap">Participant</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Email</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Progress %</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Time Taken</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Attention Check</th>
+                <th className="py-2.5 px-3 whitespace-nowrap">Certificate ID</th>
+                <th className="py-2.5 px-3 text-right sticky right-0 z-10 bg-[#EAF6F6] shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)] whitespace-nowrap">
                   Actions
                 </th>
               </tr>
@@ -177,7 +178,7 @@ export default function AdminRespondents() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-400 font-bold">
+                  <td colSpan={7} className="p-6 text-center text-slate-400 font-bold">
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 rounded-full border-2 border-[#109A9B] border-t-transparent animate-spin" />
                       <span>Querying live database records...</span>
@@ -186,7 +187,7 @@ export default function AdminRespondents() {
                 </tr>
               ) : currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 font-bold">
+                  <td colSpan={7} className="p-6 text-center text-slate-500 font-bold">
                     No respondents found matching the current search filters.
                   </td>
                 </tr>
@@ -197,10 +198,10 @@ export default function AdminRespondents() {
                     onClick={() => navigate(`/admin/respondents/${r.id}`)}
                     className="group hover:bg-[#F4FBFB]/80 cursor-pointer transition-colors"
                   >
-                    <td className="py-3.5 px-4 sm:px-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#063E46] to-[#109A9B] text-[#FFF8E8] flex items-center justify-center font-black text-xs shadow-sm shrink-0 uppercase">
-                          {r.name ? r.name.charAt(0) : 'P'}
+                    <td className="py-2 px-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#063E46] to-[#109A9B] text-white flex items-center justify-center shadow-xs shrink-0">
+                          <User className="w-3.5 h-3.5 text-white" />
                         </div>
                         <div className="min-w-0">
                           <div className="font-bold text-[#10242C] text-xs sm:text-sm truncate group-hover:text-[#109A9B] transition-colors">
@@ -209,55 +210,82 @@ export default function AdminRespondents() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 sm:px-5">
+                    <td className="py-2 px-3">
                       <span
-                        className="text-[#53656A] font-semibold text-xs truncate max-w-[180px] sm:max-w-[220px] block"
+                        className="text-[#53656A] font-semibold text-xs truncate max-w-[160px] sm:max-w-[200px] block"
                         title={r.email || 'N/A'}
                       >
                         {r.email || 'N/A'}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 sm:px-5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex-1 bg-slate-100 h-2 rounded-full min-w-[50px] max-w-[70px] overflow-hidden hidden sm:block">
+                    <td className="py-2 px-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-slate-100 h-1.5 rounded-full min-w-[45px] max-w-[65px] overflow-hidden hidden sm:block">
                           <div
-                            className={`h-full rounded-full transition-all duration-500 ${r.completionPct === 100
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              r.completionPct === 100
                                 ? 'bg-emerald-500'
                                 : r.completionPct > 50
-                                  ? 'bg-[#109A9B]'
-                                  : 'bg-amber-500'
-                              }`}
+                                ? 'bg-[#109A9B]'
+                                : 'bg-amber-500'
+                            }`}
                             style={{ width: `${Math.min(100, Math.max(0, r.completionPct || 0))}%` }}
                           />
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
                           <span className="font-extrabold text-[#075D63] text-xs">{r.completionPct || 0}%</span>
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap ${r.completionStatus === 'Completed'
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${
+                              r.completionStatus === 'Completed'
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                 : 'bg-amber-50 text-amber-900 border-amber-200'
-                              }`}
+                            }`}
                           >
                             {r.completionStatus}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 sm:px-5">
+                    <td className="py-2 px-3">
                       <div
-                        className="flex items-center gap-1.5 whitespace-nowrap font-mono text-xs font-semibold text-[#075D63]"
+                        className="flex items-center gap-1 whitespace-nowrap font-mono text-xs font-semibold text-[#075D63]"
                         title={`Logged in: ${r.startedAtFormatted || 'N/A'}`}
                       >
-                        <Clock className="w-3.5 h-3.5 text-[#109A9B] shrink-0" />
+                        <Clock className="w-3 h-3 text-[#109A9B] shrink-0" />
                         <span>{r.durationMinutes || 'N/A'}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 sm:px-5 font-mono font-semibold text-xs text-[#075D63]">
-                      <div className="whitespace-nowrap flex items-center gap-1.5">
+
+                    {/* ATTENTION CHECK STATUS */}
+                    <td className="py-2 px-3 whitespace-nowrap">
+                      {r.attentionCheckPassed || r.attentionCheckScore === 3 ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                          <span>Passed (3/3)</span>
+                        </span>
+                      ) : typeof r.attentionCheckScore === 'number' && r.attentionCheckScore > 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs">
+                          <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                          <span>Partial ({r.attentionCheckScore}/3)</span>
+                        </span>
+                      ) : r.completionStatus === 'Completed' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-extrabold bg-rose-50 text-rose-800 border border-rose-200 shadow-2xs">
+                          <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
+                          <span>Failed (0/3)</span>
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                          Pending
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="py-2 px-3 font-mono font-semibold text-xs text-[#075D63]">
+                      <div className="whitespace-nowrap flex items-center gap-1">
                         {r.certificateId ? (
                           <>
-                            <span className="px-2.5 py-1 bg-[#EAF6F6] text-[#063E46] font-extrabold rounded-lg border border-[#109A9B]/30 shadow-2xs font-mono text-[11px] inline-flex items-center gap-1">
-                              <ShieldCheck className="w-3.5 h-3.5 text-[#109A9B] shrink-0" />
+                            <span className="px-2 py-0.5 bg-[#EAF6F6] text-[#063E46] font-extrabold rounded-lg border border-[#109A9B]/30 shadow-2xs font-mono text-[10.5px] inline-flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-[#109A9B] shrink-0" />
                               <span>{r.certificateId}</span>
                             </span>
                             <button
@@ -266,50 +294,38 @@ export default function AdminRespondents() {
                                 e.stopPropagation();
                                 handleCopyCertId(r.certificateId);
                               }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-[#063E46] hover:bg-[#EAF6F6] border border-transparent hover:border-[#109A9B]/20 transition-all cursor-pointer"
+                              className="p-1 rounded text-slate-400 hover:text-[#063E46] hover:bg-[#EAF6F6] border border-transparent hover:border-[#109A9B]/20 transition-all cursor-pointer"
                               title={copiedCertId === r.certificateId ? 'Copied to clipboard!' : 'Copy Certificate ID'}
                             >
                               {copiedCertId === r.certificateId ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-600 animate-in zoom-in-50" />
+                                <Check className="w-3 h-3 text-emerald-600 animate-in zoom-in-50" />
                               ) : (
-                                <Copy className="w-3.5 h-3.5" />
+                                <Copy className="w-3 h-3" />
                               )}
                             </button>
                           </>
                         ) : r.certificateStatus === 'issued' ? (
-                          <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-lg border border-emerald-200 font-mono text-[11px]">
+                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-bold rounded-lg border border-emerald-200 font-mono text-[10.5px]">
                             Issued
                           </span>
                         ) : (
-                          <span className="text-slate-400 font-sans italic text-[11px]">Pending</span>
+                          <span className="text-slate-400 font-sans italic text-[10.5px]">Pending</span>
                         )}
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 sm:px-5">
-                      <div className="whitespace-nowrap">
-                        {r.luckyDrawStatus === 'winner' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-950 text-[11px] font-extrabold rounded-full border border-amber-300 shadow-2xs animate-pulse">
-                            🏆 Winner ({r.luckyDrawPrize || 'Prize Assigned'})
-                          </span>
-                        ) : (
-                          <span className="text-slate-500 font-medium text-xs capitalize">
-                            {r.luckyDrawStatus || 'Pending'}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 text-right sticky right-0 z-10 bg-white group-hover:bg-[#F4FBFB] transition-colors shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
-                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+
+                    <td className="py-2 px-2.5 text-right sticky right-0 z-10 bg-white group-hover:bg-[#F4FBFB] transition-colors shadow-[-3px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                      <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteParticipant(r);
                           }}
-                          className="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center shadow-2xs hover:scale-105 transition-all cursor-pointer"
+                          className="w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center justify-center shadow-2xs hover:scale-105 transition-all cursor-pointer"
                           title="Delete Participant from Database"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>

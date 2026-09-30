@@ -32,6 +32,17 @@ function AppLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
 
+  // Always scroll to top of page when navigating to any route
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (document.documentElement) {
+      document.documentElement.scrollTop = 0;
+    }
+    if (document.body) {
+      document.body.scrollTop = 0;
+    }
+  }, [location.pathname]);
+
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-[#FAF7F0] flex flex-col">
       {!isAdminRoute && <Navbar />}

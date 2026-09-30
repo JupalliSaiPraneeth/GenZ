@@ -909,52 +909,164 @@ export const adminDataService = {
   },
 
   /**
-   * Verify certificate by ID or code across all respondents
+   * Verify an official certificate code or participant ID across Supabase DB & local records
    */
-  async verifyCertificateCode(certCode) {
-    if (!certCode) return null;
-    const clean = String(certCode).trim().toUpperCase();
+  async verifyCertificateCode(codeOrId) {
+    if (!codeOrId) return null;
+    const cleanCode = String(codeOrId).trim().toUpperCase();
+    if (!cleanCode) return null;
 
-    // 1. Get all respondents list (includes deterministic IDs and database stored IDs)
-    const list = await this.getRespondentsList();
+    // 1. Search in `getRespondentsList()` (authoritative list populated directly from Supabase DB)
+    try {
+      const respondents = await this.getRespondentsList();
+      if (Array.isArray(respondents) && respondents.length > 0) {
+        const matched = respondents.find((r) => {
+          const rCertId = String(r.certificateId || '').trim().toUpperCase();
+          const rId = String(r.id || '').trim().toUpperCase();
+          const rEmail = String(r.email || '').trim().toUpperCase();
+          const rName = String(r.name || '').trim().toUpperCase();
+          const detCertIdById = r.id ? generateDeterministicCertId(r.id).toUpperCase() : '';
+          const detCertIdByEmail = r.email ? generateDeterministicCertId(r.email).toUpperCase() : '';
+          const detCertIdByName = r.name ? generateDeterministicCertId(r.name).toUpperCase() : '';
 
-    // Find participant whose certificateId or ID or email matches clean code
-    const matched = list.find((r) => {
-      const rCertId = String(r.certificateId || '').trim().toUpperCase();
-      const rId = String(r.id || '').trim().toUpperCase();
-      const rEmail = String(r.email || '').trim().toUpperCase();
+          return (
+            (rCertId && rCertId === cleanCode) ||
+            (rId && rId === cleanCode) ||
+            (rEmail && rEmail === cleanCode) ||
+            (detCertIdById && detCertIdById === cleanCode) ||
+            (detCertIdByEmail && detCertIdByEmail === cleanCode) ||
+            (detCertIdByName && detCertIdByName === cleanCode)
+          );
+        });
 
-      return (rCertId && rCertId === clean) || (rId && rId === clean) || (rEmail && rEmail === clean);
-    });
+        if (matched) {
+          const displayName = (matched.name && matched.name !== 'ADMIN_BLUEPRINT_CONFIG' && matched.name !== 'Gen Z Participant')
+            ? matched.name
+            : (matched.email && matched.email !== 'N/A' ? matched.email.split('@')[0] : 'Gen Z Participant');
 
-    if (matched) {
-      return matched;
-    }
+          const displayEmail = (matched.email && matched.email !== 'N/A') ? matched.email : '';
 
-    // 2. Fallback direct query to Supabase participants by certificate_id
-    if (isSupabaseConfigured) {
-      try {
-        const { data: p } = await supabase
-          .from('participants')
-          .select('*')
-          .eq('certificate_id', clean)
-          .maybeSingle();
-
-        if (p) {
-          const startedAt = p.started_at || p.created_at;
-          const completedAt = p.completed_at || p.updated_at;
           return {
-            id: p.id,
-            name: p.name || 'Gen Z Participant',
-            email: p.email || 'Registered Participant',
-            certificateId: p.certificate_id || clean,
-            certificateStatus: p.certificate_status || 'issued',
-            submittedAt: formatIST(completedAt || startedAt || new Date().toISOString()),
-            completedAtFormatted: completedAt ? formatIST(completedAt) : 'Completed',
+            id: matched.id,
+            certificateId: matched.certificateId || (matched.id ? generateDeterministicCertId(matched.id) : cleanCode),
+            name: displayName,
+            email: displayEmail,
+            completedAtFormatted: matched.completedAtFormatted || matched.submittedAt || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            certificateStatus: matched.certificateStatus || 'issued',
+            status: matched.completionStatus || 'completed',
+            submittedAt: matched.submittedAt,
+            participantDetails: matched,
           };
         }
+      }
+    } catch (err) {
+      console.warn('verifyCertificateCode respondents lookup notice:', err);
+    }
+
+    // 2. Direct Supabase DB queries if configured
+    if (isSupabaseConfigured) {
+      try {
+        // A. Check `certificates` table
+        try {
+          const { data: certRow } = await supabase
+            .from('certificates')
+            .select('*, session_id')
+            .or(`verification_code.eq.${cleanCode},certificate_number.eq.${cleanCode}`)
+            .maybeSingle();
+
+          if (certRow) {
+            let pData = null;
+            if (certRow.session_id && (typeof isValidUUID === 'undefined' || isValidUUID(certRow.session_id))) {
+              const { data } = await supabase
+                .from('participants')
+                .select('*')
+                .eq('id', certRow.session_id)
+                .maybeSingle();
+              pData = data;
+            }
+
+            const certName = pData?.name || certRow.participant_name || (pData?.email ? pData.email.split('@')[0] : 'Gen Z Participant');
+            const certEmail = pData?.email || certRow.participant_email || '';
+
+            return {
+              id: pData?.id || certRow.session_id,
+              certificateId: certRow.verification_code || cleanCode,
+              name: certName,
+              email: certEmail,
+              completedAtFormatted: certRow.issued_at
+                ? new Date(certRow.issued_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+              certificateStatus: 'issued',
+              status: 'completed',
+            };
+          }
+        } catch (cErr) {
+          // Ignore table/column error for certificates table if non-existent
+        }
+
+        // B. Check `participants` table directly (safely handling UUID type to prevent 400 Bad Request error)
+        try {
+          const isUuid = (typeof isValidUUID !== 'undefined') ? isValidUUID(cleanCode) : /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cleanCode);
+          let pQuery = supabase.from('participants').select('*');
+          if (isUuid) {
+            pQuery = pQuery.eq('id', cleanCode);
+          } else {
+            pQuery = pQuery.ilike('email', cleanCode);
+          }
+
+          const { data: pData } = await pQuery.maybeSingle();
+
+          if (pData) {
+            const pName = (pData.name && pData.name !== 'ADMIN_BLUEPRINT_CONFIG')
+              ? pData.name
+              : (pData.email ? pData.email.split('@')[0] : 'Gen Z Participant');
+
+            return {
+              id: pData.id,
+              certificateId: generateDeterministicCertId(pData.id) || cleanCode,
+              name: pName,
+              email: pData.email || '',
+              completedAtFormatted: pData.updated_at || pData.created_at
+                ? formatIST(pData.updated_at || pData.created_at)
+                : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+              certificateStatus: pData.certificate_status || 'issued',
+              status: pData.status || 'completed',
+            };
+          }
+        } catch (pErr) {
+          // Ignore query error for participants table
+        }
+
+        // C. Fetch all participants to evaluate deterministic cert ID match
+        const { data: allParticipants } = await supabase.from('participants').select('*');
+        if (allParticipants && allParticipants.length > 0) {
+          const pMatch = allParticipants.find((p) => {
+            const cert1 = p.id ? generateDeterministicCertId(p.id).toUpperCase() : '';
+            const cert2 = p.email ? generateDeterministicCertId(p.email).toUpperCase() : '';
+            const cert3 = p.name ? generateDeterministicCertId(p.name).toUpperCase() : '';
+            return cert1 === cleanCode || cert2 === cleanCode || cert3 === cleanCode;
+          });
+
+          if (pMatch) {
+            const pName = (pMatch.name && pMatch.name !== 'ADMIN_BLUEPRINT_CONFIG')
+              ? pMatch.name
+              : (pMatch.email ? pMatch.email.split('@')[0] : 'Gen Z Participant');
+
+            return {
+              id: pMatch.id,
+              certificateId: cleanCode,
+              name: pName,
+              email: pMatch.email || '',
+              completedAtFormatted: pMatch.updated_at || pMatch.created_at
+                ? formatIST(pMatch.updated_at || pMatch.created_at)
+                : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+              certificateStatus: pMatch.certificate_status || 'issued',
+              status: pMatch.status || 'completed',
+            };
+          }
+        }
       } catch (err) {
-        console.warn('verifyCertificateCode direct lookup notice:', err);
+        console.warn('verifyCertificateCode DB error:', err);
       }
     }
 
@@ -1345,21 +1457,7 @@ export const adminDataService = {
     };
   },
 
-  /**
-   * Verify Certificate Code by matching DB records or deterministic ID
-   */
-  async verifyCertificateCode(certCode) {
-    if (!certCode) return null;
-    const clean = certCode.trim().toUpperCase();
-    const list = await this.getRespondentsList();
-    const found = list.find(
-      (r) =>
-        (r.certificateId && r.certificateId.toUpperCase() === clean) ||
-        r.id.toUpperCase() === clean ||
-        generateDeterministicCertId(r.id || r.email).toUpperCase() === clean
-    );
-    return found || null;
-  },
+
 
   /**
    * Get Question Explorer & Response Distributions directly from DB
@@ -1867,76 +1965,7 @@ export const adminDataService = {
     };
   },
 
-  /**
-   * Verify an official certificate code against Supabase DB `certificates` table and `participants` table
-   */
-  async verifyCertificateCode(cleanCode) {
-    if (!cleanCode) return null;
-    const targetCode = String(cleanCode).trim().toUpperCase();
 
-    if (isSupabaseConfigured) {
-      try {
-        // 1. Search in `certificates` table
-        const { data: certRow } = await supabase
-          .from('certificates')
-          .select('*, session_id')
-          .or(`verification_code.eq.${targetCode},certificate_number.eq.${targetCode}`)
-          .maybeSingle();
-
-        if (certRow) {
-          // Fetch associated participant details
-          const { data: pData } = await supabase
-            .from('participants')
-            .select('*')
-            .eq('id', certRow.session_id)
-            .maybeSingle();
-
-          return {
-            certificateId: certRow.verification_code || targetCode,
-            name: pData?.name || 'Gen Z Participant',
-            email: pData?.email || '',
-            completedAtFormatted: certRow.issued_at ? new Date(certRow.issued_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null,
-          };
-        }
-
-        // 2. Fallback search in `participants` table
-        const { data: pData } = await supabase
-          .from('participants')
-          .select('*')
-          .or(`certificate_id.eq.${targetCode},id.eq.${targetCode}`)
-          .maybeSingle();
-
-        if (pData) {
-          return {
-            certificateId: pData.certificate_id || targetCode,
-            name: pData.name || 'Gen Z Participant',
-            email: pData.email || '',
-            completedAtFormatted: pData.updated_at ? new Date(pData.updated_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null,
-          };
-        }
-      } catch (err) {
-        console.warn('verifyCertificateCode DB error:', err);
-      }
-    }
-
-    // 3. Fallback deterministic verification match
-    const { sessions } = await this.fetchRawDatabaseRecords();
-    const match = sessions.find((s) => {
-      const code = s.certificateId || generateDeterministicCertId(s.participantId || s.name || s.id);
-      return code.toUpperCase() === targetCode;
-    });
-
-    if (match) {
-      return {
-        certificateId: targetCode,
-        name: match.name || 'Gen Z Participant',
-        email: match.email || '',
-        completedAtFormatted: match.submittedAt || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      };
-    }
-
-    return null;
-  },
 };
 
 

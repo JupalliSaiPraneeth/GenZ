@@ -169,20 +169,16 @@ export default function Home() {
 
               {/* CLEAN RESPONSIVE WRAPPING RIBBON (NO SCROLLBAR) */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-2.5 py-1 font-sora text-[11px] sm:text-xs font-bold text-[#063E46]">
-                <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200/90 shadow-2xs whitespace-nowrap">
-                  <Clock className="w-3.5 h-3.5 text-[#109A9B]" />
+                <span className="inline-block bg-white px-3 py-1.5 rounded-full border border-slate-200/90 shadow-2xs whitespace-nowrap">
                   15–20 Minutes
                 </span>
-                <span className="flex items-center gap-1.5 bg-[#FFF8E8] px-3 py-1.5 rounded-full border border-amber-200 text-amber-900 shadow-2xs whitespace-nowrap">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span className="inline-block bg-[#FFF8E8] px-3 py-1.5 rounded-full border border-amber-200 text-amber-900 shadow-2xs whitespace-nowrap">
                   Thoughtful Responses
                 </span>
-                <span className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 text-emerald-800 shadow-2xs whitespace-nowrap">
-                  <Award className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="inline-block bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 text-emerald-800 shadow-2xs whitespace-nowrap">
                   Instant Certificate
                 </span>
-                <span className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-200 text-purple-800 shadow-2xs whitespace-nowrap">
-                  <Gift className="w-3.5 h-3.5 text-purple-600" />
+                <span className="inline-block bg-purple-50 px-3 py-1.5 rounded-full border border-purple-200 text-purple-800 shadow-2xs whitespace-nowrap">
                   Lucky Draw
                 </span>
               </div>
@@ -444,15 +440,15 @@ export default function Home() {
               </h2>
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-2 text-xs font-sora font-semibold text-teal-100">
                 <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
-                  <span className="w-4.5 h-4.5 rounded-full bg-[#109A9B] text-white font-sora font-extrabold text-[11px] inline-flex items-center justify-center shrink-0">1</span>
+                  <span className="font-sora font-extrabold text-white text-[12px]">1.</span>
                   <span>15–20 Mins Survey</span>
                 </span>
                 <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
-                  <span className="w-4.5 h-4.5 rounded-full bg-[#109A9B] text-white font-sora font-extrabold text-[11px] inline-flex items-center justify-center shrink-0">2</span>
+                  <span className="font-sora font-extrabold text-white text-[12px]">2.</span>
                   <span>Share Perspective</span>
                 </span>
                 <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
-                  <span className="w-4.5 h-4.5 rounded-full bg-[#109A9B] text-white font-sora font-extrabold text-[11px] inline-flex items-center justify-center shrink-0">3</span>
+                  <span className="font-sora font-extrabold text-white text-[12px]">3.</span>
                   <span>Discover National Insights</span>
                 </span>
               </div>

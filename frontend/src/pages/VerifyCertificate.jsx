@@ -25,7 +25,9 @@ export default function VerifyCertificate() {
         setResult({
           valid: true,
           code: participant.certificateId || cleanCode,
-          recipient: participant.name || 'Gen Z Participant',
+          recipient: (participant.name && participant.name !== 'ADMIN_BLUEPRINT_CONFIG')
+            ? participant.name
+            : (participant.email ? participant.email.split('@')[0] : 'Gen Z Participant'),
           issuedAt: participant.completedAtFormatted || participant.submittedAt || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
           type: 'Official Certificate of Participation',
           issuer: 'Gen Z Voices National Survey Committee',

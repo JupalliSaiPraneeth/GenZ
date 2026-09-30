@@ -32,6 +32,59 @@ import {
   Award,
 } from 'lucide-react';
 
+// Background component extracted from About.jsx to ensure visual design consistency
+function SurveyHeroBackground() {
+  return (
+    <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
+      {/* Deep atmospheric gradient */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(111,245,232,0.20),transparent_24%),radial-gradient(circle_at_92%_18%,rgba(35,210,203,0.13),transparent_24%),linear-gradient(135deg,#075D63_0%,#07535B_48%,#063E46_100%)]" />
+
+      {/* Soft glow behind the logo area */}
+      <div className="absolute -top-8 -left-8 sm:left-4 lg:left-8 w-[250px] sm:w-[330px] lg:w-[390px] h-[180px] sm:h-[230px] lg:h-[260px] rounded-full bg-[#8FF7EE]/20 blur-[55px]" />
+
+      {/* Large translucent brush-stroke layers */}
+      <div
+        className="absolute top-[62px] left-[-45px] sm:left-[-25px] lg:left-[15px] w-[340px] sm:w-[430px] lg:w-[500px] h-[120px] sm:h-[150px] rotate-[-8deg] bg-gradient-to-r from-[#7FF8EF]/0 via-[#7FF8EF]/25 to-[#7FF8EF]/0 blur-[2px] opacity-80"
+        style={{ clipPath: 'polygon(3% 42%, 12% 25%, 27% 34%, 41% 15%, 58% 31%, 76% 12%, 97% 38%, 90% 66%, 73% 55%, 58% 77%, 42% 59%, 25% 82%, 8% 65%)' }}
+      />
+
+      <div
+        className="absolute top-[88px] left-[-25px] sm:left-[5px] lg:left-[35px] w-[360px] sm:w-[460px] lg:w-[520px] h-[105px] rotate-[-7deg] border-y border-[#9CFFF6]/20 opacity-70"
+        style={{ clipPath: 'polygon(0 35%, 15% 18%, 31% 30%, 48% 10%, 65% 27%, 82% 8%, 100% 30%, 92% 68%, 75% 52%, 57% 72%, 40% 55%, 21% 78%, 5% 60%)' }}
+      />
+
+      {/* Logo-zone grid/dot accents */}
+      <div
+        className="absolute top-[92px] left-[28px] sm:left-[55px] lg:left-[78px] w-16 h-16 opacity-60"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(133,250,242,0.75) 1.5px, transparent 1.5px)',
+          backgroundSize: '16px 16px',
+        }}
+      />
+
+      {/* Decorative orbital rings — right side */}
+      <div className="absolute -top-[150px] -right-[95px] sm:-top-[170px] sm:-right-[75px] w-[330px] h-[330px] rounded-full border border-[#67EEE5]/30" />
+      <div className="absolute -top-[125px] -right-[70px] sm:-top-[145px] sm:-right-[50px] w-[280px] h-[280px] rounded-full border border-[#67EEE5]/15" />
+      <div className="absolute top-[48px] right-[55px] w-2.5 h-2.5 rounded-full bg-[#67EEE5] shadow-[0_0_18px_rgba(103,238,229,0.9)]" />
+
+      {/* Bottom-left orbital accent */}
+      <div className="absolute -bottom-[185px] -left-[145px] w-[360px] h-[360px] rounded-full border border-[#67EEE5]/25" />
+      <div className="absolute -bottom-[155px] -left-[115px] w-[300px] h-[300px] rounded-full border border-[#67EEE5]/10" />
+
+      {/* Fine diagonal texture */}
+      <div
+        className="absolute inset-0 opacity-[0.055]"
+        style={{
+          backgroundImage: 'repeating-linear-gradient(135deg, transparent 0, transparent 38px, rgba(255,255,255,0.8) 39px, transparent 40px)',
+        }}
+      />
+
+      {/* Atmospheric lighting */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.18),transparent_70%)]" />
+    </div>
+  );
+}
+
 export default function Survey() {
   const navigate = useNavigate();
 
@@ -466,11 +519,7 @@ export default function Survey() {
       <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
 
         {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
-        <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
-          <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
-        </div>
+        <SurveyHeroBackground />
 
         {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
         <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
@@ -518,10 +567,12 @@ export default function Survey() {
                 />
               </div>
 
-              {/* Header Sparkles Icon Box */}
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-[#075D63] to-[#109A9B] text-[#FFF8E8] flex items-center justify-center mx-auto mb-2.5 sm:mb-4 shadow-md shadow-teal-900/15">
-                <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 fill-[#FFF8E8]" />
-              </div>
+              {/* Header Project Logo */}
+              <img
+                src="/logo.png"
+                alt="Gen Z Voices Logo"
+                className="h-10 sm:h-14 w-auto object-contain mx-auto mb-2.5 sm:mb-4"
+              />
 
               {/* Main Heading */}
               <h1 className="font-heading font-extrabold text-xl sm:text-3xl md:text-[44px] leading-tight text-[#10242C] mb-1.5 sm:mb-3 tracking-tight">
@@ -610,11 +661,7 @@ export default function Survey() {
       <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
 
         {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
-        <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
-          <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
-        </div>
+        <SurveyHeroBackground />
 
         {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
         <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
@@ -821,11 +868,7 @@ export default function Survey() {
       <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
         {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
-        <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
-          <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
-        </div>
+        <SurveyHeroBackground />
 
         {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
         <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
@@ -909,11 +952,7 @@ export default function Survey() {
       <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
         {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
-        <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
-          <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
-        </div>
+        <SurveyHeroBackground />
 
         {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
         <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
@@ -1099,11 +1138,7 @@ export default function Survey() {
     <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-between items-center pt-[88px] sm:pt-[105px] lg:pt-[115px] pb-6 select-none">
 
       {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
-      <div className="absolute top-0 left-0 right-0 h-[360px] sm:h-[420px] lg:h-[460px] bg-[#075D63] z-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(16,154,155,0.25),transparent_70%)]" />
-        <div className="absolute -top-24 -left-28 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-0 right-0 w-[350px] sm:w-[550px] h-[300px] sm:h-[400px] bg-gradient-to-bl from-teal-300/10 via-transparent to-transparent rounded-bl-[260px] blur-xl pointer-events-none" />
-      </div>
+      <SurveyHeroBackground />
 
       {/* UNIFIED CREAM BACKGROUND FOR LOWER PAGE */}
       <div className="absolute inset-0 top-[360px] sm:top-[420px] lg:top-[460px] bg-[#FAF7F0] z-0 overflow-hidden pointer-events-none">
