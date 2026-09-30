@@ -169,7 +169,7 @@ export default function LuckyDraw() {
                     RUNNER UP
                   </span>
                   <div className="font-heading font-black text-3xl sm:text-4xl text-[#0B1F2A] tracking-tight">
-                    ₹1,500
+                    ₹1,000
                   </div>
                   <div className="pt-2">
                     <span className="inline-block px-3.5 py-1 rounded-xl bg-slate-100/90 border border-slate-200/90 text-xs font-bold text-slate-600 shadow-sm">
@@ -200,7 +200,7 @@ export default function LuckyDraw() {
                     GRAND PRIZE
                   </span>
                   <div className="font-heading font-black text-4xl sm:text-5xl text-[#063E46] tracking-tight">
-                    ₹2,500
+                    ₹1,500
                   </div>
                   <div className="pt-2">
                     <span className="inline-block px-4 py-1.5 rounded-xl bg-amber-400/25 border border-amber-400/40 text-xs font-black text-amber-900 shadow-sm backdrop-blur-md">
@@ -231,7 +231,7 @@ export default function LuckyDraw() {
                     3RD PRIZE WINNER
                   </span>
                   <div className="font-heading font-black text-3xl sm:text-4xl text-[#0B1F2A] tracking-tight">
-                    ₹1,000
+                    ₹500
                   </div>
                   <div className="pt-2">
                     <span className="inline-block px-3.5 py-1 rounded-xl bg-amber-100/80 border border-amber-200/80 text-xs font-bold text-amber-900 shadow-sm">
@@ -296,7 +296,7 @@ export default function LuckyDraw() {
                       : 'Please complete the rest of the survey questions to qualify your entry for the cash rewards.'}
                   </>
                 ) : (
-                  'Complete the research survey to confirm your participation in the ₹5,000 total prize pool.'
+                  'Complete the research survey to confirm your participation in the ₹3,000 total prize pool.'
                 )}
               </p>
             </div>

@@ -1,76 +1,32 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import {
   ArrowRight,
   Clock,
-  FileText,
-  ShieldCheck,
+  Award,
   Gift,
-  Play,
-  Briefcase,
-  Laptop,
-  Heart,
-  Users,
-  Target,
-  ChevronRight,
+  BarChart3,
   CheckCircle2,
+  Sparkles,
+  BookOpen,
+  UserCheck,
+  Target,
+  Brain,
+  Rocket,
+  Globe,
+  Heart,
+  Briefcase,
+  ChevronRight,
+  ShieldCheck,
+  GraduationCap,
+  Crown
 } from 'lucide-react';
 import { useSurveyStore } from '../stores/surveyStore';
 
-const EXPLORE_CATEGORIES = [
-  {
-    icon: Briefcase,
-    title: 'Career',
-    subtitle: 'Jobs, skills, future',
-    bgColor: 'bg-[#EAF6F6]',
-    iconColor: 'text-[#109A9B]',
-    path: '/survey?cat=career',
-  },
-  {
-    icon: Laptop,
-    title: 'Technology',
-    subtitle: 'AI, gadgets, innovation',
-    bgColor: 'bg-[#FAF4E1]',
-    iconColor: 'text-[#075D63]',
-    path: '/survey?cat=tech',
-  },
-  {
-    icon: Heart,
-    title: 'Lifestyle',
-    subtitle: 'Health, hobbies, trends',
-    bgColor: 'bg-[#EAF6F6]',
-    iconColor: 'text-[#109A9B]',
-    path: '/survey?cat=lifestyle',
-  },
-  {
-    icon: Users,
-    title: 'Values',
-    subtitle: 'Beliefs, society, culture',
-    bgColor: 'bg-[#FAF4E1]',
-    iconColor: 'text-[#075D63]',
-    path: '/survey?cat=values',
-  },
-  {
-    icon: Target,
-    title: 'Aspirations',
-    subtitle: 'Dreams, goals, impact',
-    bgColor: 'bg-[#EAF6F6]',
-    iconColor: 'text-[#109A9B]',
-    path: '/survey?cat=aspirations',
-  },
-];
-
-const VERTICAL_SIDEBAR_ITEMS = [
-  { icon: Briefcase, label: 'CAREER' },
-  { icon: Laptop, label: 'TECHNOLOGY' },
-  { icon: Heart, label: 'LIFESTYLE' },
-  { icon: Users, label: 'VALUES' },
-  { icon: Target, label: 'ASPIRATIONS' },
-];
-
 export default function Home() {
-  const heroRef = useRef(null);
+  const containerRef = useRef(null);
+  const [activeTab, setActiveTab] = useState('aims');
 
   const participantName = useSurveyStore((state) => state.participantName);
   const participantEmail = useSurveyStore((state) => state.participantEmail);
@@ -84,119 +40,160 @@ export default function Home() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from('.hero-fade', {
-        y: 30,
+      gsap.from('.anim-hero-title', {
+        y: 25,
         opacity: 0,
-        duration: 0.8,
-        stagger: 0.12,
+        duration: 0.7,
         ease: 'power3.out',
       });
-    }, heroRef);
+      gsap.from('.anim-card-item', {
+        y: 35,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power2.out',
+      });
+    }, containerRef);
     return () => ctx.revert();
   }, []);
 
   return (
     <div
-      className="relative pt-[72px] sm:pt-[82px] min-h-[100svh] w-full overflow-x-hidden overflow-y-auto flex flex-col justify-center pb-8"
-      ref={heroRef}
-      style={{
-        background: `
-          radial-gradient(circle at 75% 30%, rgba(16,154,155,0.30) 0%, transparent 55%),
-          radial-gradient(circle at 15% 80%, rgba(253,241,199,0.60) 0%, transparent 45%),
-          radial-gradient(circle at 50% 15%, rgba(255,253,248,0.90) 0%, transparent 60%),
-          linear-gradient(135deg, #FAF7F0 0%, #FFFDF8 42%, #EAF6F6 100%)
-        `
-      }}
+      className="relative pt-[76px] sm:pt-[88px] pb-12 min-h-screen w-full overflow-x-hidden flex flex-col font-inter bg-[#FAF7F0] text-[#0B1F2A]"
+      ref={containerRef}
     >
 
-      {/* HERO SECTION WITH SOFT LIGHT ELEGANT CREAM & MINT-TEAL EDITORIAL BACKGROUND */}
-      <section className="relative py-2 sm:py-4 overflow-hidden min-h-0 flex flex-col justify-center">
+      {/* DYNAMIC BACKGROUND AMBIENT CANVAS */}
+      <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-[#109A9B]/10 via-[#FAF7F0]/40 to-transparent pointer-events-none -z-10" />
+      <div className="absolute top-[5%] left-[10%] w-[450px] h-[450px] bg-[#109A9B]/15 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="absolute top-[15%] right-[5%] w-[500px] h-[500px] bg-[#FDF1C7]/70 rounded-full blur-[100px] pointer-events-none -z-10" />
 
-        {/* 1. TOP-LEFT BACKGROUND CORNER: SOFT LIGHT TEAL BLOB */}
-        <div className="absolute -top-28 -left-28 w-[320px] sm:w-[680px] h-[320px] sm:h-[620px] bg-[#109A9B]/30 sm:bg-[#109A9B]/40 rounded-full blur-2xl pointer-events-none -z-20" />
+      {/* MAIN CONTAINER */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-8 sm:space-y-10">
 
-        {/* 2. CENTER-LEFT SOFT CREAM SHAPE FOR HEADLINE CONTRAST */}
-        <div className="absolute top-[16%] -left-16 w-[300px] sm:w-[560px] h-[300px] sm:h-[540px] bg-[#FDF1C7]/80 rounded-full blur-xl pointer-events-none -z-20" />
+        {/* ========================================================================= */}
+        {/* 1. HERO SHOWCASE (PHOTO ON TOP FOR MOBILE, NO SCROLLBAR) */}
+        {/* ========================================================================= */}
+        <section className="relative py-3 sm:py-6 lg:py-8 text-[#0B1F2A]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-center relative z-10">
 
-        {/* 3. BOTTOM-LEFT CURVED AREA: SOFT PALE TEAL SHAPE */}
-        <div className="absolute -bottom-44 -left-32 w-[350px] sm:w-[750px] h-[350px] sm:h-[650px] bg-gradient-to-tr from-[#109A9B]/35 via-[#109A9B]/20 to-[#EAF6F6]/50 rounded-full blur-2xl pointer-events-none -z-20" />
+            {/* RIGHT HERO GRAPHIC (ORDER-1 ON MOBILE = TOP, ORDER-2 ON DESKTOP = RIGHT) */}
+            <div className="order-1 lg:order-2 lg:col-span-5 relative flex items-center justify-center">
+              <div className="relative w-full max-w-[260px] xs:max-w-[300px] sm:max-w-[360px] aspect-square flex items-center justify-center">
 
-        {/* 4. FAR RIGHT BACKGROUND AREA: LIGHT PALE TEAL ENVIRONMENT */}
-        <div
-          className="absolute top-[-80px] right-[-100px] w-[400px] sm:w-[950px] h-[400px] sm:h-[950px] pointer-events-none -z-20 blur-2xl"
-          style={{
-            background: 'radial-gradient(circle at center, rgba(16,154,155,0.35) 0%, rgba(234,246,246,0.60) 45%, transparent 75%)'
-          }}
-        />
+                {/* PROMINENT DARK TEAL ACCENT CIRCLE */}
+                <div className="absolute w-[92%] aspect-square rounded-full bg-gradient-to-br from-[#063E46] via-[#075D63] to-[#109A9B] shadow-2xl border-4 border-white pointer-events-none" />
 
-        {/* 5. BOTTOM-RIGHT EDGE ACCENT BLOB */}
-        <div className="absolute -bottom-40 -right-28 w-[320px] sm:w-[680px] h-[300px] sm:h-[600px] bg-[#109A9B]/35 rounded-full blur-2xl pointer-events-none -z-20" />
+                {/* Thin Ring Accents */}
+                <div className="absolute w-[100%] aspect-square rounded-full border-2 border-[#109A9B]/40 pointer-events-none" />
 
-        {/* HERO CONTENT CONTAINER */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-[clamp(1rem,2vw,2.5rem)] items-center min-h-0 py-2">
+                {/* Floating Stat Chip Top-Left */}
+                <div className="absolute -top-2 -left-2 bg-white/95 backdrop-blur-md text-[#063E46] p-2 sm:p-2.5 px-3 sm:px-3.5 rounded-2xl shadow-xl border border-[#109A9B]/30 text-[11px] sm:text-xs font-sora font-extrabold flex items-center gap-1.5 sm:gap-2 z-30">
+                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+                  <span>100% Anonymous</span>
+                </div>
 
-            {/* LEFT HERO CONTENT (~50% Desktop width) */}
-            <div className="lg:col-span-6 xl:col-span-6 pt-1 sm:pt-2 lg:pt-0 text-center lg:text-left z-20 min-w-0">
+                {/* Floating Sticky Note Bottom-Right with Crown SVG Icon */}
+                <div className="absolute -bottom-2 -right-2 bg-[#FDE7B5] text-[#0B1F2A] p-2.5 sm:p-3 rounded-2xl shadow-xl border border-amber-300 max-w-[145px] sm:max-w-[165px] z-30 transform rotate-[4deg]">
+                  <div className="flex items-center gap-1 mb-0.5 text-[#075D63]">
+                    <Crown className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                    <span className="font-handwritten text-xs sm:text-sm font-black text-[#0B1F2A]">GEN Z VOICES</span>
+                  </div>
+                  <div className="font-handwritten text-[10px] sm:text-xs font-black leading-tight text-[#0B1F2A]">
+                    YOUR PERSPECTIVE MATTERS
+                  </div>
+                </div>
 
-              {/* Supported by NRI Institute Banner Pill */}
-              <div className="hero-fade inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-4.5 py-1.5 sm:py-2 rounded-full bg-white/85 backdrop-blur-md border border-[#109A9B]/25 shadow-[0_8px_25px_rgba(6,62,70,0.08)] hover:shadow-[0_12px_30px_rgba(6,62,70,0.14)] hover:border-[#109A9B]/40 transition-all duration-300 mb-2.5 sm:mb-4 group cursor-default">
-                <span className="relative flex h-2 w-2 shrink-0">
+                {/* Logged in Welcome Badge */}
+                {isLoggedIn && (
+                  <div className="absolute top-2 right-1 bg-white/95 backdrop-blur-md text-[#063E46] px-3 py-1 rounded-full shadow-lg border border-[#109A9B]/40 z-30 text-[11px] sm:text-xs font-sora font-bold flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#109A9B] shrink-0" />
+                    <span>Welcome, <strong className="text-[#109A9B]">{participantName}</strong></span>
+                  </div>
+                )}
+
+                {/* Student Photo Cutout inside the dark teal circle */}
+                <div className="relative z-20">
+                  <img
+                    src="/GenZ-removebg-preview.png"
+                    alt="Gen Z student"
+                    className="w-auto h-[230px] xs:h-[270px] sm:h-[340px] max-h-[46svh] object-contain drop-shadow-[0_15px_30px_rgba(0,0,0,0.3)]"
+                  />
+                </div>
+
+              </div>
+            </div>
+
+            {/* LEFT HERO CONTENT (ORDER-2 ON MOBILE = BELOW PHOTO, ORDER-1 ON DESKTOP = LEFT) */}
+            <div className="order-2 lg:order-1 lg:col-span-7 space-y-4 sm:space-y-5 text-center lg:text-left">
+
+              {/* Institution Seal Badge */}
+              <div className="inline-flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-2.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/95 backdrop-blur-md border border-[#109A9B]/30 shadow-xs text-xs font-sora font-extrabold cursor-default">
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#109A9B] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#075D63]" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#075D63]" />
                 </span>
 
-                <span className="font-sora font-extrabold text-[11px] sm:text-xs text-[#063E46] tracking-tight uppercase whitespace-nowrap">
-                  GENZ VOICES <span className="text-[#109A9B] font-bold normal-case">Supported By</span>
+                <span className="tracking-wider uppercase text-[#063E46]">
+                  GEN Z VOICES <span className="text-[#109A9B] font-bold">| RAG Initiative</span>
                 </span>
 
-                <span className="h-3.5 sm:h-4 w-[1px] bg-[#063E46]/20 shrink-0" />
+                <span className="h-4 w-[1px] bg-[#063E46]/20 shrink-0" />
 
-                <img
-                  src="/nrilogo.png"
-                  alt="NRI Institute Logo"
-                  className="h-5 sm:h-7 w-auto object-contain shrink-0 transition-transform duration-300 group-hover:scale-105"
-                />
+                {/* NRI Logo Container */}
+                <div className="flex items-center shrink-0">
+                  <img
+                    src="/nrilogo.png"
+                    alt="NRI Institute Logo"
+                    className="h-5 sm:h-6 w-auto object-contain max-h-[24px]"
+                    style={{ height: '22px', width: 'auto' }}
+                  />
+                </div>
               </div>
 
-              {/* Main Headline */}
-              <h1 className="hero-fade font-archivo text-[clamp(2rem,3.6vw,3.8rem)] text-[#0B1F2A] tracking-tight sm:tracking-[-2px] leading-[0.96] mb-2.5 sm:mb-4 drop-shadow-xs">
-                <span className="inline-block sm:whitespace-nowrap">GIVE A VOICE TO</span> <br className="hidden sm:inline" />
-                <span className="text-[#109A9B] uppercase font-black relative inline-block ml-1.5 sm:ml-0">
-                  GEN Z
-                  {/* Hand-drawn underline SVG swoosh */}
-                  <svg
-                    className="absolute -bottom-1.5 sm:-bottom-3 left-0 w-full h-2.5 sm:h-5 text-[#109A9B]"
-                    viewBox="0 0 200 20"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="4.5"
-                    strokeLinecap="round"
-                  >
+              {/* Hero Title */}
+              <h1 className="anim-hero-title font-archivo text-2.5xl sm:text-5xl lg:text-6xl tracking-tight leading-[1.02] text-[#0B1F2A]">
+                Give Voice to{' '}
+                <span className="text-[#109A9B] uppercase font-black relative inline-block">
+                  Gen Z
+                  <svg className="absolute -bottom-1.5 left-0 w-full h-2.5 text-[#109A9B]" viewBox="0 0 200 20" fill="none" stroke="currentColor" strokeWidth="4">
                     <path d="M 4 14 Q 100 20 196 6" />
                   </svg>
                 </span>
               </h1>
 
-              {/* Editorial Tagline */}
-              <p className="hero-fade text-[clamp(0.95rem,1.4vw,1.35rem)] font-extrabold text-[#0B1F2A] mb-2 sm:mb-3 font-sora leading-snug">
-                “Your Perspective. A Brighter Tomorrow.”
+              {/* Overview Text */}
+              <p className="text-xs sm:text-base lg:text-lg text-[#0F353C] leading-relaxed font-medium max-w-2xl mx-auto lg:mx-0">
+                <strong>Gen Z Voices</strong> is an independent research initiative undertaken by the <strong>Research Analytical Group (RAG)</strong>, a group of researchers from <strong>Dr. RVR Institute of Technology (Deemed to be University)</strong>, Agiripalli, near Vijayawada, Andhra Pradesh.
               </p>
 
-              {/* Description Paragraph */}
-              <p className="hero-fade text-[#0F353C] text-[clamp(0.72rem,0.95vw,0.98rem)] max-w-[520px] mx-auto lg:mx-0 mb-3.5 sm:mb-5 leading-[1.45] sm:leading-[1.55] font-inter font-medium tracking-tight">
-                Join thousands of young minds across India shaping the future. Share your honest perspective on career, technology, values, lifestyle, and aspirations in an engaging digital experience.
-              </p>
+              {/* CLEAN RESPONSIVE WRAPPING RIBBON (NO SCROLLBAR) */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 sm:gap-2.5 py-1 font-sora text-[11px] sm:text-xs font-bold text-[#063E46]">
+                <span className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-slate-200/90 shadow-2xs whitespace-nowrap">
+                  <Clock className="w-3.5 h-3.5 text-[#109A9B]" />
+                  15–20 Minutes
+                </span>
+                <span className="flex items-center gap-1.5 bg-[#FFF8E8] px-3 py-1.5 rounded-full border border-amber-200 text-amber-900 shadow-2xs whitespace-nowrap">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  Thoughtful Responses
+                </span>
+                <span className="flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 text-emerald-800 shadow-2xs whitespace-nowrap">
+                  <Award className="w-3.5 h-3.5 text-emerald-600" />
+                  Instant Certificate
+                </span>
+                <span className="flex items-center gap-1.5 bg-purple-50 px-3 py-1.5 rounded-full border border-purple-200 text-purple-800 shadow-2xs whitespace-nowrap">
+                  <Gift className="w-3.5 h-3.5 text-purple-600" />
+                  Lucky Draw
+                </span>
+              </div>
 
-              {/* Dynamic Primary CTA Button */}
-              <div className="hero-fade flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-2 sm:mb-3 font-inter">
+              {/* CTA Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-3.5 pt-2">
                 {isCompleted ? (
                   <button
                     type="button"
                     disabled
-                    onClick={(e) => e.preventDefault()}
-                    className="w-full sm:w-auto bg-[#063E46]/90 border border-emerald-400/40 text-emerald-200 font-sora font-extrabold text-sm sm:text-base h-[44px] sm:h-[50px] px-6 sm:px-8 rounded-[14px] sm:rounded-[16px] shadow-md flex items-center justify-center gap-2.5 sm:gap-3 cursor-not-allowed opacity-90 select-none"
-                    title="You have already completed the survey"
+                    className="w-full sm:w-auto bg-[#063E46] text-emerald-300 border border-emerald-400/40 font-sora font-extrabold text-sm sm:text-base h-[48px] sm:h-[50px] px-7 sm:px-8 rounded-2xl shadow-md flex items-center justify-center gap-2.5 cursor-not-allowed select-none"
                   >
                     <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                     <span>Completed Survey!</span>
@@ -204,106 +201,275 @@ export default function Home() {
                 ) : isStarted ? (
                   <Link
                     to="/survey"
-                    className="w-full sm:w-auto bg-gradient-to-r from-[#0D5960] to-[#063E46] hover:from-[#08484E] hover:to-[#042B31] text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[44px] sm:h-[50px] px-6 sm:px-8 rounded-[14px] sm:rounded-[16px] shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 sm:gap-3 transform hover:-translate-y-0.5 group cursor-pointer"
+                    className="w-full sm:w-auto bg-gradient-to-r from-[#0D5960] to-[#063E46] hover:from-[#08484E] hover:to-[#042B31] text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[48px] sm:h-[50px] px-7 sm:px-8 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 transform hover:-translate-y-0.5 group cursor-pointer"
                   >
                     <span>Continue Survey</span>
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 ) : (
                   <Link
                     to="/survey"
-                    className="w-full sm:w-auto bg-gradient-to-r from-[#0D5960] to-[#063E46] hover:from-[#08484E] hover:to-[#042B31] text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[44px] sm:h-[50px] px-6 sm:px-8 rounded-[14px] sm:rounded-[16px] shadow-lg shadow-teal-950/20 hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2.5 sm:gap-3 transform hover:-translate-y-0.5 group cursor-pointer"
+                    className="w-full sm:w-auto bg-gradient-to-r from-[#0D5960] to-[#063E46] hover:from-[#08484E] hover:to-[#042B31] text-[#FFF8E8] font-sora font-extrabold text-sm sm:text-base h-[48px] sm:h-[50px] px-7 sm:px-8 rounded-2xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2.5 transform hover:-translate-y-0.5 group cursor-pointer"
                   >
                     <span>Take the Survey</span>
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 )}
-              </div>
 
-            </div>
-
-            {/* RIGHT HERO VISUAL (~50% Desktop width) */}
-            <div className="lg:col-span-6 xl:col-span-6 relative mt-2 lg:mt-0 flex items-center justify-center min-w-0 min-h-0">
-
-              <div className="relative w-full max-w-[260px] xs:max-w-[320px] sm:max-w-[420px] lg:max-w-[min(460px,36vw)] aspect-square flex items-center justify-center">
-
-                {/* 1. SOFT ELEGANT SUNBURST CREAM GLOW */}
-                <div
-                  className="absolute pointer-events-none -z-10 rounded-full w-[112%] h-[112%]"
-                  style={{
-                    background: 'radial-gradient(circle, #FFFDF0 0%, #FDF1C7 35%, rgba(253,241,199,0.55) 55%, transparent 75%)',
-                    filter: 'blur(6px)'
-                  }}
-                />
-
-                {/* 2. PROMINENT #109A9B TEAL CIRCULAR SHAPE */}
-                <div className="absolute w-[90%] aspect-square rounded-full bg-[#109A9B]/35 border-2 border-[#109A9B]/60 shadow-lg pointer-events-none -z-10" />
-
-                {/* 3. THIN TEAL OUTLINE ARC RING */}
-                <div className="absolute w-[96%] aspect-square rounded-full border-2 border-[#109A9B]/40 pointer-events-none -z-10 shadow-xs" />
-
-                {/* 4. DECORATIVE DOT MATRIX GRID */}
-                <div className="absolute top-[14%] right-[14%] pointer-events-none -z-10 hidden sm:grid grid-cols-6 gap-3.5 opacity-35">
-                  {Array.from({ length: 36 }).map((_, i) => (
-                    <div key={i} className="w-1 h-1 rounded-full bg-[#109A9B]" />
-                  ))}
-                </div>
-
-                {/* Left Handwritten Editorial Doodle - Positioned safely inside the right graphic bounds */}
-                <div className="absolute top-8 sm:top-12 left-0 sm:left-2 pointer-events-none hidden xl:block z-30">
-                  <div className="font-handwritten text-[#0B1F2A] font-black text-lg lg:text-2xl rotate-[-6deg] leading-none text-center max-w-[130px] drop-shadow-xs">
-                    Ideas Today <br />
-                    <span className="text-[#109A9B]">Impact Tomorrow</span>
-                  </div>
-                </div>
-
-                {/* Top Right Handwritten Editorial Doodle */}
-                <div className="absolute top-4 sm:top-8 right-2 sm:right-6 pointer-events-none z-30 hidden sm:block">
-                  <div className="font-handwritten text-[#075D63] font-black text-base sm:text-xl lg:text-2xl tracking-wide rotate-[8deg] drop-shadow-xs text-right leading-none">
-                    YOUNG MINDS <br />
-                    <span className="text-[#0B1F2A]">REAL CHANGE</span>
-                  </div>
-                </div>
-
-                {/* HERO PERSON CUTOUT PORTRAIT */}
-                <div className="relative z-20 pt-2 flex justify-center">
-                  <img
-                    src="/GenZ-removebg-preview.png"
-                    alt="Gen Z student portrait holding tablet"
-                    className="w-auto h-[clamp(280px,58svh,530px)] max-h-[58svh] object-contain drop-shadow-[0_20px_30px_rgba(11,31,42,0.2)] transition-transform duration-500 hover:scale-[1.01]"
-                  />
-                </div>
-
-                {/* FLOATING STICKY NOTE */}
-                <div className="absolute bottom-[2%] sm:bottom-[4%] right-0 sm:-right-4 bg-[#FDE7B5] text-[#0B1F2A] p-2.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-xl transform rotate-[6deg] border border-[#075D63]/30 max-w-[130px] xs:max-w-[150px] sm:max-w-[180px] z-40">
-                  <div className="flex items-center gap-1 mb-0.5 text-[#075D63]">
-                    <span className="text-xs sm:text-base">👑</span>
-                    <span className="font-handwritten text-sm sm:text-xl font-black text-[#0B1F2A]">GEN Z</span>
-                  </div>
-                  <div className="font-handwritten text-[10px] xs:text-xs sm:text-lg font-extrabold leading-tight text-[#0B1F2A]">
-                    BOLDER IDEAS <br />
-                    BRIGHTER FUTURE
-                  </div>
-                </div>
-
-                {/* LOGGED IN USER WELCOME BADGE (Centered between CTA button & photo on Mobile, bottom arc on Desktop) */}
-                {isLoggedIn && (
-                  <div className="absolute -top-7 sm:top-auto sm:bottom-3 lg:bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-[#109A9B]/40 text-[#063E46] px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full shadow-[0_12px_35px_rgba(6,62,70,0.18)] z-40 flex items-center gap-2 transition-all hover:scale-105 cursor-default hover:border-[#109A9B] whitespace-nowrap">
-                    <span className="text-xs sm:text-sm animate-bounce">👋</span>
-                    <span className="font-sora font-bold text-[11px] sm:text-xs text-[#063E46] tracking-tight">
-                      Welcome back, <span className="text-[#109A9B] font-extrabold">{participantName}</span>!
-                    </span>
-                  </div>
-                )}
-
+                <Link
+                  to="/about"
+                  className="w-full sm:w-auto bg-white hover:bg-slate-50 text-[#063E46] border border-[#109A9B]/35 font-sora font-bold text-sm sm:text-base h-[48px] sm:h-[50px] px-6 sm:px-7 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Learn About RAG</span>
+                  <ChevronRight className="w-4 h-4 text-[#109A9B]" />
+                </Link>
               </div>
 
             </div>
 
           </div>
-        </div>
+        </section>
 
-      </section>
+        {/* ========================================================================= */}
+        {/* 2. RESEARCH ARCHITECTURE (STUDY AIMS, PURPOSE & PARTICIPANT GUIDELINES) */}
+        {/* ========================================================================= */}
+        <section className="space-y-5">
+
+          {/* Section Sub-header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-1">
+            <div>
+              <span className="text-xs font-sora font-extrabold text-[#109A9B] uppercase tracking-wider block">RESEARCH ARCHITECTURE</span>
+              <h2 className="font-sora font-extrabold text-2xl sm:text-3xl text-[#0B1F2A]">Scope, Purpose & Eligibility</h2>
+            </div>
+            <div className="flex items-center gap-1 bg-white p-1 rounded-2xl border border-slate-200 shadow-2xs">
+              <button
+                onClick={() => setActiveTab('aims')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-sora font-extrabold transition-all ${activeTab === 'aims' ? 'bg-[#063E46] text-white shadow-2xs' : 'text-[#53656A] hover:text-[#0B1F2A]'}`}
+              >
+                Study Aims
+              </button>
+              <button
+                onClick={() => setActiveTab('guidelines')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-sora font-extrabold transition-all ${activeTab === 'guidelines' ? 'bg-[#063E46] text-white shadow-2xs' : 'text-[#53656A] hover:text-[#0B1F2A]'}`}
+              >
+                Your Voice Matters
+              </button>
+            </div>
+          </div>
+
+          {/* Dual Column Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+            {/* STUDY AIMS & SCOPE (7 Cols) */}
+            <div className="anim-card-item lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-[#109A9B]/25 shadow-xs flex flex-col justify-between space-y-5">
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2.5 rounded-2xl bg-[#EAF6F6] text-[#109A9B] border border-[#109A9B]/30 shadow-2xs">
+                    <Target className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold text-[#109A9B] uppercase tracking-wider block font-sora">RESEARCH OBJECTIVES</span>
+                    <h3 className="font-sora font-extrabold text-xl text-[#0B1F2A]">Comprehensive Study Aims</h3>
+                  </div>
+                </div>
+
+                <p className="text-sm text-[#53656A] font-medium leading-relaxed">
+                  The study aims to understand the <strong>attitudes, behaviours, habits, aspirations, values, lifestyle choices, digital practices, career expectations and future perspectives</strong> of Generation Z youth in India.
+                </p>
+
+                <p className="text-sm text-[#53656A] font-medium leading-relaxed">
+                  Our purpose is to <strong>listen to young people's voices</strong> and develop <strong>research-based insights</strong> into how Gen Z thinks, lives, learns, works, connects and plans for the future.
+                </p>
+              </div>
+
+              {/* 6 Core Pillars Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-3 border-t border-slate-100">
+                {[
+                  { icon: Brain, label: 'Thinks', desc: 'Mindset & Values' },
+                  { icon: Heart, label: 'Lives', desc: 'Lifestyle & Habits' },
+                  { icon: BookOpen, label: 'Learns', desc: 'Education & Growth' },
+                  { icon: Briefcase, label: 'Works', desc: 'Career Expectations' },
+                  { icon: Globe, label: 'Connects', desc: 'Digital Practices' },
+                  { icon: Rocket, label: 'Plans', desc: 'Future Aspirations' },
+                ].map((item, idx) => (
+                  <div key={idx} className="bg-[#FAF7F0] p-2.5 rounded-2xl border border-[#109A9B]/15 hover:border-[#109A9B]/40 transition-all group">
+                    <div className="flex items-center gap-2 mb-1">
+                      <item.icon className="w-4 h-4 text-[#109A9B] group-hover:scale-110 transition-transform" />
+                      <span className="font-sora font-extrabold text-xs text-[#063E46]">{item.label}</span>
+                    </div>
+                    <span className="text-[10px] font-medium text-[#53656A] block leading-tight">{item.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* YOUR VOICE MATTERS & ELIGIBILITY (5 Cols) */}
+            <div className="anim-card-item lg:col-span-5 bg-gradient-to-br from-[#FFF8E8] via-[#FFFDF8] to-[#FDE7B5]/40 rounded-3xl p-6 sm:p-7 border border-amber-200/90 shadow-xs flex flex-col justify-between space-y-5">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2.5 rounded-2xl bg-[#063E46] text-white shadow-md">
+                    <UserCheck className="w-6 h-6 text-[#109A9B]" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-wider block font-sora">PARTICIPATION GUIDELINES</span>
+                    <h3 className="font-sora font-extrabold text-xl text-[#0B1F2A]">Your Voice Matters</h3>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="bg-white/95 p-3.5 rounded-2xl border border-amber-200 shadow-2xs space-y-1">
+                    <div className="flex items-center gap-2 text-emerald-700 font-sora font-extrabold text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>18+ Eligibility Criteria</span>
+                    </div>
+                    <p className="text-xs text-[#53656A] font-medium pl-6 leading-relaxed">
+                      If you are <strong>18 years or above</strong>, you can participate.
+                    </p>
+                  </div>
+
+                  <div className="bg-white/95 p-3.5 rounded-2xl border border-amber-200 shadow-2xs space-y-1">
+                    <div className="flex items-center gap-2 text-emerald-700 font-sora font-extrabold text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Thoughtful & Honest Responses</span>
+                    </div>
+                    <p className="text-xs text-[#53656A] font-medium pl-6 leading-relaxed">
+                      There are <strong>no right or wrong answers</strong>. We encourage you to answer thoughtfully and honestly, based on your actual experiences, behaviour and preferences.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                to="/survey"
+                className="w-full py-3.5 px-5 rounded-2xl bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-sora font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md group cursor-pointer"
+              >
+                <span>Take the Survey Now</span>
+                <ArrowRight className="w-4 h-4 text-[#109A9B] group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 3. BENEFIT SHOWCASE: WHAT YOU RECEIVE (WITH LUCIDE SVG ICONS) */}
+        {/* ========================================================================= */}
+        <section className="bg-white rounded-3xl p-6 sm:p-8 border border-[#109A9B]/20 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <span className="text-xs font-sora font-extrabold text-amber-700 uppercase tracking-wider block">PARTICIPANT INCENTIVES</span>
+              <h2 className="font-sora font-extrabold text-2xl sm:text-3xl text-[#0B1F2A]">What You Receive</h2>
+            </div>
+            <span className="text-xs font-sora font-extrabold text-[#063E46] bg-[#EAF6F6] px-4 py-1.5 rounded-full border border-[#109A9B]/30 shadow-2xs flex items-center gap-1.5">
+              <Award className="w-3.5 h-3.5 text-[#109A9B] shrink-0" />
+              <span>Verified Rewards & Research Access</span>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            {/* CARD 1: CERTIFICATE */}
+            <div className="bg-[#FAF7F0] rounded-2xl p-5 border border-emerald-200/90 hover:border-emerald-400 transition-all shadow-2xs flex flex-col justify-between space-y-4 group">
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center border border-emerald-300 shadow-2xs group-hover:scale-110 transition-transform">
+                  <GraduationCap className="w-6 h-6 text-emerald-700 shrink-0" />
+                </div>
+                <h3 className="font-sora font-extrabold text-base text-[#0B1F2A] group-hover:text-emerald-800 transition-colors">
+                  Instant Participation Certificate
+                </h3>
+                <p className="text-xs text-[#53656A] font-medium leading-relaxed">
+                  Receive a Participation Certificate with a unique Certificate Number after successful completion.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-emerald-200/60 text-xs font-sora font-bold text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Unique Certificate Number</span>
+              </div>
+            </div>
+
+            {/* CARD 2: LUCKY DRAW */}
+            <div className="bg-[#FAF7F0] rounded-2xl p-5 border border-purple-200/90 hover:border-purple-400 transition-all shadow-2xs flex flex-col justify-between space-y-4 group">
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center border border-purple-300 shadow-2xs group-hover:scale-110 transition-transform">
+                  <Gift className="w-6 h-6 text-purple-700 shrink-0" />
+                </div>
+                <h3 className="font-sora font-extrabold text-base text-[#0B1F2A] group-hover:text-purple-800 transition-colors">
+                  Lucky Draw Opportunity
+                </h3>
+                <p className="text-xs text-[#53656A] font-medium leading-relaxed">
+                  Eligible participants can participate in the Lucky Draw on <strong>14 November 2026</strong>, with cash awards for selected prize winners.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-purple-200/60 text-xs font-sora font-bold text-purple-800 flex items-center gap-2">
+                <Gift className="w-4 h-4 text-purple-600 shrink-0" />
+                <span>Draw Date: 14 November 2026</span>
+              </div>
+            </div>
+
+            {/* CARD 3: RESEARCH INSIGHTS */}
+            <div className="bg-[#FAF7F0] rounded-2xl p-5 border border-sky-200/90 hover:border-sky-400 transition-all shadow-2xs flex flex-col justify-between space-y-4 group">
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center border border-sky-300 shadow-2xs group-hover:scale-110 transition-transform">
+                  <BarChart3 className="w-6 h-6 text-sky-700 shrink-0" />
+                </div>
+                <h3 className="font-sora font-extrabold text-base text-[#0B1F2A] group-hover:text-sky-800 transition-colors">
+                  Research Insights
+                </h3>
+                <p className="text-xs text-[#53656A] font-medium leading-relaxed">
+                  Explore the common trends, patterns and variations emerging from the Gen Z responses once the research findings are published.
+                </p>
+              </div>
+
+              <div className="pt-3 border-t border-sky-200/60 text-xs font-sora font-bold text-sky-800 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-sky-600 shrink-0" />
+                <span>Published Research Findings</span>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* 4. DYNAMIC PARTICIPATION FLOW BANNER */}
+        {/* ========================================================================= */}
+        <section className="relative rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-[#063E46] via-[#075D63] to-[#0D5960] text-white shadow-xl border border-[#109A9B]/30 overflow-hidden">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 relative z-10">
+
+            <div className="space-y-2 text-center lg:text-left max-w-3xl">
+              <span className="text-xs font-sora font-extrabold text-[#109A9B] uppercase tracking-wider block">3-STEP PARTICIPATION JOURNEY</span>
+              <h2 className="font-sora font-extrabold text-xl sm:text-2xl lg:text-3xl text-white tracking-tight leading-snug">
+                Take the Survey → Share Your Voice → Discover Gen Z Insights
+              </h2>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-2 text-xs font-sora font-semibold text-teal-100">
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
+                  <span className="w-4.5 h-4.5 rounded-full bg-[#109A9B] text-white font-sora font-extrabold text-[11px] inline-flex items-center justify-center shrink-0">1</span>
+                  <span>15–20 Mins Survey</span>
+                </span>
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
+                  <span className="w-4.5 h-4.5 rounded-full bg-[#109A9B] text-white font-sora font-extrabold text-[11px] inline-flex items-center justify-center shrink-0">2</span>
+                  <span>Share Perspective</span>
+                </span>
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl border border-white/15">
+                  <span className="w-4.5 h-4.5 rounded-full bg-[#109A9B] text-white font-sora font-extrabold text-[11px] inline-flex items-center justify-center shrink-0">3</span>
+                  <span>Discover National Insights</span>
+                </span>
+              </div>
+            </div>
+
+            <Link
+              to="/survey"
+              className="shrink-0 px-8 py-4 rounded-2xl bg-[#FFF8E8] hover:bg-[#FDE7B5] text-[#063E46] font-sora font-extrabold text-sm sm:text-base shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2.5 cursor-pointer"
+            >
+              <span>Take the Survey Now</span>
+              <ArrowRight className="w-5 h-5 text-[#063E46]" />
+            </Link>
+
+          </div>
+        </section>
+
+      </div>
 
     </div>
   );
