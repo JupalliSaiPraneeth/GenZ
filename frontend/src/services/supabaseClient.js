@@ -408,30 +408,45 @@ export async function completeParticipantSurvey(participantId, deviceTimestamp =
       attention_check_passed: acPassed,
     });
 
-    const updatePayload = {
+    const isEmail = typeof participantId === 'string' && participantId.includes('@');
+    const isUuid = isValidUUID(participantId);
+
+    // Core payload guaranteed across schema versions
+    const corePayload = {
       status: 'completed',
+      updated_at: completedAt,
+      device_timestamp: deviceTimestamp,
+    };
+
+    const extendedPayload = {
+      ...corePayload,
       certificate_id: certCode,
       certificate_status: 'issued',
       certificate_issued_at: completedAt,
       completed_at: completedAt,
-      updated_at: completedAt,
-      device_timestamp: deviceTimestamp,
       attention_check_score: acScore,
       attention_check_passed: acPassed,
     };
 
-    const { error: updateErr } = await supabase
-      .from('participants')
-      .update(updatePayload)
-      .eq('id', participantId);
+    let query = supabase.from('participants').update(extendedPayload);
+    if (isEmail) {
+      query = query.eq('email', participantId.trim().toLowerCase());
+    } else if (isUuid) {
+      query = query.eq('id', participantId);
+    } else {
+      query = query.eq('certificate_id', participantId);
+    }
+
+    const { error: updateErr } = await query;
 
     if (updateErr) {
-      delete updatePayload.attention_check_score;
-      delete updatePayload.attention_check_passed;
-      await supabase
-        .from('participants')
-        .update(updatePayload)
-        .eq('id', participantId);
+      let fallbackQuery = supabase.from('participants').update(corePayload);
+      if (isEmail) {
+        fallbackQuery = fallbackQuery.eq('email', participantId.trim().toLowerCase());
+      } else if (isUuid) {
+        fallbackQuery = fallbackQuery.eq('id', participantId);
+      }
+      await fallbackQuery;
     }
   } catch (e) {
     console.warn('completeParticipantSurvey notice:', e);
@@ -893,35 +908,65 @@ export async function saveCertificateToSupabase({ participantId, certCode, certN
   if (!isSupabaseConfigured || !certCode) return false;
   try {
     const validId = isValidUUID(participantId) ? participantId : generateValidUUID();
+    const isEmail = typeof participantId === 'string' && participantId.includes('@');
+    const isUuid = isValidUUID(participantId);
 
-    // 1. Check if certificate already exists in `certificates` table
-    const { data: existingCert } = await supabase
-      .from('certificates')
-      .select('id, verification_code')
-      .or(`verification_code.eq.${certCode},certificate_number.eq.${certCode}`)
-      .maybeSingle();
+    // 1. Update `participants` table record with `certificate_id`
+    if (participantId) {
+      try {
+        let query = supabase
+          .from('participants')
+          .update({
+            certificate_id: certCode,
+            certificate_status: 'issued',
+            updated_at: new Date().toISOString(),
+          });
 
-    if (!existingCert) {
-      // Insert new certificate row into `certificates` table
-      await supabase.from('certificates').insert([{
-        session_id: validId,
-        certificate_number: certCode,
-        verification_code: certCode,
-        issued_at: new Date().toISOString(),
-        certificate_url: null,
-      }]);
+        if (isEmail) {
+          query = query.eq('email', participantId.trim().toLowerCase());
+        } else if (isUuid) {
+          query = query.eq('id', participantId);
+        } else {
+          query = query.eq('certificate_id', participantId);
+        }
+
+        const { error: pErr } = await query;
+        if (pErr) {
+          // Fallback to updating basic status if certificate_id column does not exist
+          let fallbackQuery = supabase
+            .from('participants')
+            .update({
+              status: 'completed',
+              updated_at: new Date().toISOString(),
+            });
+          if (isEmail) fallbackQuery = fallbackQuery.eq('email', participantId.trim().toLowerCase());
+          else if (isUuid) fallbackQuery = fallbackQuery.eq('id', participantId);
+          await fallbackQuery;
+        }
+      } catch (err) {
+        // Ignore background participant update notices
+      }
     }
 
-    // 2. Also update `participants` table record with `certificate_id`
-    if (participantId) {
-      await supabase
-        .from('participants')
-        .update({
-          certificate_id: certCode,
-          certificate_status: 'issued',
-          updated_at: new Date().toISOString(),
-        })
-        .or(`id.eq.${participantId},email.eq.${participantId}`);
+    // 2. Insert new certificate row into `certificates` table if permitted by RLS
+    try {
+      const { data: existingCert } = await supabase
+        .from('certificates')
+        .select('id, verification_code')
+        .eq('verification_code', certCode)
+        .maybeSingle();
+
+      if (!existingCert) {
+        await supabase.from('certificates').insert([{
+          session_id: validId,
+          certificate_number: certCode,
+          verification_code: certCode,
+          issued_at: new Date().toISOString(),
+          certificate_url: null,
+        }]);
+      }
+    } catch (cErr) {
+      // Ignore background RLS 401 if certificates table requires admin role
     }
 
     // 3. Log audit event
