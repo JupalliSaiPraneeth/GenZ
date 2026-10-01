@@ -84,21 +84,31 @@
   }
 }
 
-/* Custom Scrollbars */
+/* Scrollbar Management: Hide scrollbars across the application while preserving full smooth scrollability */
+html, body, #root, * {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none !important;
+  width: 0px !important;
+  height: 0px !important;
 }
 
-::-webkit-scrollbar-track {
-  background: #FFF8E8;
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar,
+.scrollbar-thin::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #109A9B;
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #075D63;
+.no-scrollbar,
+.scrollbar-none,
+.custom-scrollbar,
+.scrollbar-thin {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }

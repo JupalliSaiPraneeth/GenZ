@@ -144,7 +144,7 @@ export default function About() {
                 <span>67-Question Research Questionnaire</span>
               </h3>
               <p>
-                The <strong>Gen Z Voices Survey Instrument</strong> is a structured, anonymous <strong>100-question research questionnaire</strong> developed to understand the behaviour, attitudes, habits, preferences, aspirations, values and future perspectives of Generation Z youth in India.
+                The <strong>Gen Z Voices Survey Instrument</strong> is a structured, anonymous <strong>67-question research questionnaire</strong> developed to understand the behaviour, attitudes, habits, preferences, aspirations, values and future perspectives of Generation Z youth in India.
               </p>
             </div>
 

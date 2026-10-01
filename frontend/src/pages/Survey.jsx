@@ -482,11 +482,11 @@ export default function Survey() {
   const isMultiColumn = optionCount >= 4;
   const isManyOptions = optionCount >= 6;
 
-  let optionsContainerClass = "font-inter mb-1.5 overflow-y-auto pr-1 flex-1 min-h-0 transition-all duration-200 custom-scrollbar ";
+  let optionsContainerClass = "font-inter mb-1.5 overflow-y-auto pr-1 flex-1 min-h-0 transition-all duration-200 no-scrollbar ";
   if (isManyOptions) {
-    optionsContainerClass += "grid grid-cols-2 gap-1.5 sm:gap-2 auto-rows-max";
+    optionsContainerClass += "grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 auto-rows-max";
   } else if (isMultiColumn) {
-    optionsContainerClass += "grid grid-cols-2 gap-1.5 sm:gap-2.5 auto-rows-max";
+    optionsContainerClass += "grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2.5 auto-rows-max";
   } else if (optionCount === 3) {
     optionsContainerClass += "grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2.5 auto-rows-max";
   } else {
@@ -500,15 +500,15 @@ export default function Survey() {
   let optionCheckIconSize = "w-3 h-3 sm:w-3.5 sm:h-3.5";
 
   if (isManyOptions) {
-    optionBtnPadding = "py-1.5 sm:py-2 px-2 sm:px-3.5";
-    optionTextSize = "text-[10px] sm:text-xs font-semibold";
-    optionMinHeight = "min-h-[34px] sm:min-h-[38px]";
+    optionBtnPadding = "py-2 sm:py-2.5 px-3 sm:px-3.5";
+    optionTextSize = "text-xs sm:text-xs font-semibold";
+    optionMinHeight = "min-h-[38px] sm:min-h-[38px]";
     optionIconSize = "w-4 h-4 sm:w-4.5 sm:h-4.5";
     optionCheckIconSize = "w-2.5 h-2.5 sm:w-3 sm:h-3";
   } else if (isMultiColumn) {
-    optionBtnPadding = "py-1.5 sm:py-2.5 px-2.5 sm:px-4";
-    optionTextSize = "text-[11px] sm:text-xs font-semibold";
-    optionMinHeight = "min-h-[38px] sm:min-h-[44px]";
+    optionBtnPadding = "py-2 sm:py-2.5 px-3 sm:px-4";
+    optionTextSize = "text-xs sm:text-xs font-semibold";
+    optionMinHeight = "min-h-[40px] sm:min-h-[44px]";
     optionIconSize = "w-4.5 h-4.5 sm:w-5 sm:h-5";
     optionCheckIconSize = "w-2.5 h-2.5 sm:w-3 sm:h-3";
   }
@@ -516,7 +516,7 @@ export default function Survey() {
   // ONBOARDING STEP 0: MASTER PROMPT WELCOME EXPERIENCE
   if (onboardingStep === 0) {
     return (
-      <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
+      <div className="relative min-h-screen w-full overflow-x-hidden overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
 
         {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
         <SurveyHeroBackground />
@@ -658,7 +658,7 @@ export default function Survey() {
   // ONBOARDING STEP 1: ATTRACTIVE, PROFESSIONAL EDITORIAL 4-SECTION ROADMAP
   if (onboardingStep === 1) {
     return (
-      <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
+      <div className="relative min-h-screen w-full overflow-x-hidden overflow-y-auto bg-[#FAF7F0] flex flex-col justify-start items-center pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 select-none">
 
         {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
         <SurveyHeroBackground />
@@ -865,7 +865,7 @@ export default function Survey() {
   // ONBOARDING STEP 2: PRIVACY GUARANTEE
   if (onboardingStep === 2) {
     return (
-      <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
+      <div className="relative min-h-screen w-full overflow-x-hidden overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
         {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
         <SurveyHeroBackground />
@@ -949,7 +949,7 @@ export default function Survey() {
   // ONBOARDING STEP 2.5: PARTICIPANT NAME & EMAIL ENTRY (Persists immediately to Supabase DB)
   if (onboardingStep === 2.5 || (onboardingStep === 3 && !participantName)) {
     return (
-      <div className="relative min-h-screen w-full overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
+      <div className="relative min-h-screen w-full overflow-x-hidden overflow-y-auto flex flex-col items-center justify-start pt-[78px] sm:pt-[88px] pb-24 sm:pb-32 px-3.5 sm:px-4 bg-[#FAF7F0] select-none">
 
         {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
         <SurveyHeroBackground />
@@ -1135,7 +1135,7 @@ export default function Survey() {
 
   // ACTIVE 207-QUESTION SURVEY EXPERIENCE (Step 3: Master Prompt Implementation)
   return (
-    <div className="relative min-h-screen w-full overflow-y-auto bg-[#FAF7F0] flex flex-col justify-between items-center pt-[88px] sm:pt-[105px] lg:pt-[115px] pb-6 select-none">
+    <div className="relative min-h-screen w-full overflow-x-hidden overflow-y-auto bg-[#FAF7F0] flex flex-col justify-between items-center pt-[84px] sm:pt-[105px] lg:pt-[115px] pb-6 select-none">
 
       {/* TOP DARK TEAL HERO BACKGROUND SECTION */}
       <SurveyHeroBackground />
@@ -1153,16 +1153,16 @@ export default function Survey() {
         </div>
       </div>
 
-      {/* 4. BOTTOM LEFT ORGANIC SHAPE */}
-      <div className="absolute bottom-0 -left-20 w-[520px] h-[520px] rounded-full bg-[#109A9B]/15 blur-3xl pointer-events-none z-0" />
-      <div className="absolute top-[280px] left-8 w-[360px] h-[360px] rounded-full bg-[#FFF8E8]/60 blur-2xl pointer-events-none z-0" />
-
-      {/* 5. BOTTOM RIGHT ORGANIC BLOB */}
-      <div className="absolute -bottom-20 -right-20 w-[480px] h-[480px] bg-gradient-to-tl from-[#109A9B]/25 via-[#075D63]/15 to-transparent rounded-full blur-3xl pointer-events-none z-0" />
-      <div className="absolute bottom-12 right-0 w-[380px] h-[260px] bg-[#FDE7B5]/40 rounded-tl-[180px] blur-2xl pointer-events-none z-0" />
+      {/* 4 & 5. ORGANIC BACKGROUND BLOBS (CLIPPED TO PREVENT HORIZONTAL OVERFLOW ON MOBILE) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute bottom-0 -left-20 w-[520px] h-[520px] rounded-full bg-[#109A9B]/15 blur-3xl" />
+        <div className="absolute top-[280px] left-8 w-[360px] h-[360px] rounded-full bg-[#FFF8E8]/60 blur-2xl" />
+        <div className="absolute -bottom-20 -right-20 w-[480px] h-[480px] bg-gradient-to-tl from-[#109A9B]/25 via-[#075D63]/15 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-12 right-0 w-[380px] h-[260px] bg-[#FDE7B5]/40 rounded-tl-[180px] blur-2xl" />
+      </div>
 
       {/* MAIN CONTAINER */}
-      <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-center my-auto py-4 sm:py-6">
+      <div className="relative z-10 max-w-[1400px] mx-auto px-3.5 sm:px-6 lg:px-8 w-full flex-1 flex flex-col justify-center my-auto py-3 sm:py-6 min-w-0">
 
         {isCompletedSession ? (
           /* CLEAN FULL-PAGE COMPLETED ANNOUNCEMENT CARD (NO 4 SECTIONS, NO QUESTIONS GRID) */
@@ -1561,7 +1561,7 @@ export default function Survey() {
             </div>
 
             {/* 2-COLUMN MAIN CONTENT GRID */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-12 items-center my-auto w-full min-w-0">
 
               {/* LEFT SIDE VISUAL AREA */}
               <div className="hidden lg:flex lg:col-span-4 flex-col items-center relative pr-4 lg:pr-8">
@@ -1594,7 +1594,7 @@ export default function Survey() {
               </div>
 
               {/* CENTER COLUMN: MAIN SURVEY QUESTIONNAIRE CARD WITH CARD ANIMATION */}
-              <div className="col-span-1 lg:col-span-8 max-w-[760px] xl:max-w-[820px] w-full mx-auto">
+              <div className="col-span-1 lg:col-span-8 max-w-[760px] xl:max-w-[820px] w-full mx-auto min-w-0">
                 <div className={`bg-[#FFF8E8] rounded-2xl sm:rounded-[28px] p-3.5 sm:p-6 md:p-7 border border-white/70 shadow-[0px_20px_50px_rgba(6,62,70,0.15)] relative z-20 transition-all duration-300 min-h-[420px] sm:min-h-[470px] lg:min-h-[490px] flex flex-col justify-between overflow-hidden ${cardAnimClass}`}>
 
                   <div className="flex-1 flex flex-col justify-start min-h-0">
@@ -1604,7 +1604,7 @@ export default function Survey() {
                       {/* Left Badges Group */}
                       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-wrap sm:flex-nowrap">
                         {/* Participant Badge */}
-                        <span className="text-[10px] sm:text-[11px] font-bold text-[#075D63] bg-[#109A9B]/10 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#109A9B]/20 truncate inline-block whitespace-nowrap shrink-0">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-[#075D63] bg-[#109A9B]/10 px-2 sm:px-2.5 py-0.5 rounded-full border border-[#109A9B]/20 truncate inline-block whitespace-nowrap shrink-0 max-w-[140px] sm:max-w-none">
                           Participant: {participantName || 'Gen Z Study'}
                         </span>
 
@@ -1657,7 +1657,7 @@ export default function Survey() {
                     </div>
 
                     {/* Question Text */}
-                    <h2 className="font-sora font-extrabold text-lg sm:text-xl text-[#10242C] mb-1 leading-snug tracking-tight flex-shrink-0">
+                    <h2 className="font-sora font-extrabold text-base sm:text-xl text-[#10242C] mb-1 leading-snug tracking-tight flex-shrink-0">
                       Q{currentQuestionIndex + 1}. {currentQuestion?.text?.replace(/^(Q\d+|\d+)\.\s*/i, '')}
                     </h2>
 
@@ -1745,11 +1745,11 @@ export default function Survey() {
                   </div>
 
                   {/* Bottom Actions Container */}
-                  <div className="w-full flex items-center justify-between gap-2.5 pt-3 border-t border-slate-200/80 mt-2 font-inter flex-shrink-0">
+                  <div className="w-full flex items-center justify-between gap-2 sm:gap-2.5 pt-3 border-t border-slate-200/80 mt-2 font-inter flex-shrink-0">
                     <button
                       onClick={handlePrevQuestionWithAnim}
                       disabled={currentQuestionIndex === 0 || isTransitioning}
-                      className="bg-white border border-[#063E46]/40 text-[#063E46] hover:bg-[#FFF8E8] font-bold text-xs sm:text-sm px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl transition-all disabled:opacity-30 flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                      className="bg-white border border-[#063E46]/40 text-[#063E46] hover:bg-[#FFF8E8] font-bold text-xs sm:text-sm px-3.5 sm:px-5 py-2.5 sm:py-3 rounded-xl transition-all disabled:opacity-30 flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 shrink-0"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       <span>Previous</span>
@@ -1759,10 +1759,10 @@ export default function Survey() {
                       <button
                         onClick={handleNextQuestionWithAnim}
                         disabled={isTransitioning}
-                        className="flex-1 bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-sora font-bold text-xs sm:text-sm py-2.5 sm:py-3 px-4 sm:px-5 rounded-xl shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2 transition-all group cursor-pointer disabled:opacity-50"
+                        className="flex-1 bg-[#063E46] hover:bg-[#075D63] text-[#FFF8E8] font-sora font-bold text-xs sm:text-sm py-2.5 sm:py-3 px-3 sm:px-5 rounded-xl shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2 transition-all group cursor-pointer disabled:opacity-50 min-w-0"
                       >
-                        <span>Next Question</span>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        <span className="truncate">Next Question</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform shrink-0" />
                       </button>
                     ) : (
                       <button
