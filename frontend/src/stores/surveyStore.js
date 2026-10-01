@@ -172,6 +172,93 @@ export const useSurveyStore = create((set, get) => ({
       }
 
       const { questions, sections } = get();
+
+      // Check DB participant status
+      let isDbCompleted = false;
+      if (savedParticipantId && isSupabaseConfigured) {
+        try {
+          const { data: pData } = await supabase
+            .from('participants')
+            .select('status')
+            .eq('id', savedParticipantId)
+            .maybeSingle();
+
+          if (!pData) {
+            // Participant record was deleted from database by Admin!
+            // Purge all stale completion flags and reset to fresh participant session!
+            localStorage.removeItem('genz_participant_id');
+            localStorage.removeItem('genz_participant_name');
+            localStorage.removeItem('genz_participant_email');
+            localStorage.removeItem('genz_participant_completed');
+            if (savedEmail) {
+              localStorage.removeItem(`genz_completed_${savedEmail.trim().toLowerCase()}`);
+            }
+            localStorage.removeItem(`genz_completed_${savedParticipantId}`);
+
+            const freshSession = generateValidUUID();
+            localStorage.setItem('genz_active_session', freshSession);
+
+            set({
+              sessionId: freshSession,
+              participantId: null,
+              participantName: '',
+              participantEmail: '',
+              answersById: {},
+              currentQuestionIndex: 0,
+              currentSectionIndex: 0,
+              isResumedSession: false,
+              isCompletedSession: false,
+            });
+            return;
+          }
+
+          isDbCompleted =
+            pData.status === 'completed' ||
+            pData.status === 'submitted';
+        } catch (e) { }
+      }
+
+      const totalQCount = questions.length;
+      const answeredCount = questions.filter(q => {
+        const qIdKey = String(q.id).toLowerCase();
+        const qCodeKey = String(q.code || '').toLowerCase();
+        const ans =
+          fetchedAnswers[q.id] ??
+          fetchedAnswers[qIdKey] ??
+          (qCodeKey ? fetchedAnswers[qCodeKey] : undefined);
+        if (ans === undefined || ans === null || ans === 'skipped' || ans === '') return false;
+        if (Array.isArray(ans) && ans.length === 0) return false;
+        return true;
+      }).length;
+
+      const allAnswered = totalQCount > 0 && answeredCount >= totalQCount;
+      const isCompleted = Boolean(isDbCompleted || (savedParticipantId && allAnswered));
+
+      if (isCompleted) {
+        localStorage.setItem('genz_participant_completed', 'true');
+        if (savedParticipantId) {
+          localStorage.setItem(`genz_completed_${savedParticipantId}`, 'true');
+        }
+        set({
+          sessionId: existingSession,
+          participantId: savedParticipantId,
+          answersById: fetchedAnswers,
+          currentQuestionIndex: 0,
+          currentSectionIndex: 0,
+          isResumedSession: true,
+          isCompletedSession: true,
+        });
+        return;
+      } else {
+        localStorage.removeItem('genz_participant_completed');
+        if (savedParticipantId) {
+          localStorage.removeItem(`genz_completed_${savedParticipantId}`);
+        }
+        if (savedEmail) {
+          localStorage.removeItem(`genz_completed_${savedEmail.trim().toLowerCase()}`);
+        }
+      }
+
       let firstUnansweredIdx = 0;
 
       if (fetchedAnswers && Object.keys(fetchedAnswers).length > 0) {
@@ -195,7 +282,8 @@ export const useSurveyStore = create((set, get) => ({
           answersById: fetchedAnswers,
           currentQuestionIndex: Math.max(0, firstUnansweredIdx),
           currentSectionIndex: Math.max(0, secIdx),
-          isResumedSession: true
+          isResumedSession: true,
+          isCompletedSession: false,
         });
       }
     } catch (err) {
@@ -292,11 +380,56 @@ export const useSurveyStore = create((set, get) => ({
     // Merge DB answers with current local answersById
     const mergedAnswers = { ...(fetchedAnswers || {}), ...(answersById || {}) };
 
-    const isCompleted = res.participant?.status === 'completed';
+    // If this is a fresh registration (not resumed from an existing DB participant):
+    // Purge any stale completion flags for this email/session!
+    if (!res?.isResumed) {
+      localStorage.removeItem('genz_participant_completed');
+      if (pId) localStorage.removeItem(`genz_completed_${pId}`);
+      if (trimmedEmail) localStorage.removeItem(`genz_completed_${trimmedEmail}`);
+    }
+
+    const totalQCount = questions.length;
+    const answeredCount = questions.filter(q => {
+      const qIdKey = String(q.id).toLowerCase();
+      const qCodeKey = String(q.code || '').toLowerCase();
+      const ans =
+        mergedAnswers[q.id] ??
+        mergedAnswers[qIdKey] ??
+        (qCodeKey ? mergedAnswers[qCodeKey] : undefined);
+      if (ans === undefined || ans === null || ans === 'skipped' || ans === '') return false;
+      if (Array.isArray(ans) && ans.length === 0) return false;
+      return true;
+    }).length;
+
+    const allAnswered = totalQCount > 0 && answeredCount >= totalQCount;
+    const isDbCompleted =
+      Boolean(res?.isResumed) &&
+      (res.participant?.status === 'completed' || res.participant?.status === 'submitted');
+
+    // ONLY consider completed if DB marks it completed OR all questions have recorded responses
+    const isCompleted = Boolean(isDbCompleted || (Boolean(res?.isResumed) && allAnswered));
+
     if (isCompleted) {
       localStorage.setItem('genz_participant_completed', 'true');
+      if (pId) {
+        localStorage.setItem(`genz_completed_${pId}`, 'true');
+      }
+      if (trimmedEmail) {
+        localStorage.setItem(`genz_completed_${trimmedEmail}`, 'true');
+      }
+      // Ensure status is marked 'completed' in Supabase if it wasn't already
+      if (pId && res.participant?.status !== 'completed' && isSupabaseConfigured) {
+        supabase
+          .from('participants')
+          .update({ status: 'completed', updated_at: new Date().toISOString() })
+          .eq('id', pId)
+          .then(() => { })
+          .catch(() => { });
+      }
     } else {
       localStorage.removeItem('genz_participant_completed');
+      if (pId) localStorage.removeItem(`genz_completed_${pId}`);
+      if (trimmedEmail) localStorage.removeItem(`genz_completed_${trimmedEmail}`);
     }
 
     // Sync any unpersisted local answers to Supabase under the participant ID if not already completed
@@ -308,20 +441,22 @@ export const useSurveyStore = create((set, get) => ({
 
     // Determine first unanswered question index (where user left off)
     let firstUnansweredIdx = 0;
-    const unansweredIdx = questions.findIndex(q => {
-      const qIdKey = String(q.id).toLowerCase();
-      const qCodeKey = String(q.code || '').toLowerCase();
-      const hasAns =
-        mergedAnswers[q.id] !== undefined ||
-        mergedAnswers[qIdKey] !== undefined ||
-        (qCodeKey && mergedAnswers[qCodeKey] !== undefined);
-      return !hasAns;
-    });
+    if (!isCompleted) {
+      const unansweredIdx = questions.findIndex(q => {
+        const qIdKey = String(q.id).toLowerCase();
+        const qCodeKey = String(q.code || '').toLowerCase();
+        const hasAns =
+          mergedAnswers[q.id] !== undefined ||
+          mergedAnswers[qIdKey] !== undefined ||
+          (qCodeKey && mergedAnswers[qCodeKey] !== undefined);
+        return !hasAns;
+      });
 
-    if (unansweredIdx !== -1) {
-      firstUnansweredIdx = unansweredIdx;
-    } else if (Object.keys(mergedAnswers).length > 0) {
-      firstUnansweredIdx = Math.min(Object.keys(mergedAnswers).length, questions.length - 1);
+      if (unansweredIdx !== -1) {
+        firstUnansweredIdx = unansweredIdx;
+      } else if (Object.keys(mergedAnswers).length > 0) {
+        firstUnansweredIdx = Math.min(Object.keys(mergedAnswers).length, questions.length - 1);
+      }
     }
 
     const targetQuestion = questions[firstUnansweredIdx] || questions[0];
@@ -334,13 +469,21 @@ export const useSurveyStore = create((set, get) => ({
       participantEmail: trimmedEmail,
       participantId: pId,
       answersById: mergedAnswers,
-      currentQuestionIndex: Math.max(0, firstUnansweredIdx),
-      currentSectionIndex: Math.max(0, sectionIdx),
+      currentQuestionIndex: isCompleted ? 0 : Math.max(0, firstUnansweredIdx),
+      currentSectionIndex: isCompleted ? 0 : Math.max(0, sectionIdx),
       isResumedSession: isResumed,
       isCompletedSession: isCompleted,
     });
 
-    return { success: true, participant: res.participant, isResumed, isCompleted };
+    return {
+      success: true,
+      participant: {
+        ...(res.participant || {}),
+        status: isCompleted ? 'completed' : res.participant?.status
+      },
+      isResumed,
+      isCompleted
+    };
   },
 
   setParticipantName: async (name) => {
@@ -349,7 +492,12 @@ export const useSurveyStore = create((set, get) => ({
 
   setAnswer: async (questionId, value) => {
     const { sessionId, participantId, answersById, isCompletedSession } = get();
-    if (isCompletedSession) {
+    const isCompletedLocked =
+      isCompletedSession ||
+      localStorage.getItem('genz_participant_completed') === 'true' ||
+      (participantId && localStorage.getItem(`genz_completed_${participantId}`) === 'true');
+
+    if (isCompletedLocked) {
       console.warn('Survey is completed and locked. Modifying answers is disabled.');
       return;
     }
@@ -458,13 +606,25 @@ export const useSurveyStore = create((set, get) => ({
     return Math.min(100, Math.round((answeredCount / questions.length) * 100));
   },
 
-  completeSurvey: async () => {
-    const { participantId, sessionId, answersById } = get();
+  completeSurvey: async (certName = '') => {
+    const { participantId, sessionId, answersById, participantEmail, participantName } = get();
+    const finalCertName = (certName || localStorage.getItem('genz_certificate_name') || localStorage.getItem('genz_participant_name') || participantName || '').trim();
+    if (finalCertName) {
+      localStorage.setItem('genz_certificate_name', finalCertName);
+      localStorage.setItem('genz_participant_name', finalCertName);
+      set({ participantName: finalCertName });
+    }
     const targetId = participantId || localStorage.getItem('genz_participant_id') || sessionId;
     localStorage.setItem('genz_participant_completed', 'true');
+    if (participantId) {
+      localStorage.setItem(`genz_completed_${participantId}`, 'true');
+    }
+    if (participantEmail) {
+      localStorage.setItem(`genz_completed_${participantEmail.trim().toLowerCase()}`, 'true');
+    }
     set({ isCompletedSession: true });
     if (targetId) {
-      await completeParticipantSurvey(targetId, new Date().toISOString(), answersById);
+      await completeParticipantSurvey(targetId, new Date().toISOString(), answersById, finalCertName);
     }
   },
 }));

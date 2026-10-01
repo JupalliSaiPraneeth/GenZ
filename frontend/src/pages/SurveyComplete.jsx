@@ -25,6 +25,7 @@ import {
   downloadCertificatePdf,
   downloadCertificateImage,
 } from '../services/certificateGenerator';
+import { sendCertificateEmail } from '../services/emailService';
 import GridModal from '../components/common/GridModal';
 
 export default function SurveyComplete() {
@@ -35,9 +36,9 @@ export default function SurveyComplete() {
   const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'success' });
   const [copiedId, setCopiedId] = useState(false);
 
-  // Certificate State
+  // Certificate State (strictly prioritizes confirmed certificate name from modal)
   const [certName, setCertName] = useState(
-    participantName || localStorage.getItem('genz_participant_name') || 'Gen Z Participant'
+    localStorage.getItem('genz_certificate_name') || participantName || localStorage.getItem('genz_participant_name') || 'Gen Z Participant'
   );
   const [certDate, setCertDate] = useState(
     new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -64,8 +65,9 @@ export default function SurveyComplete() {
 
   const loadStatus = async () => {
     setIsRefreshing(true);
+    const confirmedCertName = localStorage.getItem('genz_certificate_name') || certName;
     if (completeSurvey) {
-      await completeSurvey();
+      await completeSurvey(confirmedCertName);
     }
     const savedId = participantId || localStorage.getItem('genz_participant_id');
     const savedEmail = participantEmail || localStorage.getItem('genz_participant_email');
@@ -75,7 +77,9 @@ export default function SurveyComplete() {
       const data = await fetchParticipantStatus(target);
       if (data) {
         setParticipant(data);
-        if (data.name && data.name !== certName) {
+        if (confirmedCertName) {
+          setCertName(confirmedCertName);
+        } else if (data.name && data.name !== certName) {
           setCertName(data.name);
         }
       }
@@ -88,7 +92,7 @@ export default function SurveyComplete() {
     loadStatus();
   }, [participantId, participantEmail]);
 
-  const pName = participant?.name || certName || localStorage.getItem('genz_participant_name') || 'Gen Z Participant';
+  const pName = localStorage.getItem('genz_certificate_name') || certName || participant?.name || localStorage.getItem('genz_participant_name') || 'Gen Z Participant';
   const pEmail = participant?.email || participantEmail || localStorage.getItem('genz_participant_email') || '';
   const certCode = useMemo(() => {
     if (participant?.certificate_id) return participant.certificate_id;
@@ -102,7 +106,7 @@ export default function SurveyComplete() {
     let isMounted = true;
 
     async function prepareCertificate() {
-      const targetName = (certName || pName || 'Gen Z Participant').trim();
+      const targetName = (localStorage.getItem('genz_certificate_name') || certName || pName || 'Gen Z Participant').trim();
       setIsGeneratingCert(true);
       try {
         const dataUrl = await generateCertificateDataUrl(targetName, certDate, certCode);
@@ -116,6 +120,10 @@ export default function SurveyComplete() {
             certName: targetName,
             certDate,
           });
+
+          if (pEmail) {
+            sendCertificateEmail(pEmail, targetName, certDate, certCode).catch(() => {});
+          }
         }
       } catch (err) {
         console.warn('Certificate generation notice:', err);

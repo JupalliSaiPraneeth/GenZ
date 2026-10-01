@@ -1074,60 +1074,100 @@ export const adminDataService = {
   },
 
   /**
-   * Delete a respondent and ALL their associated data (responses, certificates, logs, progress) from Supabase DB
+   * Delete a respondent and ALL their associated data (responses, certificates, logs, progress, lucky draw) from Supabase DB
    */
-  async deleteRespondent(participantId) {
-    if (!participantId) return { success: false, error: 'Participant ID is required.' };
+  async deleteRespondent(participantId, participantEmail = null) {
+    if (!participantId && !participantEmail) return { success: false, error: 'Participant ID or Email is required.' };
     try {
       if (isSupabaseConfigured) {
-        const pId = String(participantId);
+        const pId = participantId ? String(participantId).trim() : null;
+        const email = participantEmail ? String(participantEmail).trim().toLowerCase() : null;
 
-        // 1. Delete survey_responses associated with this participant
-        await supabase
-          .from('survey_responses')
-          .delete()
-          .or(`participant_id.eq.${pId},session_id.eq.${pId}`);
-
-        // 2. Delete data_logs associated with this participant
-        await supabase
-          .from('data_logs')
-          .delete()
-          .eq('participant_id', pId);
-
-        // 3. Delete certificates associated with this participant
-        try {
-          await supabase.from('certificates').delete().eq('participant_id', pId);
-        } catch (e) {}
-
-        // 4. Delete participant identities
-        try {
-          await supabase.from('participant_identities').delete().eq('participant_id', pId);
-        } catch (e) {}
-
-        // 5. Delete survey sessions
-        try {
-          await supabase.from('survey_sessions').delete().or(`participant_id.eq.${pId},id.eq.${pId},anonymous_participant_id.eq.${pId}`);
-        } catch (e) {}
-
-        // 6. Delete survey progress
-        try {
-          await supabase.from('survey_progress').delete().eq('participant_id', pId);
-        } catch (e) {}
-
-        // 7. Delete main participant record
-        const { error, data: deletedRows } = await supabase
-          .from('participants')
-          .delete()
-          .eq('id', pId)
-          .select('id');
-
-        if (error) {
-          console.error('Supabase delete participant error:', error.message);
-          return { success: false, error: error.message };
+        // Gather all participant IDs associated with this participant or email
+        let allIds = pId ? [pId] : [];
+        if (email) {
+          try {
+            const { data: matched } = await supabase.from('participants').select('id').eq('email', email);
+            if (matched && matched.length > 0) {
+              matched.forEach(m => {
+                if (m.id && !allIds.includes(m.id)) allIds.push(m.id);
+              });
+            }
+          } catch (e) {
+            console.warn('Error fetching participant IDs by email:', e);
+          }
         }
 
-        // Verify if row deletion was blocked by RLS policy
-        if (!deletedRows || deletedRows.length === 0) {
+        // 1. Delete survey_responses associated with all linked IDs
+        for (const id of allIds) {
+          await supabase
+            .from('survey_responses')
+            .delete()
+            .or(`participant_id.eq.${id},session_id.eq.${id}`);
+        }
+
+        // 2. Delete data_logs associated with this participant
+        for (const id of allIds) {
+          await supabase
+            .from('data_logs')
+            .delete()
+            .eq('participant_id', id);
+        }
+
+        // 3. Delete certificates (certificates table uses session_id column)
+        for (const id of allIds) {
+          try {
+            await supabase.from('certificates').delete().eq('session_id', id);
+          } catch (e) {}
+        }
+        if (email) {
+          try {
+            await supabase.from('certificates').delete().eq('session_id', email);
+          } catch (e) {}
+        }
+
+        // 4. Delete lucky draw entries
+        for (const id of allIds) {
+          try {
+            await supabase.from('lucky_draw_entries').delete().eq('session_id', id);
+          } catch (e) {}
+        }
+
+        // 5. Delete survey progress
+        for (const id of allIds) {
+          try {
+            await supabase.from('survey_progress').delete().eq('session_id', id);
+          } catch (e) {}
+        }
+
+        // 6. Delete participant identities
+        if (email) {
+          try {
+            await supabase.from('participant_identities').delete().eq('email', email);
+          } catch (e) {}
+        }
+        for (const id of allIds) {
+          try {
+            await supabase.from('participant_identities').delete().eq('id', id);
+          } catch (e) {}
+        }
+
+        // 7. Delete main participant records
+        for (const id of allIds) {
+          await supabase
+            .from('participants')
+            .delete()
+            .eq('id', id);
+        }
+        if (email) {
+          await supabase
+            .from('participants')
+            .delete()
+            .eq('email', email);
+        }
+
+        // Verify if row was completely removed
+        if (pId) {
           const { data: checkP } = await supabase
             .from('participants')
             .select('id')
@@ -1137,25 +1177,46 @@ export const adminDataService = {
           if (checkP) {
             return {
               success: false,
-              error: 'RLS Permission error: DELETE policy is not enabled on participants table in Supabase. Please check SQL RLS policies.',
+              error: 'RLS Permission error: DELETE policy is not enabled on participants table in Supabase.',
             };
           }
         }
 
-        // Clean up local storage if active session matches deleted participant
-        const activeLocalPId = localStorage.getItem('genz_participant_id');
-        if (activeLocalPId === pId) {
-          localStorage.removeItem('genz_participant_id');
-          localStorage.removeItem('genz_participant_name');
-          localStorage.removeItem('genz_participant_email');
+        // 8. Clean up local storage across all browser keys for this participant
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const activeLocalPId = localStorage.getItem('genz_participant_id');
+          const activeLocalEmail = (localStorage.getItem('genz_participant_email') || '').trim().toLowerCase();
+          const matchesCurrentActive =
+            allIds.includes(activeLocalPId) ||
+            (email && activeLocalEmail === email);
+
+          if (matchesCurrentActive) {
+            localStorage.removeItem('genz_participant_id');
+            localStorage.removeItem('genz_participant_name');
+            localStorage.removeItem('genz_participant_email');
+            localStorage.removeItem('genz_participant_completed');
+            localStorage.removeItem('genz_active_seconds');
+          }
+
+          allIds.forEach(id => {
+            localStorage.removeItem(`genz_completed_${id}`);
+            localStorage.removeItem(`genz_active_seconds_${id}`);
+          });
+          if (email) {
+            localStorage.removeItem(`genz_completed_${email}`);
+          }
+
+          // Broadcast deletion so any open tab/browser window updates immediately
+          localStorage.setItem('genz_participant_deleted_broadcast', JSON.stringify({ ids: allIds, email, at: Date.now() }));
+          window.dispatchEvent(new CustomEvent('genz_participant_deleted', { detail: { ids: allIds, email } }));
         }
 
-        logAdminAuditAction('DELETE_PARTICIPANT', { participantId: pId }).catch(() => {});
+        logAdminAuditAction('DELETE_PARTICIPANT', { participantId: pId, email }).catch(() => {});
       }
 
       // Also clean local Dexie DB if present
       try {
-        if (db && db.answersQueue) {
+        if (db && db.answersQueue && participantId) {
           await db.answersQueue.where('sessionId').equals(participantId).delete();
         }
       } catch (e) {}

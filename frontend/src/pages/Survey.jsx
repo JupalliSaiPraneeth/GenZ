@@ -100,6 +100,7 @@ export default function Survey() {
     jumpToSection,
     jumpToQuestion,
     getProgressPercentage,
+    participantId,
     participantName,
     participantEmail,
     setParticipantName,
@@ -124,6 +125,8 @@ export default function Survey() {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleLogoutSession = async () => {
+    sessionStorage.removeItem('genz_survey_started');
+    sessionStorage.removeItem('genz_google_signing_in');
     if (logoutParticipant) await logoutParticipant();
     else if (resetSession) resetSession();
     setNameInput('');
@@ -137,8 +140,17 @@ export default function Survey() {
   const hasRegistered = Boolean(participantName && participantEmail);
   const hasSavedState = Boolean(hasRegistered && Object.keys(answersById).length > 0);
 
+  const isGoogleSigningInRedirect = typeof window !== 'undefined' && (
+    sessionStorage.getItem('genz_google_signing_in') === 'true' ||
+    window.location.hash.includes('access_token') ||
+    window.location.search.includes('code=')
+  );
+  const hasStartedSession = typeof window !== 'undefined' && sessionStorage.getItem('genz_survey_started') === 'true';
+
   // Onboarding Step State (0 = Welcome Screen, 1 = 4-Chapter Roadmap, 2 = Privacy Guarantee, 2.5 = Name Entry, 3 = Active 75-Q Survey)
-  const [onboardingStep, setOnboardingStep] = useState(hasRegistered ? 3 : 0);
+  const [onboardingStep, setOnboardingStep] = useState(
+    isGoogleSigningInRedirect ? 2.5 : (hasRegistered && hasStartedSession ? 3 : 0)
+  );
 
   const [nameInput, setNameInput] = useState(participantName || '');
   const [emailInput, setEmailInput] = useState(participantEmail || '');
@@ -244,14 +256,45 @@ export default function Survey() {
     }, 100);
   };
 
-  // Auto-switch to active survey experience ONLY if participant has completed registration (name & email)
+
+  // Handle external participant deletion by admin (e.g. from admin panel in another tab)
   useEffect(() => {
-    if (hasRegistered && onboardingStep < 3) {
-      setOnboardingStep(3);
-    } else if (!hasRegistered && onboardingStep === 3) {
-      setOnboardingStep(2.5);
-    }
-  }, [hasRegistered, onboardingStep]);
+    const handleParticipantDeleted = (e) => {
+      let data = e?.detail;
+      if (!data && e?.key === 'genz_participant_deleted_broadcast' && e.newValue) {
+        try {
+          data = JSON.parse(e.newValue);
+        } catch (err) {}
+      }
+      if (!data) return;
+
+      const currentPId = participantId || localStorage.getItem('genz_participant_id');
+      const currentEmail = (participantEmail || localStorage.getItem('genz_participant_email') || '').trim().toLowerCase();
+
+      const isDeleted =
+        (data.ids && currentPId && data.ids.includes(currentPId)) ||
+        (data.email && currentEmail && currentEmail === data.email.toLowerCase());
+
+      if (isDeleted) {
+        sessionStorage.removeItem('genz_survey_started');
+        sessionStorage.removeItem('genz_google_signing_in');
+        if (logoutParticipant) logoutParticipant();
+        else if (resetSession) resetSession();
+        setNameInput('');
+        setEmailInput('');
+        setEmailError('');
+        setOnboardingStep(0);
+      }
+    };
+
+    window.addEventListener('genz_participant_deleted', handleParticipantDeleted);
+    window.addEventListener('storage', handleParticipantDeleted);
+
+    return () => {
+      window.removeEventListener('genz_participant_deleted', handleParticipantDeleted);
+      window.removeEventListener('storage', handleParticipantDeleted);
+    };
+  }, [participantId, participantEmail, logoutParticipant, resetSession]);
 
   // Sync Name/Email Input if store updates
   useEffect(() => {
@@ -331,15 +374,12 @@ export default function Survey() {
             (userEmail ? userEmail.split('@')[0] : '');
 
           if (userEmail) {
-            // If already registered & stored in local store, jump to survey directly
-            if (participantEmail === userEmail && participantName) {
-              setOnboardingStep(3);
-            } else {
-              // New Google User: Fill email & suggested name, prompt user to confirm/enter username first!
-              setEmailInput(userEmail);
-              if (!nameInput) setNameInput(defaultName);
-              setIsGoogleAuthUser(true);
-              setOnboardingStep(2.5);
+            setEmailInput(userEmail);
+            if (!nameInput) setNameInput(defaultName);
+            setIsGoogleAuthUser(true);
+            const hasStartedSurvey = typeof window !== 'undefined' && sessionStorage.getItem('genz_survey_started') === 'true';
+            if (!hasStartedSurvey) {
+              setOnboardingStep((prev) => (prev < 2.5 ? 2.5 : prev));
             }
           }
         }
@@ -362,13 +402,12 @@ export default function Survey() {
             (userEmail ? userEmail.split('@')[0] : '');
 
           if (userEmail) {
-            if (participantEmail === userEmail && participantName) {
-              setOnboardingStep(3);
-            } else {
-              setEmailInput(userEmail);
-              if (!nameInput) setNameInput(defaultName);
-              setIsGoogleAuthUser(true);
-              setOnboardingStep(2.5);
+            setEmailInput(userEmail);
+            if (!nameInput) setNameInput(defaultName);
+            setIsGoogleAuthUser(true);
+            const hasStartedSurvey = typeof window !== 'undefined' && sessionStorage.getItem('genz_survey_started') === 'true';
+            if (!hasStartedSurvey) {
+              setOnboardingStep((prev) => (prev < 2.5 ? 2.5 : prev));
             }
           }
         }
@@ -380,13 +419,15 @@ export default function Survey() {
       isMounted = false;
       authSubscription?.unsubscribe();
     };
-  }, [participantEmail, participantName, nameInput]);
+  }, [nameInput]);
 
   const handleGoogleSignIn = async () => {
     setGoogleAuthError('');
     setIsGoogleSigningIn(true);
+    sessionStorage.setItem('genz_google_signing_in', 'true');
     const { error } = await signInWithGoogle();
     if (error) {
+      sessionStorage.removeItem('genz_google_signing_in');
       setIsGoogleSigningIn(false);
       setGoogleAuthError(error);
     }
@@ -412,6 +453,8 @@ export default function Survey() {
       return;
     }
 
+    sessionStorage.removeItem('genz_google_signing_in');
+    sessionStorage.setItem('genz_survey_started', 'true');
     setOnboardingStep(3);
   };
 
@@ -463,15 +506,13 @@ export default function Survey() {
   const handleConfirmCertNameAndFinish = async (e) => {
     if (e) e.preventDefault();
     const finalName = (certNameInput || nameInput || participantName || 'Gen Z Participant').trim();
+    localStorage.setItem('genz_certificate_name', finalName);
     localStorage.setItem('genz_participant_name', finalName);
 
-    if (setParticipantDetails && (emailInput || participantEmail)) {
-      await setParticipantDetails(finalName, emailInput || participantEmail);
-    } else if (setParticipantName) {
-      await setParticipantName(finalName);
-    }
+    useSurveyStore.setState({ participantName: finalName });
+
     if (completeSurvey) {
-      await completeSurvey();
+      await completeSurvey(finalName);
     }
     setShowCertNameModal(false);
     navigate('/survey-complete');

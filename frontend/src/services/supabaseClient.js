@@ -70,26 +70,50 @@ export async function registerParticipant(participantName = '', email = '', devi
     // 1. Check if email already exists in `participants` table
     const { data: existing } = await supabase
       .from('participants')
-      .select('id, name, email, status, total_answers_count, device_timestamp, created_at, updated_at')
+      .select('*')
       .eq('email', emailStr)
       .maybeSingle();
 
     if (existing) {
+      const existingNameNorm = (existing.name || '').trim().toLowerCase();
+      const inputNameNorm = nameStr.trim().toLowerCase();
+
+      // Check if username/name matches (allowing normalized comparison)
+      const isNameMatch =
+        existingNameNorm === inputNameNorm ||
+        existingNameNorm.replace(/\s+/g, ' ') === inputNameNorm.replace(/\s+/g, ' ') ||
+        !existing.name;
+
+      if (!isNameMatch) {
+        return {
+          participant: null,
+          isResumed: false,
+          error: `This email address (${emailStr}) is already registered under a different name in our database. Please enter the correct matching name to log in, or use a different email address.`,
+        };
+      }
+
       const loginTime = new Date().toISOString();
       const startedAt = existing.device_timestamp || existing.created_at || loginTime;
+      const isAlreadyCompleted =
+        existing.status === 'completed' ||
+        existing.status === 'submitted';
 
       // Update name and updated_at for existing participant
       const { data: updatedP } = await supabase
         .from('participants')
         .update({
-          name: nameStr.trim(),
+          name: existing.name || nameStr.trim(),
           updated_at: loginTime,
+          ...(isAlreadyCompleted ? { status: 'completed' } : {}),
         })
         .eq('id', existing.id)
         .select('*')
         .maybeSingle();
 
       const updatedRecord = updatedP || { ...existing, name: nameStr.trim() };
+      if (isAlreadyCompleted) {
+        updatedRecord.status = 'completed';
+      }
 
       // If responses were recorded under a temporary session ID before user logged in with existing email:
       if (validSessionId && validSessionId !== existing.id) {
@@ -103,6 +127,7 @@ export async function registerParticipant(participantName = '', email = '', devi
       return {
         participant: { ...updatedRecord, started_at: startedAt },
         isResumed: true,
+        isCompleted: isAlreadyCompleted,
         error: null,
       };
     }
@@ -165,14 +190,25 @@ export async function registerParticipant(participantName = '', email = '', devi
       if (insertErr.code === '23505' || insertErr.message?.includes('unique constraint') || insertErr.message?.includes('email')) {
         const { data: retryExisting } = await supabase
           .from('participants')
-          .select('id, name, email, status, total_answers_count')
+          .select('*')
           .eq('email', emailStr)
           .maybeSingle();
 
         if (retryExisting) {
           const retryNameNormalized = (retryExisting.name || '').trim().toLowerCase();
-          if (retryNameNormalized === nameStr.trim().toLowerCase()) {
-            return { participant: retryExisting, isResumed: true, error: null };
+          const isRetryMatch =
+            retryNameNormalized === nameStr.trim().toLowerCase() ||
+            retryNameNormalized.replace(/\s+/g, ' ') === nameStr.trim().toLowerCase().replace(/\s+/g, ' ') ||
+            !retryExisting.name;
+
+          if (isRetryMatch) {
+            const isRetryCompleted =
+              retryExisting.status === 'completed' ||
+              retryExisting.status === 'submitted';
+            if (isRetryCompleted) {
+              retryExisting.status = 'completed';
+            }
+            return { participant: retryExisting, isResumed: true, isCompleted: isRetryCompleted, error: null };
           }
         }
 
@@ -241,10 +277,30 @@ export async function fetchResponsesForParticipant(participantId) {
     const answersById = {};
     responses.forEach((r) => {
       const qKey = String(r.question_id || '').toLowerCase();
+      const qRawKey = String(r.question_id || '');
       const qCodeKey = String(r.question_code || '').toLowerCase();
-      const val = typeof r.response_value === 'object' ? r.response_value?.value : r.response_value;
-      if (qKey) answersById[qKey] = val;
-      if (qCodeKey) answersById[qCodeKey] = val;
+      const qCodeRaw = String(r.question_code || '').toUpperCase();
+
+      let val = r.response_value;
+      if (val !== null && val !== undefined) {
+        if (typeof val === 'string') {
+          try {
+            const parsed = JSON.parse(val);
+            val = parsed;
+          } catch (e) { }
+        }
+        // Only unwrap if it is an object with a .value key AND NOT AN ARRAY
+        if (val && typeof val === 'object' && !Array.isArray(val) && 'value' in val) {
+          val = val.value;
+        }
+      }
+
+      if (val !== undefined && val !== null) {
+        if (qKey) answersById[qKey] = val;
+        if (qRawKey) answersById[qRawKey] = val;
+        if (qCodeKey) answersById[qCodeKey] = val;
+        if (qCodeRaw) answersById[qCodeRaw] = val;
+      }
     });
 
     return answersById;
@@ -382,7 +438,7 @@ export function generateDeterministicCertId(seed) {
 /**
  * Mark Survey Status as Completed
  */
-export async function completeParticipantSurvey(participantId, deviceTimestamp = new Date().toISOString(), answersById = {}) {
+export async function completeParticipantSurvey(participantId, deviceTimestamp = new Date().toISOString(), answersById = {}, certName = '') {
   if (!participantId) return;
   try {
     const completedAt = new Date().toISOString();
@@ -406,6 +462,7 @@ export async function completeParticipantSurvey(participantId, deviceTimestamp =
       certificate_id: certCode,
       attention_check_score: acScore,
       attention_check_passed: acPassed,
+      ...(certName ? { certName: certName.trim() } : {}),
     });
 
     const isEmail = typeof participantId === 'string' && participantId.includes('@');
@@ -416,6 +473,7 @@ export async function completeParticipantSurvey(participantId, deviceTimestamp =
       status: 'completed',
       updated_at: completedAt,
       device_timestamp: deviceTimestamp,
+      ...(certName ? { name: certName.trim() } : {}),
     };
 
     const extendedPayload = {
@@ -426,6 +484,7 @@ export async function completeParticipantSurvey(participantId, deviceTimestamp =
       completed_at: completedAt,
       attention_check_score: acScore,
       attention_check_passed: acPassed,
+      ...(certName ? { name: certName.trim() } : {}),
     };
 
     let query = supabase.from('participants').update(extendedPayload);
@@ -701,7 +760,7 @@ export async function deleteQuestionFromSupabase(questionId) {
     // 1. Delete associated survey responses if any to prevent foreign key errors
     try {
       await supabase.from('survey_responses').delete().eq('question_id', qIdKey);
-    } catch (e) {}
+    } catch (e) { }
 
     // 2. Delete the question record from survey_questions
     const { error } = await supabase.from('survey_questions').delete().eq('id', qIdKey);
@@ -911,7 +970,7 @@ export async function saveCertificateToSupabase({ participantId, certCode, certN
     const isEmail = typeof participantId === 'string' && participantId.includes('@');
     const isUuid = isValidUUID(participantId);
 
-    // 1. Update `participants` table record with `certificate_id`
+    // 1. Update `participants` table record with `certificate_id` and confirmed `name`
     if (participantId) {
       try {
         let query = supabase
@@ -920,6 +979,7 @@ export async function saveCertificateToSupabase({ participantId, certCode, certN
             certificate_id: certCode,
             certificate_status: 'issued',
             updated_at: new Date().toISOString(),
+            ...(certName ? { name: certName.trim() } : {}),
           });
 
         if (isEmail) {
@@ -938,6 +998,7 @@ export async function saveCertificateToSupabase({ participantId, certCode, certN
             .update({
               status: 'completed',
               updated_at: new Date().toISOString(),
+              ...(certName ? { name: certName.trim() } : {}),
             });
           if (isEmail) fallbackQuery = fallbackQuery.eq('email', participantId.trim().toLowerCase());
           else if (isUuid) fallbackQuery = fallbackQuery.eq('id', participantId);

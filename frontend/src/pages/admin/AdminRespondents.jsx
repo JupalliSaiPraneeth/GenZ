@@ -62,7 +62,7 @@ export default function AdminRespondents() {
     setIsDeleting(true);
     setDeleteError('');
 
-    const res = await adminDataService.deleteRespondent(deleteTarget.id);
+    const res = await adminDataService.deleteRespondent(deleteTarget.id, deleteTarget.email);
     setIsDeleting(false);
 
     if (res?.success) {
