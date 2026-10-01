@@ -608,11 +608,9 @@ export const useSurveyStore = create((set, get) => ({
 
   completeSurvey: async (certName = '') => {
     const { participantId, sessionId, answersById, participantEmail, participantName } = get();
-    const finalCertName = (certName || localStorage.getItem('genz_certificate_name') || localStorage.getItem('genz_participant_name') || participantName || '').trim();
+    const finalCertName = (certName || localStorage.getItem('genz_certificate_name') || participantName || localStorage.getItem('genz_participant_name') || '').trim();
     if (finalCertName) {
       localStorage.setItem('genz_certificate_name', finalCertName);
-      localStorage.setItem('genz_participant_name', finalCertName);
-      set({ participantName: finalCertName });
     }
     const targetId = participantId || localStorage.getItem('genz_participant_id') || sessionId;
     localStorage.setItem('genz_participant_completed', 'true');

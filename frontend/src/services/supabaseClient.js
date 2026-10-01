@@ -468,12 +468,11 @@ export async function completeParticipantSurvey(participantId, deviceTimestamp =
     const isEmail = typeof participantId === 'string' && participantId.includes('@');
     const isUuid = isValidUUID(participantId);
 
-    // Core payload guaranteed across schema versions
+    // Core payload guaranteed across schema versions (preserves participant's username/name)
     const corePayload = {
       status: 'completed',
       updated_at: completedAt,
       device_timestamp: deviceTimestamp,
-      ...(certName ? { name: certName.trim() } : {}),
     };
 
     const extendedPayload = {
@@ -484,7 +483,6 @@ export async function completeParticipantSurvey(participantId, deviceTimestamp =
       completed_at: completedAt,
       attention_check_score: acScore,
       attention_check_passed: acPassed,
-      ...(certName ? { name: certName.trim() } : {}),
     };
 
     let query = supabase.from('participants').update(extendedPayload);
@@ -970,7 +968,7 @@ export async function saveCertificateToSupabase({ participantId, certCode, certN
     const isEmail = typeof participantId === 'string' && participantId.includes('@');
     const isUuid = isValidUUID(participantId);
 
-    // 1. Update `participants` table record with `certificate_id` and confirmed `name`
+    // 1. Update `participants` table record with `certificate_id` (preserving participant username)
     if (participantId) {
       try {
         let query = supabase
@@ -979,7 +977,6 @@ export async function saveCertificateToSupabase({ participantId, certCode, certN
             certificate_id: certCode,
             certificate_status: 'issued',
             updated_at: new Date().toISOString(),
-            ...(certName ? { name: certName.trim() } : {}),
           });
 
         if (isEmail) {
@@ -998,7 +995,6 @@ export async function saveCertificateToSupabase({ participantId, certCode, certN
             .update({
               status: 'completed',
               updated_at: new Date().toISOString(),
-              ...(certName ? { name: certName.trim() } : {}),
             });
           if (isEmail) fallbackQuery = fallbackQuery.eq('email', participantId.trim().toLowerCase());
           else if (isUuid) fallbackQuery = fallbackQuery.eq('id', participantId);

@@ -505,14 +505,11 @@ export default function Survey() {
 
   const handleConfirmCertNameAndFinish = async (e) => {
     if (e) e.preventDefault();
-    const finalName = (certNameInput || nameInput || participantName || 'Gen Z Participant').trim();
-    localStorage.setItem('genz_certificate_name', finalName);
-    localStorage.setItem('genz_participant_name', finalName);
-
-    useSurveyStore.setState({ participantName: finalName });
+    const finalCertName = (certNameInput || nameInput || participantName || 'Gen Z Participant').trim();
+    localStorage.setItem('genz_certificate_name', finalCertName);
 
     if (completeSurvey) {
-      await completeSurvey(finalName);
+      await completeSurvey(finalCertName);
     }
     setShowCertNameModal(false);
     navigate('/survey-complete');
